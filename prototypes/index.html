@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WarmPath · design directions</title>
+<style>
+  :root { --ink: #16181c; --soft: #5a606b; --rule: #d9dce1; --ground: #f6f6f4; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.5 ui-sans-serif, system-ui, 'Segoe UI', sans-serif; }
+  main { width: min(1120px, 100% - 48px); margin: 0 auto; padding: 56px 0 80px; }
+  h1 { margin: 0 0 8px; font-size: 30px; letter-spacing: -0.02em; }
+  .lede { margin: 0 0 40px; max-width: 68ch; color: var(--soft); }
+  article { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 4fr); gap: 32px; padding: 32px 0; border-top: 1px solid var(--rule); align-items: start; }
+  article img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--rule); }
+  h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.01em; }
+  p { margin: 0 0 14px; max-width: 52ch; }
+  dl { display: grid; grid-template-columns: 84px 1fr; gap: 4px 16px; margin: 0 0 18px; font-size: 14.5px; }
+  dt { color: var(--soft); }
+  dd { margin: 0; }
+  .links { display: flex; flex-wrap: wrap; gap: 10px; }
+  .links a { padding: 8px 14px; border: 1px solid var(--ink); border-radius: 6px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14.5px; }
+  .links a:first-child { background: var(--ink); color: var(--ground); }
+  .links a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px solid #1438f5; outline-offset: 3px; }
+  footer { padding-top: 28px; border-top: 1px solid var(--rule); color: var(--soft); font-size: 14.5px; max-width: 76ch; }
+  footer p { max-width: none; }
+  code { font-size: 0.92em; }
+  @media (max-width: 760px) { article { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>WarmPath design directions</h1>
+  <p class="lede">Three takes on the same four screens: goal box, path map, people panel, alum reply page. Each differs in style and in how much motion it asks the team to build. All run on the same invented data, shaped like the API contract in <code>docs/mvp.md</code>.</p>
+
+  <article>
+    <a href="thermal/index.html"><img src="shots/thermal.jpg" alt="Thermal direction: glowing strands run from You through five stops to the goal on a near-black ground" width="1440" height="900"></a>
+    <div>
+      <h2>Thermal</h2>
+      <p>The path is warm because people walked it. Each of the 14 alumni who reached the goal is a strand; where strands stack, the route burns brighter. The other 286 alumni drift behind as cold dust.</p>
+      <dl>
+        <dt>Motion</dt><dd>High. A WebGL particle field, routes that draw themselves, a living map.</dd>
+        <dt>Built with</dt><dd>React, react-three-fiber, ShaderGradient</dd>
+        <dt>Closest to</dt><dd>The Active Theory reference</dd>
+      </dl>
+      <div class="links"><a href="thermal/index.html">Open the flow</a><a href="thermal/index.html#/reply/5">Alum reply page</a></div>
+    </div>
+  </article>
+
+  <article>
+    <a href="transit/index.html"><img src="shots/transit.jpg" alt="Transit direction: black transit lines on a yellow ground, with stations for each stop" width="1440" height="900"></a>
+    <div>
+      <h2>Transit</h2>
+      <p>The transit map from the vision doc, taken literally. Each activity type is a line, each stop a station sized by its count. Stops you have are ticked off, the next one is the blue station, and the ask is a ticket the alum punches.</p>
+      <dl>
+        <dt>Motion</dt><dd>Medium. Lines draw from You outward, riders travel the lines, the next-stop flag slides between stations.</dd>
+        <dt>Built with</dt><dd>Plain SVG and the Web Animations API. Maps directly onto React Flow.</dd>
+        <dt>Closest to</dt><dd>A buildable hackathon map with one strong moment</dd>
+      </dl>
+      <div class="links"><a href="transit/index.html">Open the flow</a><a href="transit/index.html#/reply/5">Alum reply page</a></div>
+    </div>
+  </article>
+
+  <article>
+    <a href="pad/index.html"><img src="shots/pad.jpg" alt="Engineering pad direction: a worked problem on green grid paper with a plot of stops by year and lift" width="1440" height="900"></a>
+    <div>
+      <h2>Engineering pad</h2>
+      <p>The goal as a homework problem on green engineering paper: Given, Find, Solution. It shows its working, so the lift arithmetic is on the page and the next stop is the boxed answer. Highlighter marks what you have; red pencil marks what is next.</p>
+      <dl>
+        <dt>Motion</dt><dd>Low. Press feedback and a few 200ms reveals. Nothing draws itself.</dd>
+        <dt>Built with</dt><dd>HTML and CSS, about 150 lines of script</dd>
+        <dt>Closest to</dt><dd>A wireframe that already has a point of view</dd>
+      </dl>
+      <div class="links"><a href="pad/index.html">Open the flow</a><a href="pad/index.html#/reply/5">Alum reply page</a></div>
+    </div>
+  </article>
+
+  <footer>
+    <p><strong>Trying the two-device beat.</strong> Send an ask from the people panel, follow its “open the reply page” link into a second tab, and accept there. The first tab updates on its own.</p>
+    <p>Every person here is invented and the events are placeholders. Thermal loads its libraries from a CDN, so it needs a connection.</p>
+  </footer>
+</main>
+</body>
+</html>
