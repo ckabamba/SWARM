@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WarmPath · Thermal prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #06040b;
+    --ash: #8f8798;          /* quiet text on the void */
+    --bone: #f4eee6;         /* body text */
+    --ember: #ff6a1f;
+    --rose: #c22a6a;
+    --glow: #ffe9a8;         /* hottest: actions, the lit state */
+    --line: rgba(244, 238, 230, 0.16);
+    --panel: rgba(9, 6, 15, 0.84);
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--void);
+    color: var(--bone);
+    font-family: 'Mona Sans', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection { background: var(--ember); color: var(--void); }
+  button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 1px solid var(--glow); outline-offset: 4px; }
+
+  /* ---------- layers ---------- */
+  .field, .swarm, .veil { position: fixed; inset: 0; }
+  .field { opacity: 0.85; transition: opacity 1400ms var(--ease-out); }
+  [data-view='map'] .field { opacity: 0.6; }
+  [data-view='reply'] .field { opacity: 0.55; }
+  [data-accepted='true'] .field { opacity: 1; }
+  .swarm { mix-blend-mode: screen; pointer-events: none; }
+  .veil {
+    pointer-events: none;
+    background: radial-gradient(78% 74% at 50% 50%, rgba(6, 4, 11, 0.94) 0%, rgba(6, 4, 11, 0.8) 48%, rgba(6, 4, 11, 0.1) 100%);
+  }
+  .ui { position: fixed; inset: 0; }
+
+  /* small tracked caps: the one label voice */
+  .cap {
+    font-size: 10.5px;
+    font-stretch: 118%;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .quiet { color: var(--ash); }
+
+  /* ---------- top bar ---------- */
+  .bar {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 30px 40px;
+    z-index: 5;
+  }
+  .mark { display: flex; align-items: center; gap: 10px; font-stretch: 112%; font-weight: 600; letter-spacing: 0.02em; background: none; border: 0; padding: 0; }
+  .mark i {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--glow);
+  }
+  .switch {
+    position: relative;
+    display: grid; grid-template-columns: 1fr 1fr;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(9, 6, 15, 0.6);
+  }
+  .switch button {
+    position: relative; z-index: 1;
+    padding: 9px 18px;
+    border: 0; background: none; border-radius: 999px;
+    color: var(--ash);
+    transition: color 200ms ease;
+    white-space: nowrap;
+  }
+  .switch button[aria-pressed='true'] { color: var(--void); }
+  .switch .thumb {
+    position: absolute; top: 4px; bottom: 4px; left: 4px;
+    width: calc(50% - 4px);
+    border-radius: 999px;
+    background: var(--glow);
+    transition: transform 320ms var(--ease-in-out);
+  }
+  .switch[data-index='1'] .thumb { transform: translateX(100%); }
+
+  /* ---------- goal view ---------- */
+  .goal {
+    position: absolute; inset: 0;
+    display: grid; place-content: center;
+    padding: 0 8vw;
+    transition: opacity 420ms ease, filter 420ms ease, transform 420ms var(--ease-out);
+  }
+  [data-view='map'] .goal { opacity: 0; filter: blur(10px); transform: scale(0.985); pointer-events: none; }
+  .goal form { width: min(1040px, 84vw); }
+  .goal label { display: block; margin-bottom: 26px; color: var(--ash); font-size: 17px; }
+  .goal .row { display: flex; align-items: flex-end; gap: 22px; border-bottom: 1px solid var(--line); padding-bottom: 16px; transition: border-color 200ms ease; }
+  .goal .row:focus-within { border-color: rgba(255, 233, 168, 0.7); }
+  .goal input {
+    flex: 1; min-width: 0;
+    background: none; border: 0; outline: 0; padding: 0;
+    font-size: clamp(34px, 5.2vw, 76px);
+    font-weight: 300;
+    font-stretch: 108%;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    caret-color: var(--ember);
+  }
+  .goal input::placeholder { color: rgba(244, 238, 230, 0.5); }
+  .go {
+    flex: none;
+    width: 58px; height: 58px; margin-bottom: 6px;
+    display: grid; place-items: center;
+    border-radius: 50%; border: 1px solid var(--line);
+    background: none;
+    transition: transform 160ms var(--ease-out), background-color 200ms ease, border-color 200ms ease;
+  }
+  .go:active { transform: scale(0.95); }
+  .go svg { width: 20px; height: 20px; transition: transform 240ms var(--ease-out); }
+  @media (hover: hover) and (pointer: fine) {
+    .go:hover { background: var(--glow); border-color: var(--glow); color: var(--void); }
+    .go:hover svg { transform: translateX(3px); }
+  }
+  .seeds { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 26px 0 0; padding: 0; list-style: none; }
+  .seeds button { background: none; border: 0; padding: 4px 0; color: var(--ash); transition: color 160ms ease; }
+  .seeds button::before { content: '->'; margin-right: 10px; color: var(--ember); }
+  @media (hover: hover) and (pointer: fine) { .seeds button:hover { color: var(--bone); } }
+
+  .foot { position: absolute; left: 40px; right: 40px; bottom: 30px; display: flex; justify-content: space-between; gap: 24px; pointer-events: none; }
+
+  /* ---------- map view ---------- */
+  .map { position: absolute; inset: 0; pointer-events: none; }
+  .map > * { pointer-events: auto; }
+  .node {
+    position: absolute; left: 0; top: 0;
+    width: var(--d); height: var(--d);
+    margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
+    border-radius: 50%;
+    background: none; border: 0; padding: 0;
+    text-align: left;
+    opacity: 0;
+    transition: opacity 700ms var(--ease-out);
+  }
+  [data-view='map'] .node { opacity: 1; transition-delay: var(--at, 0ms); }
+  .node .ring {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(244, 238, 230, 0.55);
+    background: radial-gradient(circle, rgba(6, 4, 11, 0.55) 0%, rgba(6, 4, 11, 0.15) 70%);
+    transition: border-color 400ms ease, transform 200ms var(--ease-out);
+  }
+  .node[data-have='true'] .ring {
+    border-color: var(--glow);
+    background: radial-gradient(circle, #fff7dc 0%, var(--glow) 30%, #ff8a3a 58%, #b3275f 100%);
+  }
+  .node[data-next='true'] .ring { border-color: var(--glow); border-style: dashed; }
+  .node[data-next='true'] .ring::after {
+    content: ''; position: absolute; inset: -1px;
+    border-radius: 50%; border: 1px solid var(--glow);
+    animation: ping 2200ms var(--ease-out) infinite;
+  }
+  @keyframes ping { from { transform: scale(1); opacity: 0.75; } to { transform: scale(2.1); opacity: 0; } }
+  @media (hover: hover) and (pointer: fine) { .node:hover .ring { transform: scale(1.08); } }
+  .node:active .ring { transform: scale(0.96); }
+
+  .node .tag {
+    position: absolute;
+    left: calc(100% + 16px); top: 50%;
+    width: 230px;
+    transform: translateY(-50%);
+  }
+  .node[data-side='left'] .tag { left: auto; right: calc(100% + 16px); text-align: right; }
+  .node[data-side='below'] .tag { left: 50%; margin-left: -115px; top: calc(100% + 14px); transform: none; text-align: center; }
+  .node[data-side='above'] .tag { left: 50%; margin-left: -115px; top: auto; bottom: calc(100% + 14px); transform: none; text-align: center; }
+  .node .name { display: block; font-size: 17px; font-weight: 500; font-stretch: 105%; letter-spacing: -0.005em; line-height: 1.2; }
+  .node .count { display: block; margin-top: 5px; color: var(--ash); font-size: 13.5px; }
+  .node .count b { color: var(--bone); font-weight: 600; }
+  .node .state { display: block; margin-top: 7px; color: var(--glow); }
+  .node .when { display: block; margin-top: 4px; font-size: 13px; color: var(--bone); }
+
+  .end .name { font-size: 21px; }
+
+  .strip {
+    position: absolute; left: 40px; bottom: 30px;
+    width: min(500px, 38vw);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+  }
+  [data-view='map'] .strip { opacity: 1; transform: none; transition-delay: 3700ms; }
+  .strip h2, .closest h2 { margin: 0 0 12px; font-weight: 500; color: var(--ash); }
+  .strip ol { margin: 0; padding: 0; list-style: none; }
+  .strip li { display: grid; grid-template-columns: 62px 1fr; gap: 14px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+  .strip li div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .strip li b { font-weight: 600; }
+  .strip li span { color: var(--ash); }
+
+  .closest {
+    position: absolute; right: 40px; bottom: 30px;
+    width: min(300px, 26vw);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+  }
+  [data-view='map'] .closest { opacity: 1; transform: none; transition-delay: 3900ms; }
+  .closest button {
+    width: 100%;
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 8px 0; border: 0; border-top: 1px solid var(--line);
+    background: none; text-align: left; font-size: 13.5px;
+  }
+  .closest button b { font-weight: 600; transition: color 160ms ease; }
+  .closest button span { color: var(--ash); }
+  @media (hover: hover) and (pointer: fine) { .closest button:hover b { color: var(--glow); } }
+
+  /* ---------- people panel ---------- */
+  .panel {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: min(460px, 92vw);
+    padding: 96px 34px 34px;
+    background: var(--panel);
+    backdrop-filter: blur(22px);
+    border-left: 1px solid var(--line);
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 240ms var(--ease-out);
+    z-index: 4;
+  }
+  .panel[data-open='true'] { transform: none; transition: transform 460ms var(--ease-drawer); }
+  .panel h2 { margin: 0 70px 0 0; font-size: 26px; font-weight: 400; font-stretch: 106%; letter-spacing: -0.02em; line-height: 1.15; }
+  .panel .lede { margin: 12px 0 26px; color: var(--ash); font-size: 14px; max-width: 34ch; }
+  .panel .close { position: absolute; top: 102px; right: 34px; background: none; border: 0; padding: 6px 0; color: var(--ash); }
+  .person { padding: 18px 0; border-top: 1px solid var(--line); }
+  .person header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .person h3 { margin: 0; font-size: 17px; font-weight: 600; }
+  .person .who { color: var(--ash); font-size: 13px; }
+  .person .tie { margin: 8px 0 12px; font-size: 14px; color: #f6cfa6; max-width: 38ch; }
+  .person .more { margin: 14px 0 0; color: var(--ash); font-size: 13px; }
+  .pill {
+    padding: 9px 18px;
+    border-radius: 999px; border: 1px solid var(--line);
+    background: none;
+    transition: transform 160ms var(--ease-out), background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+  }
+  .pill:active { transform: scale(0.97); }
+  .pill.hot { background: var(--glow); border-color: var(--glow); color: var(--void); }
+  @media (hover: hover) and (pointer: fine) {
+    .pill:hover { border-color: var(--glow); }
+    .pill.hot:hover { background: #fff5d3; }
+  }
+  .draft { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 260ms var(--ease-out); }
+  .draft[data-open='true'] { grid-template-rows: 1fr; }
+  .draft > div { overflow: hidden; }
+  .draft textarea {
+    width: 100%; min-height: 168px; margin-top: 14px; padding: 14px 16px;
+    border: 1px solid var(--line); border-radius: 12px;
+    background: rgba(244, 238, 230, 0.04);
+    font-size: 14px; line-height: 1.55; resize: vertical;
+    caret-color: var(--ember);
+  }
+  .draft textarea:focus { outline: 0; border-color: rgba(255, 233, 168, 0.6); }
+  .draft .acts { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  .status { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
+  .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--ash); }
+  .status[data-status='accepted'] { color: var(--glow); }
+  .status[data-status='accepted'] i { background: var(--glow); }
+  .status a { color: inherit; text-underline-offset: 4px; }
+
+  /* ---------- alum reply page ---------- */
+  .reply { position: absolute; inset: 0; overflow-y: auto; display: grid; place-items: center; padding: 40px 22px; }
+  .reply article { width: min(400px, 100%); }
+  .reply h1 { margin: 34px 0 10px; font-size: 34px; font-weight: 300; font-stretch: 106%; letter-spacing: -0.03em; line-height: 1.1; text-wrap: balance; }
+  .reply .who { margin: 0 0 28px; color: var(--ash); }
+  .reply dl { margin: 0; }
+  .reply dt { margin: 22px 0 8px; color: var(--ash); }
+  .reply dd { margin: 0; }
+  .reply .tie { color: #f6cfa6; font-size: 16px; }
+  .reply .msg { padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: rgba(9, 6, 15, 0.55); font-size: 14.5px; line-height: 1.6; }
+  .accept {
+    position: relative; overflow: hidden;
+    width: 100%; margin-top: 30px; padding: 20px;
+    border-radius: 999px; border: 0;
+    background: var(--glow); color: var(--void);
+    font-size: 16px; font-weight: 600;
+    transition: transform 160ms var(--ease-out), background-color 300ms ease, color 300ms ease;
+  }
+  .accept:active { transform: scale(0.97); }
+  .accept[disabled] { background: rgba(255, 233, 168, 0.14); color: var(--glow); cursor: default; }
+  .reply .after { margin: 16px 0 0; text-align: center; color: var(--ash); font-size: 13.5px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: 150ms !important; transition-delay: 0ms !important; }
+    .panel, .strip, .closest, .goal { transform: none !important; }
+    .panel:not([data-open='true']) { visibility: hidden; }
+  }
+</style>
+
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.1.1",
+    "react/jsx-runtime": "https://esm.sh/react@19.1.1/jsx-runtime",
+    "react-dom": "https://esm.sh/react-dom@19.1.1",
+    "react-dom/client": "https://esm.sh/react-dom@19.1.1/client",
+    "three": "https://esm.sh/three@0.170.0",
+    "@react-three/fiber": "https://esm.sh/@react-three/fiber@9.3.0?external=react,react-dom,three",
+    "@shadergradient/react": "https://esm.sh/@shadergradient/react@2.4.20?external=react,react-dom,three,@react-three/fiber"
+  }
+}
+</script>
+<script src="../shared/fake-api.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-type="module" data-presets="react">
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { createRoot } from 'react-dom/client'
+import * as THREE from 'three'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react'
+
+const api = window.WarmPathFake
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+/* Where each stop sits, as fractions of the stage. x follows the stop's typical year. */
+const SPOTS = {
+  you: { x: 0.085, y: 0.52, side: 'below' },
+  5: { x: 0.255, y: 0.25, side: 'above' },
+  3: { x: 0.405, y: 0.6, side: 'below' },
+  4: { x: 0.585, y: 0.3, side: 'above' },
+  7: { x: 0.555, y: 0.84, side: 'below' },
+  9: { x: 0.745, y: 0.66, side: 'below' },
+  goal: { x: 0.895, y: 0.42, side: 'above' },
+}
+const STRANDS = 14      // one per alum who reached the goal
+const SAMPLES = 460     // points along each strand
+const DUST = 300        // every alum in the seed
+
+function mulberry(seed) {
+  return () => {
+    seed |= 0; seed = (seed + 0x6d2b79f5) | 0
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+/* The API returns counts, not routes, so strands are dealt out to match each stop's count. */
+function dealStrands(stops) {
+  const rand = mulberry(11)
+  const strands = Array.from({ length: STRANDS }, () => [])
+  stops.forEach((stop) => {
+    const order = Array.from({ length: STRANDS }, (_, i) => i).sort(() => rand() - 0.5)
+    order.slice(0, stop.achievers).forEach((i) => strands[i].push(stop.activity_id))
+  })
+  return strands
+}
+
+function useViewport() {
+  const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight })
+  useEffect(() => {
+    const on = () => setSize({ w: window.innerWidth, h: window.innerHeight })
+    window.addEventListener('resize', on)
+    return () => window.removeEventListener('resize', on)
+  }, [])
+  return size
+}
+
+function place(key, { w, h }) {
+  const spot = SPOTS[key]
+  const top = 100, bottom = 176
+  return { x: spot.x * w, y: top + spot.y * (h - top - bottom), side: spot.side }
+}
+
+/* ------------------------------------------------------------------ WebGL */
+
+const HEAT = `
+  vec3 heat(float t) {
+    vec3 a = vec3(0.16, 0.07, 0.34);
+    vec3 b = vec3(0.72, 0.13, 0.36);
+    vec3 c = vec3(1.0, 0.42, 0.1);
+    vec3 d = vec3(1.0, 0.92, 0.62);
+    return t < 0.33 ? mix(a, b, t / 0.33) : t < 0.66 ? mix(b, c, (t - 0.33) / 0.33) : mix(c, d, (t - 0.66) / 0.34);
+  }
+`
+
+function Swarm({ mode, viewport, stops }) {
+  const { gl } = useThree()
+  const strands = useMemo(() => dealStrands(stops), [stops])
+
+  const dust = useMemo(() => {
+    const rand = mulberry(4)
+    return Array.from({ length: DUST }, () => ({
+      hx: rand() - 0.5, hy: rand() - 0.5,
+      r: 14 + rand() * 46,
+      w1: 0.08 + rand() * 0.22, w2: 0.07 + rand() * 0.2,
+      p1: rand() * 6.28, p2: rand() * 6.28,
+      size: 5 + rand() * 8,
+      x: 0, y: 0, heat: 0, alpha: 0,
+    }))
+  }, [])
+
+  // Strand curves in world pixels (origin at centre, y up).
+  const curves = useMemo(() => {
+    const rand = mulberry(29)
+    const { w, h } = viewport
+    const world = (p) => new THREE.Vector3(p.x - w / 2, h / 2 - p.y, 0)
+    const you = place('you', viewport), goal = place('goal', viewport)
+    const order = [...stops].sort((a, b) => SPOTS[a.activity_id].x - SPOTS[b.activity_id].x)
+    return strands.map((ids) => {
+      const pts = [world({ x: you.x, y: you.y + (rand() - 0.5) * 10 })]
+      order.filter((s) => ids.includes(s.activity_id)).forEach((s) => {
+        const p = place(s.activity_id, viewport)
+        const spread = 3 + s.achievers * 1.5
+        pts.push(world({ x: p.x + (rand() - 0.5) * 6, y: p.y + (rand() - 0.5) * spread }))
+      })
+      pts.push(world({ x: goal.x, y: goal.y + (rand() - 0.5) * 12 }))
+      return new THREE.CatmullRomCurve3(pts, false, 'centripetal').getSpacedPoints(SAMPLES - 1)
+    })
+  }, [strands, stops, viewport])
+
+  const dustGeo = useMemo(() => {
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(DUST * 3), 3))
+    g.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(DUST), 1))
+    g.setAttribute('aHeat', new THREE.BufferAttribute(new Float32Array(DUST), 1))
+    g.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(DUST), 1))
+    return g
+  }, [])
+
+  const trailGeo = useMemo(() => {
+    const g = new THREE.BufferGeometry()
+    const n = STRANDS * SAMPLES
+    const u = new Float32Array(n), s = new Float32Array(n)
+    for (let i = 0; i < STRANDS; i++) for (let k = 0; k < SAMPLES; k++) {
+      u[i * SAMPLES + k] = k / (SAMPLES - 1)
+      s[i * SAMPLES + k] = i
+    }
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3))
+    g.setAttribute('aU', new THREE.BufferAttribute(u, 1))
+    g.setAttribute('aStrand', new THREE.BufferAttribute(s, 1))
+    return g
+  }, [])
+
+  useEffect(() => {
+    const pos = trailGeo.attributes.position
+    curves.forEach((pts, i) => pts.forEach((p, k) => pos.setXYZ(i * SAMPLES + k, p.x, p.y, 0)))
+    pos.needsUpdate = true
+  }, [curves, trailGeo])
+
+  const dustMat = useMemo(() => new THREE.ShaderMaterial({
+    transparent: true, depthTest: false, blending: THREE.AdditiveBlending,
+    uniforms: { uDpr: { value: gl.getPixelRatio() } },
+    vertexShader: `
+      attribute float aSize; attribute float aHeat; attribute float aAlpha;
+      uniform float uDpr; varying float vHeat; varying float vAlpha;
+      void main() {
+        vHeat = aHeat; vAlpha = aAlpha;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = aSize * uDpr;
+      }`,
+    fragmentShader: `
+      varying float vHeat; varying float vAlpha;
+      ${HEAT}
+      void main() {
+        float d = length(gl_PointCoord - 0.5);
+        float a = smoothstep(0.5, 0.0, d);
+        gl_FragColor = vec4(heat(vHeat) * a * a * vAlpha, 1.0);
+      }`,
+  }), [gl])
+
+  const trailMat = useMemo(() => new THREE.ShaderMaterial({
+    transparent: true, depthTest: false, blending: THREE.AdditiveBlending,
+    uniforms: { uDpr: { value: gl.getPixelRatio() }, uProgress: { value: new Array(STRANDS).fill(0) } },
+    vertexShader: `
+      attribute float aU; attribute float aStrand;
+      uniform float uDpr; uniform float uProgress[${STRANDS}];
+      varying float vOn;
+      void main() {
+        vOn = smoothstep(0.0, 0.04, uProgress[int(aStrand)] - aU);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = 15.0 * uDpr;
+      }`,
+    // Additive: one strand is a dull ember, nine stacked strands burn yellow.
+    fragmentShader: `
+      varying float vOn;
+      void main() {
+        float d = length(gl_PointCoord - 0.5);
+        float a = smoothstep(0.5, 0.0, d);
+        gl_FragColor = vec4(vec3(1.0, 0.34, 0.09) * a * a * 0.085 * vOn, 1.0);
+      }`,
+  }), [gl])
+
+  const pointer = useRef({ x: 9999, y: 9999, sx: 9999, sy: 9999 })
+  useEffect(() => {
+    const move = (e) => { pointer.current.x = e.clientX - window.innerWidth / 2; pointer.current.y = window.innerHeight / 2 - e.clientY }
+    window.addEventListener('pointermove', move)
+    return () => window.removeEventListener('pointermove', move)
+  }, [])
+
+  const clock = useRef({ mapAt: null })
+  useEffect(() => {
+    clock.current.mapAt = mode === 'map' ? 'pending' : null
+    if (mode !== 'map') trailMat.uniforms.uProgress.value.fill(0)
+  }, [mode, trailMat])
+
+  useFrame(({ clock: c }, dt) => {
+    const t = c.elapsedTime
+    const { w, h } = viewport
+    const state = clock.current
+    if (state.mapAt === 'pending') state.mapAt = t
+    const onMap = state.mapAt !== null
+    const p = pointer.current
+    p.sx += (p.x - p.sx) * Math.min(1, dt * 5); p.sy += (p.y - p.sy) * Math.min(1, dt * 5)
+    const progress = trailMat.uniforms.uProgress.value
+    const pos = dustGeo.attributes.position, size = dustGeo.attributes.aSize
+    const heatAttr = dustGeo.attributes.aHeat, alpha = dustGeo.attributes.aAlpha
+    const ease = Math.min(1, dt * 2.2)
+
+    for (let i = 0; i < DUST; i++) {
+      const d = dust[i]
+      let x = d.hx * w * 1.04 + Math.sin(t * d.w1 + d.p1) * d.r
+      let y = d.hy * h * 1.04 + Math.cos(t * d.w2 + d.p2) * d.r
+      // The pointer warms whatever it passes over.
+      const dx = x - p.sx, dy = y - p.sy
+      const near = Math.max(0, 1 - Math.hypot(dx, dy) / 170)
+      x += dx * near * 0.35; y += dy * near * 0.35
+      let heat = 0.3 + near * 0.6, a = onMap ? 0.22 : 0.85, sz = d.size
+
+      if (i < STRANDS && onMap) {
+        const e = t - state.mapAt - 0.2 - i * 0.085
+        const pts = curves[i]
+        heat = 1; a = 1; sz = 11
+        if (REDUCED) { progress[i] = 1; x = pts[SAMPLES - 1].x; y = pts[SAMPLES - 1].y; a = 0 }
+        else if (e < 0.9) {
+          const k = Math.max(0, e / 0.9), s = k * k * (3 - 2 * k)
+          x += (pts[0].x - x) * s; y += (pts[0].y - y) * s
+          heat = 0.3 + 0.7 * s; a = 0.85 + 0.15 * s; sz = d.size + (11 - d.size) * s
+        } else {
+          const first = 2.5, loop = 7 + (i % 5) * 1.3
+          const e2 = e - 0.9
+          let u
+          if (e2 < first) { const k = e2 / first; u = 1 - Math.pow(1 - k, 2.2); progress[i] = Math.max(progress[i], u + 0.02) }
+          else { u = ((e2 - first) % loop) / loop; progress[i] = 1.1; a = Math.min(1, u / 0.06, (1 - u) / 0.06) }
+          const f = u * (SAMPLES - 1), k0 = Math.min(SAMPLES - 2, Math.floor(f)), fr = f - k0
+          x = pts[k0].x + (pts[k0 + 1].x - pts[k0].x) * fr
+          y = pts[k0].y + (pts[k0 + 1].y - pts[k0].y) * fr
+        }
+        d.x = x; d.y = y
+      } else {
+        d.x = x; d.y = y
+      }
+      d.heat += (heat - d.heat) * ease; d.alpha += (a - d.alpha) * ease
+      pos.setXYZ(i, d.x, d.y, 0)
+      size.setX(i, sz); heatAttr.setX(i, i < STRANDS && onMap ? heat : d.heat); alpha.setX(i, i < STRANDS && onMap ? a : d.alpha)
+    }
+    pos.needsUpdate = size.needsUpdate = heatAttr.needsUpdate = alpha.needsUpdate = true
+  })
+
+  return (
+    <>
+      <points geometry={trailGeo} material={trailMat} frustumCulled={false} />
+      <points geometry={dustGeo} material={dustMat} frustumCulled={false} />
+    </>
+  )
+}
+
+function Backdrop() {
+  return (
+    <div className="field" aria-hidden="true">
+      <ShaderGradientCanvas style={{ position: 'absolute', inset: 0 }} pixelDensity={1} fov={45}>
+        <ShaderGradient
+          type="waterPlane" animate={REDUCED ? 'off' : 'on'} uSpeed={0.12} uStrength={2.6} uDensity={1.1} uFrequency={5.5}
+          color1="#ff9a3c" color2="#c4266f" color3="#241063"
+          cDistance={4.4} cPolarAngle={74} cAzimuthAngle={200} positionY={0.6}
+          lightType="3d" brightness={0.8} reflection={0.05} grain="on" enableTransition={false}
+        />
+      </ShaderGradientCanvas>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ DOM */
+
+function Arrow() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 10h14M11 4l6 6-6 6" />
+    </svg>
+  )
+}
+
+function StudentSwitch({ students, value, onChange }) {
+  const index = students.findIndex((s) => s.id === value)
+  return (
+    <div className="switch cap" data-index={index} role="group" aria-label="Student profile">
+      <span className="thumb" />
+      {students.map((s) => (
+        <button key={s.id} aria-pressed={s.id === value} onClick={() => onChange(s.id)}>
+          {s.major} · {api.ordinal(s.school_year)} year
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function Node({ at, delay, stop, onOpen }) {
+  const d = 26 + stop.achievers * 4
+  const day = stop.event && api.eventDay(stop.event.starts_at)
+  return (
+    <button
+      className="node" data-have={stop.have} data-next={stop.next} data-side={at.side}
+      style={{ transform: `translate(${at.x}px, ${at.y}px)`, '--d': `${d}px`, '--at': `${delay}ms` }}
+      onClick={onOpen}
+    >
+      <span className="ring" />
+      <span className="tag">
+        <span className="name">{stop.name}</span>
+        <span className="count"><b>{stop.achievers} of 14</b> did this · {api.TYPE_LABEL[stop.type]}</span>
+        {stop.have && <span className="state cap">You have this</span>}
+        {stop.next && <span className="state cap">Next for you</span>}
+        {stop.next && day && <span className="when">{stop.event.title} · {day.weekdayLong} {day.time}, {stop.event.location}</span>}
+      </span>
+    </button>
+  )
+}
+
+function PeoplePanel({ open, path, activityId, onClose }) {
+  const [, bump] = useState(0)
+  const [composing, setComposing] = useState(null)
+  const [text, setText] = useState('')
+  useEffect(() => api.subscribe(() => bump((n) => n + 1)), [])
+  useEffect(() => setComposing(null), [activityId, path.student.id])
+
+  const stop = path.stops.find((s) => s.activity_id === activityId)
+  const people = api.getPeople({ goal_id: path.goal.id, student_id: path.student.id, activity_id: stop ? activityId : undefined })
+  const asks = api.asksByAlum(path.student.id)
+  const total = stop ? stop.achievers : path.goal.achievers
+  const shown = people.slice(0, 4)
+
+  const send = (person) => {
+    api.postAsk({ student_id: path.student.id, alum_id: person.id, goal_id: path.goal.id, message: text })
+    setComposing(null)
+  }
+
+  return (
+    <aside className="panel" data-open={open} aria-hidden={!open} inert={!open}>
+      <button className="close cap" onClick={onClose}>Close</button>
+      <h2>{stop ? stop.name : path.goal.label}</h2>
+      <p className="lede">
+        {stop
+          ? `${total} of the ${path.goal.achievers} alumni who reached this goal went through here.`
+          : `${total} alumni in the seed reached this goal.`} Closest starting point to yours first.
+      </p>
+      {shown.map((person) => {
+        const ask = asks[person.id]
+        const isOpen = composing === person.id
+        return (
+          <section className="person" key={person.id}>
+            <header>
+              <h3>{person.name}</h3>
+              <span className="who">{person.major} ’{String(person.grad_year).slice(2)}</span>
+            </header>
+            <p className="tie">{person.shared_tie}</p>
+            {ask ? (
+              <p className="status" data-status={ask.status}>
+                <i />
+                {ask.status === 'accepted' ? 'Accepted a 15-minute call' : 'Sent. Waiting for a reply.'}
+                {ask.status !== 'accepted' && <a href={`#/reply/${ask.id}`} target="_blank" rel="noreferrer">Open the reply page</a>}
+              </p>
+            ) : (
+              !isOpen && <button className="pill" onClick={() => { setComposing(person.id); setText(person.draft) }}>Ask {person.name.split(' ')[0]}</button>
+            )}
+            <div className="draft" data-open={isOpen && !ask}>
+              <div>
+                <textarea value={text} onChange={(e) => setText(e.target.value)} aria-label={`Message to ${person.name}`} tabIndex={isOpen ? 0 : -1} />
+                <div className="acts">
+                  <button className="pill" onClick={() => setComposing(null)} tabIndex={isOpen ? 0 : -1}>Cancel</button>
+                  <button className="pill hot" onClick={() => send(person)} tabIndex={isOpen ? 0 : -1}>Send the ask</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )
+      })}
+      {total > shown.length && <p className="more">Showing the {shown.length} closest of {total}.</p>}
+    </aside>
+  )
+}
+
+function Experience() {
+  const students = useMemo(() => api.getStudents(), [])
+  const [studentId, setStudentId] = useState(students[0].id)
+  const [view, setView] = useState('goal')
+  const [goalText, setGoalText] = useState('')
+  const [panel, setPanel] = useState(null)           // activity id, 'goal', or null
+  const viewport = useViewport()
+  const path = useMemo(() => api.postPath({ goal: goalText || api.SEEDED_GOALS[0], student_id: studentId }), [studentId, view])
+  const closest = api.getPeople({ goal_id: path.goal.id, student_id: studentId }).slice(0, 3)
+
+  useEffect(() => { document.body.dataset.view = view }, [view])
+  useEffect(() => {
+    const key = (e) => { if (e.key === 'Escape') setPanel(null) }
+    window.addEventListener('keydown', key)
+    return () => window.removeEventListener('keydown', key)
+  }, [])
+
+  const submit = (e) => { e.preventDefault(); setView('map') }
+  const you = place('you', viewport), goal = place('goal', viewport)
+  const arrive = (x) => (REDUCED ? 0 : Math.round(1100 + x * 2300))
+
+  return (
+    <>
+      <Backdrop />
+      <div className="veil" />
+      <div className="swarm" aria-hidden="true">
+        <Canvas orthographic dpr={[1, 2]} gl={{ alpha: false, antialias: false }} camera={{ position: [0, 0, 10], near: 0.1, far: 100 }}>
+          <color attach="background" args={['#000000']} />
+          <Swarm mode={view} viewport={viewport} stops={path.stops} />
+        </Canvas>
+      </div>
+
+      <div className="ui">
+        <header className="bar">
+          <button className="mark" onClick={() => { setView('goal'); setPanel(null) }} aria-label="WarmPath, start a new goal"><i />WarmPath</button>
+          <StudentSwitch students={students} value={studentId} onChange={setStudentId} />
+        </header>
+
+        <section className="goal" aria-hidden={view !== 'goal'} inert={view !== 'goal'}>
+          <form onSubmit={submit}>
+            <label htmlFor="goal">Where do you want to end up?</label>
+            <div className="row">
+              <input id="goal" autoFocus autoComplete="off" spellCheck="false" value={goalText} onChange={(e) => setGoalText(e.target.value)} placeholder={api.SEEDED_GOALS[0]} />
+              <button className="go" aria-label="Trace the path"><Arrow /></button>
+            </div>
+            <ul className="seeds cap">
+              {api.SEEDED_GOALS.slice(1).map((g) => (
+                <li key={g}><button type="button" onClick={() => setGoalText(g)}>{g}</button></li>
+              ))}
+            </ul>
+          </form>
+          <p className="foot cap quiet">
+            <span>Each point is one of {api.ALUMNI_TOTAL} alumni</span>
+            <span>Seeded demo data</span>
+          </p>
+        </section>
+
+        <section className="map" aria-hidden={view !== 'map'} inert={view !== 'map'}>
+          <button className="node end" data-have="true" data-side={you.side} style={{ transform: `translate(${you.x}px, ${you.y}px)`, '--d': '30px', '--at': '500ms' }} onClick={() => setStudentId(students.find((s) => s.id !== studentId).id)}>
+            <span className="ring" />
+            <span className="tag">
+              <span className="name">You</span>
+              <span className="count">{path.student.major}, {api.ordinal(path.student.school_year)} year</span>
+            </span>
+          </button>
+          {path.stops.map((stop) => (
+            <Node key={stop.activity_id} stop={stop} at={place(stop.activity_id, viewport)} delay={arrive(SPOTS[stop.activity_id].x)} onOpen={() => setPanel(stop.activity_id)} />
+          ))}
+          <button className="node end" data-side={goal.side} style={{ transform: `translate(${goal.x}px, ${goal.y}px)`, '--d': '92px', '--at': `${arrive(SPOTS.goal.x)}ms` }} onClick={() => setPanel('goal')}>
+            <span className="ring" />
+            <span className="tag">
+              <span className="name">{path.goal.label}</span>
+              <span className="count"><b>{path.goal.achievers} alumni</b> got here</span>
+            </span>
+          </button>
+
+          <div className="strip">
+            <h2 className="cap">This week on your path</h2>
+            <ol>
+              {path.events.slice(0, 3).map((event) => {
+                const day = api.eventDay(event.starts_at)
+                const stop = path.stops.find((s) => s.activity_id === event.activity_id)
+                return (
+                  <li key={event.id}>
+                    <b>{day.weekday} {day.day}</b>
+                    <div>{event.title} <span>· {stop.name} · {day.time}, {event.location}</span></div>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
+
+          <div className="closest">
+            <h2 className="cap">Closest starts to yours</h2>
+            {closest.map((person) => (
+              <button key={person.id} onClick={() => setPanel('goal')}>
+                <b>{person.name}</b>
+                <span>{person.major} ’{String(person.grad_year).slice(2)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <PeoplePanel open={view === 'map' && panel !== null} path={path} activityId={panel} onClose={() => setPanel(null)} />
+      </div>
+    </>
+  )
+}
+
+function Reply({ id }) {
+  const [ask, setAsk] = useState(() => api.getAsk(id))
+  useEffect(() => { document.body.dataset.view = 'reply' }, [])
+  useEffect(() => { document.body.dataset.accepted = ask.status === 'accepted' }, [ask.status])
+  useEffect(() => api.subscribe(() => setAsk(api.getAsk(id))), [id])
+  const first = ask.student.name.split(' ')[0]
+  const accepted = ask.status === 'accepted'
+  return (
+    <>
+      <Backdrop />
+      <div className="veil" />
+      <main className="ui reply">
+        <article>
+          <span className="mark"><i />WarmPath</span>
+          <h1>{ask.student.name} would like 15 minutes of your time.</h1>
+          <p className="who">{ask.student.major}, {api.ordinal(ask.student.school_year)} year at Georgia Tech</p>
+          <dl>
+            <dt className="cap">What you share</dt>
+            <dd className="tie">{ask.shared_tie.replace(/^You are both/, 'You are both').replace('your next stop', `${first}’s next stop`)}</dd>
+            <dt className="cap">{first}’s question</dt>
+            <dd className="msg">{ask.message}</dd>
+          </dl>
+          <button className="accept" disabled={accepted} onClick={() => setAsk(api.acceptAsk(id))}>
+            {accepted ? 'Accepted' : 'Accept a 15-minute call'}
+          </button>
+          <p className="after">{accepted ? `${first} can see that you said yes.` : 'One tap. No account needed.'}</p>
+        </article>
+      </main>
+    </>
+  )
+}
+
+function App() {
+  const [hash, setHash] = useState(location.hash)
+  useEffect(() => {
+    const on = () => setHash(location.hash)
+    window.addEventListener('hashchange', on)
+    return () => window.removeEventListener('hashchange', on)
+  }, [])
+  const reply = hash.match(/^#\/reply\/(\d+)/)
+  return reply ? <Reply id={reply[1]} /> : <Experience />
+}
+
+createRoot(document.getElementById('root')).render(<App />)
+</script>
+</body>
+</html>
