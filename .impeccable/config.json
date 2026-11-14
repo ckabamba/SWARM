@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "archivo",
+        "files": [
+          "prototypes/transit/index.html"
+        ],
+        "createdAt": "2026-11-14T19:41:22.058Z",
+        "reason": "agent: alternate design-direction prototype kept for comparison, not part of the Thermal theme DESIGN.md documents"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "recursive",
+        "files": [
+          "prototypes/pad/index.html"
+        ],
+        "createdAt": "2026-11-14T19:41:22.672Z",
+        "reason": "agent: alternate design-direction prototype kept for comparison, not part of the Thermal theme DESIGN.md documents"
+      }
+    ]
+  }
+}
