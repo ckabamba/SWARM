@@ -1,18 +1,19 @@
-// Theme tokens directly from DESIGN.md
+// WarmPath Visual & Design Tokens ported from DESIGN.md and prototypes/thermal/index.html
+
 export const THEME = {
   colors: {
     void: '#06040b',
-    bone: '#f4eee6',
+    panel: 'rgba(9, 6, 15, 0.84)',
+    panelSolid: '#0c0814',
     ash: '#8f8798',
-    glow: '#ffe9a8',
-    glowHover: '#fff5d3',
-    gold: '#eaaa00',
-    goldDeep: '#8f5c00',
+    bone: '#f4eee6',
     ember: '#ff6a1f',
-    tie: '#f6cfa6',
+    gold: '#eaaa00', // Georgia Tech Buzz Gold
+    goldDeep: '#8f5c00',
+    glow: '#ffe9a8', // Hottest state
+    glowHover: '#fff5d3',
+    tie: '#f6cfa6', // Shared alumni connection highlight text
     line: 'rgba(244, 238, 230, 0.16)',
-    lineSolid: '#2a2632',
-    panel: 'rgba(9, 6, 15, 0.94)',
     surface: 'rgba(244, 238, 230, 0.04)',
     surfaceSubtle: 'rgba(244, 238, 230, 0.08)',
     fogOrange: '#ff8a2a',
@@ -21,40 +22,40 @@ export const THEME = {
   },
   typography: {
     display: {
-      fontSize: 28,
-      fontWeight: '300',
-      letterSpacing: -0.8,
+      fontSize: 26,
+      fontWeight: '300' as const,
+      letterSpacing: -0.5,
       color: '#f4eee6',
     },
     headline: {
-      fontSize: 22,
-      fontWeight: '400',
-      letterSpacing: -0.5,
+      fontSize: 20,
+      fontWeight: '400' as const,
+      letterSpacing: -0.3,
       color: '#f4eee6',
     },
     title: {
       fontSize: 16,
-      fontWeight: '500',
+      fontWeight: '500' as const,
       letterSpacing: -0.1,
       color: '#f4eee6',
     },
     body: {
       fontSize: 14,
-      fontWeight: '400',
+      fontWeight: '400' as const,
       lineHeight: 20,
       color: '#f4eee6',
     },
     bodyAsh: {
-      fontSize: 13.5,
-      fontWeight: '400',
-      lineHeight: 19,
+      fontSize: 13,
+      fontWeight: '400' as const,
+      lineHeight: 18,
       color: '#8f8798',
     },
-    label: {
+    cap: {
       fontSize: 10.5,
-      fontWeight: '500',
-      letterSpacing: 1.6,
-      textTransform: 'uppercase',
+      fontWeight: '500' as const,
+      letterSpacing: 1.8,
+      textTransform: 'uppercase' as const,
       color: '#8f8798',
     },
   },
@@ -62,7 +63,7 @@ export const THEME = {
     pill: 999,
     field: 12,
     message: 14,
-    hexagonRadius: 16,
+    card: 16,
   },
   spacing: {
     hair: 8,
