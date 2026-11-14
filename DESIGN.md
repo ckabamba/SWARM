@@ -1,6 +1,6 @@
 ---
 name: WarmPath
-description: A path map of the routes Georgia Tech alumni took to a goal, drawn as heat on a honeycomb.
+description: A shared visual language for WarmPath resource discovery, community, and geographic maps on web and mobile.
 colors:
   void: "#06040b"
   bone: "#f4eee6"
@@ -110,16 +110,16 @@ The system is taken from the working prototype at [prototypes/thermal/index.html
 
 **Creative North Star: "The Warm Hive"**
 
-WarmPath shows which campus steps alumni took on the way to a goal. The theme makes that literal. The screen is a dark honeycomb, the Georgia Tech swarm at night, and a path is warm because people walked it. Each alum who reached the goal is one glowing strand, and where strands stack the route burns brighter. Light on this screen always means people.
+WarmPath connects Georgia Tech students and alumni through paths/resource discovery, community posts and events, and geographic maps of campus activities and alumni cities. The shared theme is a dark honeycomb with warm yellow selections, restrained gold and ember accents, and pill controls. In the alumni-path view, each alum who reached a goal is a glowing strand; shared routes burn brighter. Across other views, brightness represents a meaningful count or interaction state.
 
 The feel is a quiet, near-black field with a few bright things in it. Colour sits at the edges as slow amber fog, the centre stays dark so type and routes read, and the interface itself is small: hairlines, pills and one size of tracked caps. The reference for mood is Active Theory's site: one object in a dark room, minimal chrome anchored to the corners.
 
 **Key Characteristics:**
 
 - Near-black ground, with gold and ember as the only chromatic colours.
-- A flat-topped honeycomb behind everything; checkpoints are cells of it.
+- Flat-topped honeycomb geometry for the path view and brand surfaces; keep feed content and geographic basemaps readable.
 - Brightness encodes a count or a state. It is never decoration.
-- Interface chrome is thin and sits in the corners. The map owns the middle.
+- Thin interface chrome and consistent navigation; each experience gets the layout its content needs.
 - Motion is one authored moment per screen, then stillness.
 
 ### Motion
@@ -192,19 +192,39 @@ Set `font-variant-numeric: tabular-nums` on the body so counts line up.
 
 ## Layout
 
-The app is laid out for a laptop screen and does not have a mobile layout. The one exception is the alum reply page, which is a single column no wider than 400px, centred, because it is opened on a phone.
+All three core experiences support web and mobile. Preserve the existing colors, typography, pill controls, focus states, and reduced-motion behavior across layouts. The delivery technology for mobile remains undecided; responsive and touch-friendly design is required regardless.
 
-Every screen is one fixed viewport with no page scroll, except the landing, which is three viewports tall inside its own scroller. Chrome sits in the corners with a 40px gutter (`spacing.gutter`):
+The following desktop path layout is a starting point from the prototype, not a rule for every screen. Community feeds and resource lists can scroll normally. Maps use a bounded interactive area with accessible details. Use the 40px gutter (`spacing.gutter`) where space allows and reduce it on small screens:
+
+Desktop path layout:
 
 - Top left: wordmark. Top right: student switch.
 - Bottom left: "This week on your path". Bottom right: "Closest starts to yours".
 - The map takes the space between, with 100px reserved at the top and 176px at the bottom.
 
-The people panel is a drawer on the right edge, `min(460px, 92vw)` wide, that slides over the map without moving it.
+On desktop, the people panel is a drawer on the right edge, `min(460px, 92vw)` wide. On mobile, use a readable sheet or detail page that does not hide essential controls or clip text.
 
-Layers stack in a fixed order, back to front: animated backdrop, dark veil, 3D honeycomb model (landing only), honeycomb lattice with strands and alumni dots, then the interface. The lattice layer is blended with `mix-blend-mode: screen` so it only ever adds light.
+For the path visualization, layers stack in this order, back to front: animated backdrop, dark veil, 3D honeycomb model (landing only), honeycomb lattice with strands and alumni dots, then the interface. The lattice layer is blended with `mix-blend-mode: screen` so it only ever adds light.
 
-Lists are rows separated by hairlines, with 8px vertical padding in compact lists and 18px in the panel. There is no card grid anywhere.
+Lists can use rows separated by hairlines, with 8px vertical padding in compact lists and 18px in panels. Community posts and event highlights may use grouped surfaces or cards with the existing colors, radii, and borders; choose the structure for readability.
+
+### Community layout
+
+Provide a scrollable stream of LinkedIn-style student/alumni posts with clear author identity and content. Give club activities and campus-event highlights a distinct section. On small screens, stack these sections in a deliberate reading order. Links open the same profile, club, event, or resource records used in discovery and maps. Reactions, comments, follows, and private messaging remain undecided.
+
+### Geographic maps
+
+Provide campus and alumni-city views within the geographic-map experience. Campus markers identify real activity/event locations. Alumni markers represent shared cities, with a way to explore the relevant people. City counts and company/industry/major/shared-club filters are proposed details. Position geographic markers by coordinates, not by the decorative honeycomb grid. Basemap and marker geometry can differ from path checkpoints.
+
+Use selected-state styling consistent with the yellow pill controls. Details must be accessible through touch and keyboard controls; provide an accompanying list or equivalent access to location results. Mobile layouts should keep map controls and details usable without hover.
+
+### Text and voice
+
+Keep text entry available alongside voice access. Define visible listening, processing, and failure states once the voice interaction is specified. Make it possible to stop recording and return to text. Spoken output behavior is undecided; resource results must remain readable and actionable on screen.
+
+### Mobile behavior
+
+Use readable single-column content where needed, touch-friendly targets, and navigation between discovery, community, and maps. Allow map pan/zoom without interfering with surrounding page scrolling. Adapt drawers, labels, and long posts to narrow screens. Verify the flows on both desktop and phone-sized displays; do not restrict mobile support to the reply page.
 
 ## Elevation & Depth
 
@@ -216,7 +236,7 @@ There are no shadows. Depth comes from the layer order above, from additive ligh
 
 ## Shapes
 
-Three forms, and no others.
+The existing path view uses three primary forms. Extend them consistently for community content and geographic maps:
 
 - **Hexagons, flat-topped.** The lattice cell is 26px from centre to corner. Checkpoints are the same shape with slightly eased corners, drawn as SVG with a 1px non-scaling stroke.
 - **Pills** (`rounded.pill`). Every button and the student switch.
@@ -224,7 +244,7 @@ Three forms, and no others.
 
 ### Named Rules
 
-**The Flat-Top Rule.** Every hexagon on screen has a flat top and bottom, and every checkpoint sits exactly on the centre of a lattice cell. A hexagon that floats off the grid or points upward is a bug.
+**The Flat-Top Rule.** Decorative hexagons and path checkpoints have a flat top and bottom; path checkpoints align to lattice cells. Geographic markers follow actual place/city coordinates and are exempt from lattice alignment.
 
 ## Components
 
@@ -258,7 +278,7 @@ One stop on the path, and also the "You" and goal markers.
 
 ### Student switch
 
-A two-segment pill. A Glow thumb slides between segments over 320ms; the selected label is Void, the other Ash. Switching student must update checkpoints, the "next" marker and the closest alumni together.
+The prototype's two-segment pill demonstrates switching sample student profiles. A Glow thumb slides between segments over 320ms; the selected label is Void, the other Ash. Switching student updates checkpoints, the "next" marker and the closest alumni together. This is a demo control, not the production identity model. Reuse its visual treatment for suitable view selectors without hard-coding two sample identities into the service.
 
 ### Goal field
 
@@ -285,9 +305,9 @@ Three viewport-tall beats in a scroller with proximity snap: opening line left, 
 ### Do:
 
 - **Do** take colours, type and radii from the frontmatter tokens. Copy the `:root` block in the prototype if you need them as CSS variables.
-- **Do** put every new hexagon on the lattice, flat-topped, at a cell centre.
+- **Do** align path checkpoints to the flat-topped lattice; place geographic markers at their actual coordinates.
 - **Do** make brightness mean a count or a state, and write the count next to it in words: "9 of 14 did this".
-- **Do** keep chrome in the corners and leave the middle of the screen to the map.
+- **Do** use the desktop path layout where appropriate and adapt navigation, feeds, and map details to the screen size.
 - **Do** give every pressable element `scale(0.97)` press feedback and a visible keyboard focus state in Glow.
 - **Do** check any new text colour against Void for 4.5:1 contrast.
 - **Do** honour `prefers-reduced-motion` on anything you animate.
@@ -297,7 +317,7 @@ Three viewport-tall beats in a scroller with proximity snap: opening line left, 
 - **Don't** add shadows, glows or halos.
 - **Don't** add pink, magenta, purple, or a second accent colour.
 - **Don't** use circles for checkpoints or pointy-topped hexagons.
-- **Don't** add cards, card grids, gradient text, or a second label style.
+- **Don't** add gradient text or a second label style. Use shared tokens for any community or event cards.
 - **Don't** animate the lattice, list rows or the top bar on their own, and don't use `ease-in`.
 - **Don't** put saturated colour behind text.
-- **Don't** build a mobile layout for the map; only the reply page is phone-sized.
+- **Don't** rely on hover, fixed desktop dimensions, or a non-scrolling viewport for essential mobile interactions.
