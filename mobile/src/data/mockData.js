@@ -1,0 +1,91 @@
+export const SEEDED_ACCOUNTS = {
+  student: {
+    id: 1,
+    name: 'George P. Burdell',
+    role: 'student',
+    title: '2nd Year Undergraduate',
+    major: 'Computer Engineering',
+    school: 'Georgia Tech',
+    gradYear: 2027,
+    avatar: '🐝',
+    currentActivities: [
+      { id: 101, name: 'RoboJackets', type: 'club', year: 1 },
+      { id: 102, name: 'CS 1332 (Data Structures)', type: 'course', year: 2 },
+    ],
+  },
+  alum: {
+    id: 87,
+    name: 'Sarah Chen',
+    role: 'alum',
+    title: 'SWE at NVIDIA',
+    company: 'NVIDIA',
+    major: 'Computer Engineering',
+    school: 'Georgia Tech',
+    gradYear: 2023,
+    avatar: '⚡',
+    city: 'Santa Clara, CA',
+    pastActivities: [
+      { id: 101, name: 'RoboJackets', type: 'club', year: 1 },
+      { id: 201, name: 'Autonomous Racing VIP', type: 'vip', year: 2 },
+      { id: 301, name: 'ECE 4180 (Embedded Systems)', type: 'course', year: 3 },
+    ],
+  },
+};
+
+export const SEEDED_PATH = {
+  goal: {
+    id: 12,
+    label: 'SWE Internship at NVIDIA',
+    achieversCount: 14,
+  },
+  stops: [
+    {
+      id: 'stop-1',
+      activityId: 101,
+      name: 'RoboJackets (RoboCup / Software)',
+      type: 'club',
+      achievers: 11,
+      lift: 3.2,
+      have: true,
+      next: false,
+      description: 'You completed this in Year 1.',
+    },
+    {
+      id: 'stop-2',
+      activityId: 201,
+      name: 'Autonomous Racing VIP Team',
+      type: 'vip',
+      achievers: 9,
+      lift: 4.8,
+      have: false,
+      next: true,
+      description: '9 of 14 NVIDIA achievers joined this in Year 2.',
+      event: {
+        title: 'VIP Fall Info Session & Lab Tour',
+        time: 'Tuesday 6:00 PM',
+        location: 'Klaus Atrium',
+      },
+    },
+    {
+      id: 'stop-3',
+      activityId: 301,
+      name: 'ECE 4180: Embedded Systems Design',
+      type: 'course',
+      achievers: 8,
+      lift: 2.7,
+      have: false,
+      next: false,
+      description: 'Key technical prerequisite cited by alumni.',
+    },
+  ],
+  topAlum: {
+    id: 87,
+    name: 'Sarah Chen',
+    role: 'SWE at NVIDIA',
+    major: 'CompE',
+    gradYear: 2023,
+    sharedTie: 'You are both CompE, both did RoboJackets, and she joined Autonomous Racing VIP in year 2.',
+    draftMessage:
+      'Hi Sarah! I am a 2nd year CompE at Georgia Tech in RoboJackets. I noticed you took the Autonomous Racing VIP path before landing at NVIDIA—could I ask you 2 questions over a 15-min chat about how that VIP prepared you for SWE interviews?',
+  },
+};
