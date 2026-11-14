@@ -2,7 +2,7 @@
 
 Rules for coding agents (Claude Code, Cursor, Copilot, Codex and others) working in this repo. Human teammates follow the same git workflow.
 
-Before writing code, read [README.md](README.md) for the overview and [docs/mvp.md](docs/mvp.md) for the spec. The reasoning behind both is in [docs/alumni-path-map.md](docs/alumni-path-map.md).
+Before writing code, read [README.md](README.md) for the overview and [docs/mvp.md](docs/mvp.md) for the spec. The reasoning behind both is in [docs/alumni-path-map.md](docs/alumni-path-map.md). Before any front-end work, also read [DESIGN.md](DESIGN.md), which sets the visual theme.
 
 ## Git workflow
 
