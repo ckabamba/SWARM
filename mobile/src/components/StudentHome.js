@@ -8,172 +8,247 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import { THEME } from '../theme';
 
-export default function StudentHome({ student, pathData, activeAsks, onSendAsk }) {
+export default function StudentHome({
+  student,
+  pathData,
+  onSendAsk,
+  onSwitchStudent,
+  currentStudentId,
+}) {
   const [goalText, setGoalText] = useState('SWE internship at NVIDIA');
+  const [draftOpen, setDraftOpen] = useState(false);
+  const [draftMessage, setDraftMessage] = useState(pathData.topAlum.draftMessage);
   const [hasSentAsk, setHasSentAsk] = useState(false);
 
-  const handleSendAsk = () => {
+  const handleSend = () => {
     onSendAsk({
       id: Date.now(),
       studentName: student.name,
       studentMajor: student.major,
-      studentYear: student.title,
+      studentYear: `${student.title} · ${student.major}`,
       alumId: pathData.topAlum.id,
       alumName: pathData.topAlum.name,
       sharedTie: pathData.topAlum.sharedTie,
-      message: pathData.topAlum.draftMessage,
+      message: draftMessage,
       status: 'pending',
       createdAt: 'Just now',
     });
     setHasSentAsk(true);
+    setDraftOpen(false);
     Alert.alert(
-      'Ask Sent!',
-      `Your 15-minute call request has been dispatched to ${pathData.topAlum.name}. Check the Alumni device to see it appear!`
+      'Ask Dispatched',
+      `Your request was sent to ${pathData.topAlum.name}. Switch to the ALUM REPLY view above to test the reply experience.`
     );
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Profile Card */}
-      <View style={styles.profileCard}>
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>{student.avatar}</Text>
-        </View>
-        <View style={styles.profileTextContainer}>
-          <Text style={styles.profileName}>{student.name}</Text>
-          <Text style={styles.profileSubtitle}>
-            {student.title} • {student.major}
-          </Text>
-          <Text style={styles.profileSchool}>{student.school}</Text>
+      {/* Student Switcher Bar */}
+      <View style={styles.studentSwitcherRow}>
+        <Text style={styles.sectionLabel}>ACTIVE STUDENT</Text>
+        <View style={styles.miniPillGroup}>
+          <TouchableOpacity
+            style={[
+              styles.miniPill,
+              currentStudentId === 1 && styles.miniPillActive,
+            ]}
+            onPress={() => onSwitchStudent(1)}
+          >
+            <Text
+              style={[
+                styles.miniPillText,
+                currentStudentId === 1 && styles.miniPillTextActive,
+              ]}
+            >
+              George P. Burdell (CompE · 2nd)
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.miniPill,
+              currentStudentId === 2 && styles.miniPillActive,
+            ]}
+            onPress={() => onSwitchStudent(2)}
+          >
+            <Text
+              style={[
+                styles.miniPillText,
+                currentStudentId === 2 && styles.miniPillTextActive,
+              ]}
+            >
+              Devon Brooks (CS · 1st)
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Goal Box */}
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionHeader}>Target Goal</Text>
-        <Text style={styles.sectionSubtext}>
-          WarmPath finds the exact campus steps alumni took to reach this:
-        </Text>
-        <View style={styles.inputRow}>
+      {/* Goal Input Section */}
+      <View style={styles.goalSection}>
+        <Text style={styles.sectionLabel}>TARGET GOAL</Text>
+        <View style={styles.goalInputRow}>
           <TextInput
-            style={styles.input}
+            style={styles.goalInput}
             value={goalText}
             onChangeText={setGoalText}
-            placeholder="e.g. SWE internship at NVIDIA"
-            placeholderTextColor="#888"
+            placeholder="Type your goal..."
+            placeholderTextColor="rgba(244, 238, 230, 0.4)"
+            selectionColor={THEME.colors.ember}
           />
-          <TouchableOpacity style={styles.goButton}>
-            <Text style={styles.goButtonText}>Map</Text>
-          </TouchableOpacity>
         </View>
-        <View style={styles.quickChips}>
+        <View style={styles.goalUnderline} />
+
+        {/* Arrow links */}
+        <View style={styles.arrowRow}>
           <TouchableOpacity
-            style={styles.chip}
+            style={styles.arrowLink}
             onPress={() => setGoalText('SWE internship at NVIDIA')}
           >
-            <Text style={styles.chipText}>SWE @ NVIDIA</Text>
+            <Text style={styles.arrowIcon}>→</Text>
+            <Text style={styles.arrowText}>SWE AT NVIDIA</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.chip}
+            style={styles.arrowLink}
             onPress={() => setGoalText('Robotics Research at IRIM')}
           >
-            <Text style={styles.chipText}>Robotics Research</Text>
+            <Text style={styles.arrowIcon}>→</Text>
+            <Text style={styles.arrowText}>ROBOTICS RESEARCH</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Path Stops */}
-      <View style={styles.sectionCard}>
-        <View style={styles.pathHeaderRow}>
-          <Text style={styles.sectionHeader}>Your Path to {pathData.goal.label}</Text>
-          <Text style={styles.badgeCount}>
-            {pathData.goal.achieversCount} Achievers
+      {/* Path Checkpoints Section */}
+      <View style={styles.pathSection}>
+        <View style={styles.pathHeader}>
+          <Text style={styles.sectionLabel}>PATH TO GOAL</Text>
+          <Text style={styles.achieversMeta}>
+            <Text style={styles.achieversBold}>{pathData.goal.achieversCount}</Text> achievers in dataset
           </Text>
         </View>
 
-        {pathData.stops.map((stop, index) => (
-          <View
-            key={stop.id}
-            style={[
-              styles.stopCard,
-              stop.have && styles.stopCardHave,
-              stop.next && styles.stopCardNext,
-            ]}
-          >
-            <View style={styles.stopIndicator}>
-              <View
-                style={[
-                  styles.stopDot,
-                  stop.have && styles.stopDotHave,
-                  stop.next && styles.stopDotNext,
-                ]}
-              >
-                <Text style={styles.stopNumber}>{index + 1}</Text>
-              </View>
-              {index < pathData.stops.length - 1 && <View style={styles.stopLine} />}
-            </View>
+        {pathData.stops.map((stop, index) => {
+          // If Devon is selected, Devon doesn't have stop 1
+          const isHave = currentStudentId === 1 ? stop.have : (stop.activityId === 5);
+          const isNext = currentStudentId === 1 ? stop.next : (stop.activityId === 3);
 
-            <View style={styles.stopDetails}>
-              <View style={styles.stopTitleRow}>
-                <Text style={styles.stopName}>{stop.name}</Text>
-                {stop.next && (
-                  <View style={styles.flagNext}>
-                    <Text style={styles.flagNextText}>NEXT BEST STEP</Text>
-                  </View>
-                )}
-                {stop.have && (
-                  <View style={styles.flagHave}>
-                    <Text style={styles.flagHaveText}>COMPLETED</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.stopLift}>
-                {stop.description} (Lift: {stop.lift}x)
-              </Text>
-              {stop.event && (
-                <View style={styles.eventBox}>
-                  <Text style={styles.eventTitle}>📅 {stop.event.title}</Text>
-                  <Text style={styles.eventMeta}>
-                    {stop.event.time} • {stop.event.location}
+          return (
+            <View key={stop.id} style={styles.stopRow}>
+              {/* Geometric checkpoint marker */}
+              <View style={styles.markerCol}>
+                <View
+                  style={[
+                    styles.hexMarker,
+                    isHave && styles.hexMarkerHave,
+                    isNext && styles.hexMarkerNext,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.hexNumber,
+                      (isHave || isNext) && styles.hexNumberActive,
+                    ]}
+                  >
+                    {index + 1}
                   </Text>
                 </View>
-              )}
+                {index < pathData.stops.length - 1 && <View style={styles.pathLine} />}
+              </View>
+
+              {/* Stop info */}
+              <View style={styles.stopBody}>
+                <View style={styles.stopTitleRow}>
+                  <Text style={styles.stopTitle}>{stop.name}</Text>
+                  {isHave && (
+                    <Text style={styles.tagHave}>YOU HAVE THIS</Text>
+                  )}
+                  {isNext && (
+                    <Text style={styles.tagNext}>NEXT FOR YOU</Text>
+                  )}
+                </View>
+
+                {/* Count in Bone, descriptor in Ash (The Heat is Data rule) */}
+                <Text style={styles.stopStat}>
+                  <Text style={styles.statCount}>{stop.achievers} of {pathData.goal.achieversCount}</Text>{' '}
+                  did this · {stop.type} · Lift {stop.lift}×
+                </Text>
+
+                {stop.event && (
+                  <View style={styles.eventRow}>
+                    <Text style={styles.eventLabel}>NEXT EVENT</Text>
+                    <Text style={styles.eventTitle}>{stop.event.title}</Text>
+                    <Text style={styles.eventMeta}>
+                      {stop.event.time} · {stop.event.location}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </View>
 
-      {/* Top Alum Card */}
-      <View style={[styles.sectionCard, styles.alumCard]}>
-        <View style={styles.alumHeader}>
-          <Text style={styles.sectionHeader}>Closest Alumni Match</Text>
-          <Text style={styles.matchBadge}>94% Match</Text>
+      {/* People Panel / Closest Match */}
+      <View style={styles.peopleSection}>
+        <View style={styles.pathHeader}>
+          <Text style={styles.sectionLabel}>CLOSEST ALUMNI START</Text>
+          <Text style={styles.rankMeta}>RANK 1</Text>
         </View>
-        <Text style={styles.alumName}>{pathData.topAlum.name}</Text>
-        <Text style={styles.alumRole}>
-          {pathData.topAlum.role} • GT '{pathData.topAlum.gradYear} ({pathData.topAlum.major})
-        </Text>
 
-        <View style={styles.sharedTieBox}>
-          <Text style={styles.sharedTieTitle}>Shared Tie:</Text>
+        <View style={styles.personRow}>
+          <View style={styles.personHeaderRow}>
+            <Text style={styles.personName}>{pathData.topAlum.name}</Text>
+            <Text style={styles.personGrad}>
+              {pathData.topAlum.major} '{pathData.topAlum.gradYear}
+            </Text>
+          </View>
+          <Text style={styles.personRole}>{pathData.topAlum.role}</Text>
+
+          {/* Shared tie sentence in colors.tie */}
           <Text style={styles.sharedTieText}>{pathData.topAlum.sharedTie}</Text>
-        </View>
 
-        <View style={styles.draftBox}>
-          <Text style={styles.draftTitle}>Drafted Ask (LLM Generated):</Text>
-          <Text style={styles.draftText}>"{pathData.topAlum.draftMessage}"</Text>
+          {/* Ask Flow */}
+          {hasSentAsk ? (
+            <View style={styles.statusLine}>
+              <View style={styles.statusDot} />
+              <Text style={styles.statusText}>Ask sent · Awaiting 15-minute response</Text>
+            </View>
+          ) : !draftOpen ? (
+            <TouchableOpacity
+              style={styles.ghostButton}
+              onPress={() => setDraftOpen(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.ghostButtonText}>Ask 15-min call</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.draftContainer}>
+              <Text style={styles.draftLabel}>DRAFTED ASK (LLM GENERATED)</Text>
+              <TextInput
+                style={styles.draftInput}
+                value={draftMessage}
+                onChangeText={setDraftMessage}
+                multiline
+                numberOfLines={4}
+                selectionColor={THEME.colors.ember}
+              />
+              <View style={styles.draftActionsRow}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setDraftOpen(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={handleSend}
+                >
+                  <Text style={styles.primaryButtonText}>Send the ask</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
-
-        <TouchableOpacity
-          style={[styles.askButton, hasSentAsk && styles.askButtonDisabled]}
-          onPress={handleSendAsk}
-          disabled={hasSentAsk}
-        >
-          <Text style={styles.askButtonText}>
-            {hasSentAsk ? '✓ Request Sent' : 'Send 15-Minute Ask'}
-          </Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -182,177 +257,151 @@ export default function StudentHome({ student, pathData, activeAsks, onSendAsk }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: THEME.colors.void,
   },
   content: {
-    padding: 16,
-    paddingBottom: 40,
+    paddingHorizontal: THEME.spacing.gutter,
+    paddingTop: 16,
+    paddingBottom: 48,
   },
-  profileCard: {
+  studentSwitcherRow: {
+    marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: THEME.colors.line,
+  },
+  sectionLabel: {
+    ...THEME.typography.label,
+    marginBottom: 8,
+  },
+  miniPillGroup: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#003057', // Tech Navy
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  avatarContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#B3A369', // Tech Gold
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  avatarText: {
-    fontSize: 26,
-  },
-  profileTextContainer: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  profileSubtitle: {
-    fontSize: 13,
-    color: '#E5E7EB',
-    marginTop: 2,
-  },
-  profileSchool: {
-    fontSize: 12,
-    color: '#B3A369',
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  sectionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  sectionHeader: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  sectionSubtext: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
-    marginBottom: 10,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
-  },
-  goButton: {
-    marginLeft: 8,
-    backgroundColor: '#B3A369',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  goButtonText: {
-    fontWeight: '700',
-    color: '#003057',
-  },
-  quickChips: {
-    flexDirection: 'row',
-    marginTop: 10,
     gap: 8,
+    flexWrap: 'wrap',
   },
-  chip: {
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 10,
+  miniPill: {
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: THEME.rounded.pill,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: THEME.colors.line,
+    backgroundColor: THEME.colors.surface,
   },
-  chipText: {
+  miniPillActive: {
+    borderColor: THEME.colors.glow,
+    backgroundColor: 'rgba(255, 233, 168, 0.1)',
+  },
+  miniPillText: {
     fontSize: 12,
-    color: '#1D4ED8',
+    color: THEME.colors.ash,
+  },
+  miniPillTextActive: {
+    color: THEME.colors.glow,
     fontWeight: '600',
   },
-  pathHeaderRow: {
+  goalSection: {
+    marginBottom: 28,
+  },
+  goalInputRow: {
+    marginTop: 4,
+  },
+  goalInput: {
+    ...THEME.typography.display,
+    fontSize: 22,
+    paddingVertical: 4,
+    color: THEME.colors.bone,
+  },
+  goalUnderline: {
+    height: 1,
+    backgroundColor: THEME.colors.line,
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  arrowRow: {
+    flexDirection: 'row',
+    gap: 16,
+    flexWrap: 'wrap',
+  },
+  arrowLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  arrowIcon: {
+    color: THEME.colors.ember,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  arrowText: {
+    ...THEME.typography.label,
+    fontSize: 10,
+    color: THEME.colors.ash,
+  },
+  pathSection: {
+    marginBottom: 28,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: THEME.colors.line,
+  },
+  pathHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  badgeCount: {
-    backgroundColor: '#FEF3C7',
-    color: '#92400E',
-    fontSize: 11,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
+  achieversMeta: {
+    ...THEME.typography.bodyAsh,
+    fontSize: 12,
   },
-  stopCard: {
+  achieversBold: {
+    color: THEME.colors.bone,
+    fontWeight: '600',
+  },
+  stopRow: {
     flexDirection: 'row',
-    marginBottom: 14,
+    marginBottom: 20,
   },
-  stopCardHave: {
-    opacity: 0.85,
-  },
-  stopCardNext: {
-    backgroundColor: '#FEFCE8',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FDE047',
-  },
-  stopIndicator: {
-    alignItems: 'center',
+  markerCol: {
     width: 32,
-    marginRight: 10,
+    alignItems: 'center',
+    marginRight: 12,
   },
-  stopDot: {
+  hexMarker: {
     width: 24,
     height: 24,
-    borderRadius: 12,
-    backgroundColor: '#9CA3AF',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 238, 230, 0.55)',
+    backgroundColor: 'rgba(6, 4, 11, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  stopDotHave: {
-    backgroundColor: '#10B981',
+  hexMarkerHave: {
+    borderColor: THEME.colors.glow,
+    backgroundColor: THEME.colors.gold,
   },
-  stopDotNext: {
-    backgroundColor: '#B3A369',
+  hexMarkerNext: {
+    borderColor: THEME.colors.glow,
+    borderStyle: 'dashed',
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(234, 170, 0, 0.15)',
   },
-  stopNumber: {
-    fontSize: 12,
-    color: '#FFF',
-    fontWeight: 'bold',
+  hexNumber: {
+    fontSize: 11,
+    color: THEME.colors.ash,
+    fontWeight: '600',
   },
-  stopLine: {
-    width: 2,
+  hexNumberActive: {
+    color: THEME.colors.void,
+    fontWeight: '700',
+  },
+  pathLine: {
+    width: 1,
     flex: 1,
-    backgroundColor: '#E5E7EB',
-    marginTop: 4,
-    minHeight: 30,
+    backgroundColor: THEME.colors.line,
+    marginTop: 6,
   },
-  stopDetails: {
+  stopBody: {
     flex: 1,
   },
   stopTitleRow: {
@@ -360,134 +409,171 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  stopName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1F2937',
+  stopTitle: {
+    ...THEME.typography.title,
     flex: 1,
   },
-  flagNext: {
-    backgroundColor: '#B3A369',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  flagNextText: {
+  tagHave: {
+    ...THEME.typography.label,
     fontSize: 9,
-    color: '#003057',
-    fontWeight: 'bold',
+    color: THEME.colors.glow,
+    letterSpacing: 1.0,
   },
-  flagHave: {
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  flagHaveText: {
+  tagNext: {
+    ...THEME.typography.label,
     fontSize: 9,
-    color: '#065F46',
-    fontWeight: 'bold',
+    color: THEME.colors.glow,
+    letterSpacing: 1.0,
   },
-  stopLift: {
-    fontSize: 12,
-    color: '#4B5563',
+  stopStat: {
+    ...THEME.typography.bodyAsh,
+    fontSize: 13,
     marginTop: 3,
   },
-  eventBox: {
-    backgroundColor: '#F3F4F6',
-    padding: 8,
-    borderRadius: 6,
-    marginTop: 6,
+  statCount: {
+    color: THEME.colors.bone,
+    fontWeight: '600',
+  },
+  eventRow: {
+    marginTop: 8,
+    padding: 10,
+    backgroundColor: THEME.colors.surface,
+    borderRadius: THEME.rounded.field,
+    borderWidth: 1,
+    borderColor: THEME.colors.line,
+  },
+  eventLabel: {
+    ...THEME.typography.label,
+    fontSize: 8.5,
+    color: THEME.colors.ember,
+    marginBottom: 2,
   },
   eventTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 13,
+    fontWeight: '500',
+    color: THEME.colors.bone,
   },
   eventMeta: {
-    fontSize: 11,
-    color: '#6B7280',
+    fontSize: 12,
+    color: THEME.colors.ash,
     marginTop: 2,
   },
-  alumCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#003057',
+  peopleSection: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: THEME.colors.line,
   },
-  alumHeader: {
+  rankMeta: {
+    ...THEME.typography.label,
+    fontSize: 9,
+    color: THEME.colors.ash,
+  },
+  personRow: {
+    paddingTop: 8,
+  },
+  personHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  matchBadge: {
-    backgroundColor: '#DCFCE7',
-    color: '#15803D',
-    fontSize: 11,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+  personName: {
+    ...THEME.typography.title,
+    fontWeight: '600',
   },
-  alumName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginTop: 8,
-  },
-  alumRole: {
+  personGrad: {
+    ...THEME.typography.bodyAsh,
     fontSize: 13,
-    color: '#4B5563',
+  },
+  personRole: {
+    ...THEME.typography.bodyAsh,
+    fontSize: 13,
     marginTop: 2,
-  },
-  sharedTieBox: {
-    backgroundColor: '#F8FAFC',
-    borderLeftWidth: 3,
-    borderLeftColor: '#B3A369',
-    padding: 10,
-    borderRadius: 4,
-    marginTop: 10,
-  },
-  sharedTieTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#92400E',
-    marginBottom: 2,
+    marginBottom: 8,
   },
   sharedTieText: {
-    fontSize: 12,
-    color: '#1E293B',
-    lineHeight: 16,
+    fontFamily: 'System',
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: THEME.colors.tie,
+    marginBottom: 14,
   },
-  draftBox: {
-    backgroundColor: '#F9FAFB',
-    padding: 10,
-    borderRadius: 6,
-    marginTop: 8,
+  ghostButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 9,
+    paddingHorizontal: 18,
+    borderRadius: THEME.rounded.pill,
+    borderWidth: 1,
+    borderColor: THEME.colors.line,
   },
-  draftTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#4B5563',
-    marginBottom: 2,
+  ghostButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: THEME.colors.bone,
   },
-  draftText: {
-    fontSize: 12,
-    color: '#374151',
-    fontStyle: 'italic',
-    lineHeight: 16,
-  },
-  askButton: {
-    backgroundColor: '#003057',
-    paddingVertical: 12,
-    borderRadius: 8,
+  statusLine: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: THEME.colors.glow,
+  },
+  statusText: {
+    fontSize: 13,
+    color: THEME.colors.ash,
+  },
+  draftContainer: {
+    backgroundColor: THEME.colors.surface,
+    padding: 14,
+    borderRadius: THEME.rounded.field,
+    borderWidth: 1,
+    borderColor: THEME.colors.line,
+  },
+  draftLabel: {
+    ...THEME.typography.label,
+    fontSize: 8.5,
+    color: THEME.colors.ash,
+    marginBottom: 6,
+  },
+  draftInput: {
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: THEME.colors.bone,
+    backgroundColor: 'rgba(244, 238, 230, 0.04)',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: THEME.colors.line,
+    textAlignVertical: 'top',
+    minHeight: 80,
+  },
+  draftActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
     marginTop: 12,
   },
-  askButtonDisabled: {
-    backgroundColor: '#10B981',
+  cancelButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: THEME.rounded.pill,
   },
-  askButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14,
+  cancelButtonText: {
+    color: THEME.colors.ash,
+    fontSize: 13,
+  },
+  primaryButton: {
+    backgroundColor: THEME.colors.glow,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: THEME.rounded.pill,
+  },
+  primaryButtonText: {
+    color: THEME.colors.void,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

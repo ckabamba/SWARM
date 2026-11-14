@@ -5,28 +5,31 @@ import Header from './src/components/Header';
 import StudentHome from './src/components/StudentHome';
 import AlumHome from './src/components/AlumHome';
 import { SEEDED_ACCOUNTS, SEEDED_PATH } from './src/data/mockData';
+import { THEME } from './src/theme';
 
 export default function App() {
   const [currentRole, setCurrentRole] = useState('student'); // 'student' | 'alum'
+  const [currentStudentId, setCurrentStudentId] = useState(1); // 1: George P. Burdell, 2: Devon Brooks
   const [activeAsks, setActiveAsks] = useState([
     {
       id: 991,
       studentName: 'George P. Burdell',
-      studentMajor: 'Computer Engineering',
-      studentYear: '2nd Year Undergraduate',
+      studentMajor: 'CompE',
+      studentYear: '2nd Year Undergraduate · CompE',
       alumId: 87,
-      alumName: 'Sarah Chen',
-      sharedTie: 'Both CompE, both did RoboJackets, and joined Autonomous Racing VIP in year 2.',
+      alumName: 'Elena Rostova',
+      sharedTie: 'You are both CompE and both joined VIP: Embedded Vision in second year',
       message:
-        'Hi Sarah! I am a 2nd year CompE in RoboJackets. I noticed you took the Autonomous Racing VIP path before landing at NVIDIA—could I ask you 2 questions over a 15-min chat?',
+        'Hi Elena, I am a second-year CompE student at Georgia Tech looking into SWE roles at NVIDIA. I saw you were on the VIP: Embedded Vision team—would you be open to a 15-minute call on how that shaped your preparation?',
       status: 'pending',
       createdAt: '5m ago',
     },
   ]);
 
-  const toggleRole = () => {
-    setCurrentRole((prev) => (prev === 'student' ? 'alum' : 'student'));
-  };
+  const activeStudent =
+    currentStudentId === 1
+      ? SEEDED_ACCOUNTS.student
+      : SEEDED_ACCOUNTS.studentDevon;
 
   const handleSendAsk = (newAsk) => {
     setActiveAsks((prev) => [newAsk, ...prev]);
@@ -42,11 +45,13 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
-      <Header currentRole={currentRole} onToggleRole={toggleRole} />
+      <StatusBar style="light" backgroundColor={THEME.colors.void} />
+      <Header currentRole={currentRole} onSelectRole={setCurrentRole} />
       {currentRole === 'student' ? (
         <StudentHome
-          student={SEEDED_ACCOUNTS.student}
+          student={activeStudent}
+          currentStudentId={currentStudentId}
+          onSwitchStudent={setCurrentStudentId}
           pathData={SEEDED_PATH}
           activeAsks={activeAsks}
           onSendAsk={handleSendAsk}
@@ -65,6 +70,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#003057',
+    backgroundColor: THEME.colors.void,
   },
 });
