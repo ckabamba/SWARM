@@ -13,7 +13,7 @@
     --ash: #8f8798;          /* quiet text on the void */
     --bone: #f4eee6;         /* body text */
     --ember: #ff6a1f;
-    --rose: #c22a6a;
+    --gold: #eaaa00;         /* Georgia Tech Buzz Gold */
     --glow: #ffe9a8;         /* hottest: actions, the lit state */
     --line: rgba(244, 238, 230, 0.16);
     --panel: rgba(9, 6, 15, 0.84);
@@ -39,9 +39,11 @@
   :focus-visible { outline: 1px solid var(--glow); outline-offset: 4px; }
 
   /* ---------- layers ---------- */
-  .field, .swarm, .veil { position: fixed; inset: 0; }
-  .field { opacity: 0.85; transition: opacity 1400ms var(--ease-out); }
-  [data-view='map'] .field { opacity: 0.6; }
+  .field, .swarm, .veil, .hive { position: fixed; inset: 0; }
+  .hive { pointer-events: none; transition: opacity 500ms ease; }
+  [data-view='map'] .hive { opacity: 0; }
+  .field { opacity: 0.72; transition: opacity 1400ms var(--ease-out); }
+  [data-view='map'] .field { opacity: 0.5; }
   [data-view='reply'] .field { opacity: 0.55; }
   [data-accepted='true'] .field { opacity: 1; }
   .swarm { mix-blend-mode: screen; pointer-events: none; }
@@ -102,11 +104,35 @@
   /* ---------- goal view ---------- */
   .goal {
     position: absolute; inset: 0;
-    display: grid; place-content: center;
-    padding: 0 8vw;
     transition: opacity 420ms ease, filter 420ms ease, transform 420ms var(--ease-out);
   }
   [data-view='map'] .goal { opacity: 0; filter: blur(10px); transform: scale(0.985); pointer-events: none; }
+
+  /* The landing is three screens tall. Scrolling it turns the honeycomb. */
+  .landing {
+    position: absolute; inset: 0; overflow-y: auto; scroll-snap-type: y proximity; overscroll-behavior: contain; scrollbar-width: none;
+    mask-image: linear-gradient(to bottom, transparent 40px, #000 150px, #000 calc(100% - 130px), transparent calc(100% - 60px));
+  }
+  .landing::-webkit-scrollbar { display: none; }
+  .beat { position: relative; min-height: 100%; display: grid; align-content: center; justify-items: start; padding: 0 8vw; scroll-snap-align: start; }
+  .beat h1, .beat .say {
+    margin: 0; max-width: 10.5em;
+    font-size: clamp(32px, 4.3vw, 64px); font-weight: 300; font-stretch: 108%;
+    letter-spacing: -0.03em; line-height: 1.08; text-wrap: balance;
+  }
+  /* Words arrive one at a time, out of a blur. After React Bits' BlurText, done in CSS. */
+  .word { display: inline-block; }
+  .beat:not([data-seen]) .word { opacity: 0; }
+  .beat[data-seen] .word { animation: word-in 700ms var(--ease-out) both; animation-delay: calc(var(--i) * 45ms); }
+  @keyframes word-in { from { opacity: 0; filter: blur(10px); transform: translateY(0.25em); } }
+  .beat.right { justify-items: end; }
+  .beat.right .say { text-align: right; }
+  .beat .jump { margin-top: 34px; padding: 4px 0; border: 0; background: none; color: var(--ash); transition: color 160ms ease; }
+  .beat .jump::before { content: '->'; margin-right: 10px; color: var(--ember); }
+  @media (hover: hover) and (pointer: fine) { .beat .jump:hover { color: var(--bone); } }
+  .cue { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); margin: 0; color: var(--ash); transition: opacity 300ms ease; pointer-events: none; }
+  .goal[data-scrolled] .cue { opacity: 0; }
+  .beat.ask { justify-items: center; }
   .goal form { width: min(1040px, 84vw); }
   .goal label { display: block; margin-bottom: 26px; color: var(--ash); font-size: 17px; }
   .goal .row { display: flex; align-items: flex-end; gap: 22px; border-bottom: 1px solid var(--line); padding-bottom: 16px; transition: border-color 200ms ease; }
@@ -141,7 +167,8 @@
   .seeds button::before { content: '->'; margin-right: 10px; color: var(--ember); }
   @media (hover: hover) and (pointer: fine) { .seeds button:hover { color: var(--bone); } }
 
-  .foot { position: absolute; left: 40px; right: 40px; bottom: 30px; display: flex; justify-content: space-between; gap: 24px; pointer-events: none; }
+  .foot { position: absolute; left: 40px; right: 40px; bottom: 30px; margin: 0; display: flex; justify-content: space-between; gap: 24px; pointer-events: none; }
+  .foot a { color: inherit; pointer-events: auto; text-underline-offset: 4px; }
 
   /* ---------- map view ---------- */
   .map { position: absolute; inset: 0; pointer-events: none; }
@@ -150,33 +177,28 @@
     position: absolute; left: 0; top: 0;
     width: var(--d); height: var(--d);
     margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
-    border-radius: 50%;
     background: none; border: 0; padding: 0;
     text-align: left;
     opacity: 0;
     transition: opacity 700ms var(--ease-out);
   }
   [data-view='map'] .node { opacity: 1; transition-delay: var(--at, 0ms); }
-  .node .ring {
-    position: absolute; inset: 0;
-    border-radius: 50%;
-    border: 1px solid rgba(244, 238, 230, 0.55);
-    background: radial-gradient(circle, rgba(6, 4, 11, 0.55) 0%, rgba(6, 4, 11, 0.15) 70%);
-    transition: border-color 400ms ease, transform 200ms var(--ease-out);
-  }
-  .node[data-have='true'] .ring {
-    border-color: var(--glow);
-    background: radial-gradient(circle, #fff7dc 0%, var(--glow) 30%, #ff8a3a 58%, #b3275f 100%);
-  }
-  .node[data-next='true'] .ring { border-color: var(--glow); border-style: dashed; }
-  .node[data-next='true'] .ring::after {
-    content: ''; position: absolute; inset: -1px;
-    border-radius: 50%; border: 1px solid var(--glow);
-    animation: ping 2200ms var(--ease-out) infinite;
-  }
-  @keyframes ping { from { transform: scale(1); opacity: 0.75; } to { transform: scale(2.1); opacity: 0; } }
-  @media (hover: hover) and (pointer: fine) { .node:hover .ring { transform: scale(1.08); } }
-  .node:active .ring { transform: scale(0.96); }
+  /* Each checkpoint is one cell of the honeycomb: same flat-topped shape, sized by its count. */
+  .node .hex { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; transition: transform 200ms var(--ease-out); }
+  .hex path { vector-effect: non-scaling-stroke; }
+  .hex .base { fill: rgba(6, 4, 11, 0.5); }
+  .hex .hot { fill: url(#hot); opacity: 0; transition: opacity 500ms ease; }
+  .hex .edge { fill: none; stroke: rgba(244, 238, 230, 0.55); stroke-width: 1; stroke-linejoin: round; transition: stroke 500ms ease; }
+  .hex .pulse { fill: none; stroke: var(--glow); stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
+  .node[data-have='true'] .hot { opacity: 1; }
+  .node[data-have='true'] .edge { stroke: var(--glow); }
+  .node[data-next='true'] .edge { stroke: var(--glow); stroke-dasharray: 5 4; }
+  .node[data-next='true'] .pulse { animation: ping 2200ms var(--ease-out) infinite; }
+  @keyframes ping { from { transform: scale(1); opacity: 0.75; } to { transform: scale(2); opacity: 0; } }
+  @media (hover: hover) and (pointer: fine) { .node:hover .hex { transform: scale(1.08); } }
+  .node:active .hex { transform: scale(0.96); }
+  .node:focus-visible { outline: 0; }
+  .node:focus-visible .edge { stroke: var(--glow); stroke-width: 2.5; stroke-dasharray: none; }
 
   .node .tag {
     position: absolute;
@@ -187,6 +209,8 @@
   .node[data-side='left'] .tag { left: auto; right: calc(100% + 16px); text-align: right; }
   .node[data-side='below'] .tag { left: 50%; margin-left: -115px; top: calc(100% + 14px); transform: none; text-align: center; }
   .node[data-side='above'] .tag { left: 50%; margin-left: -115px; top: auto; bottom: calc(100% + 14px); transform: none; text-align: center; }
+  .node .state, .node .when { animation: settle 400ms ease both; }
+  @keyframes settle { from { opacity: 0; } }
   .node .name { display: block; font-size: 17px; font-weight: 500; font-stretch: 105%; letter-spacing: -0.005em; line-height: 1.2; }
   .node .count { display: block; margin-top: 5px; color: var(--ash); font-size: 13.5px; }
   .node .count b { color: var(--bone); font-weight: 600; }
@@ -316,6 +340,7 @@
     "react-dom": "https://esm.sh/react-dom@19.1.1",
     "react-dom/client": "https://esm.sh/react-dom@19.1.1/client",
     "three": "https://esm.sh/three@0.170.0",
+    "three/addons/loaders/GLTFLoader.js": "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js?external=three",
     "@react-three/fiber": "https://esm.sh/@react-three/fiber@9.3.0?external=react,react-dom,three",
     "@shadergradient/react": "https://esm.sh/@shadergradient/react@2.4.20?external=react,react-dom,three,@react-three/fiber"
   }
@@ -332,6 +357,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import * as THREE from 'three'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react'
 
 const api = window.WarmPathFake
@@ -342,14 +368,15 @@ const SPOTS = {
   you: { x: 0.085, y: 0.52, side: 'below' },
   5: { x: 0.255, y: 0.25, side: 'above' },
   3: { x: 0.405, y: 0.6, side: 'below' },
-  4: { x: 0.585, y: 0.3, side: 'above' },
-  7: { x: 0.555, y: 0.84, side: 'below' },
+  4: { x: 0.63, y: 0.3, side: 'above' },
+  7: { x: 0.54, y: 0.86, side: 'below' },
   9: { x: 0.745, y: 0.66, side: 'below' },
   goal: { x: 0.895, y: 0.42, side: 'above' },
 }
 const STRANDS = 14      // one per alum who reached the goal
 const SAMPLES = 460     // points along each strand
 const DUST = 300        // every alum in the seed
+const HEX_R = 26        // honeycomb cell radius, centre to corner, in px
 
 function mulberry(seed) {
   return () => {
@@ -371,6 +398,40 @@ function dealStrands(stops) {
   return strands
 }
 
+/*
+ * Honeycomb cell centres, built ring by ring around the origin.
+ * Adapted from prisoner849's lattice: https://jsfiddle.net/prisoner849/jzLdcemb/
+ */
+function hexLattice(rings) {
+  const unit = Math.sqrt(3) * HEX_R
+  const angle = Math.PI / 3
+  const axis = new THREE.Vector3(0, 0, 1)
+  const axisVector = new THREE.Vector3(0, -unit, 0)
+  const sideVector = new THREE.Vector3(0, unit, 0).applyAxisAngle(axis, -angle)
+  const pts = [new THREE.Vector3()]
+  const temp = new THREE.Vector3()
+  for (let seg = 0; seg < 6; seg++) {
+    for (let ax = 1; ax <= rings; ax++) {
+      for (let sd = 0; sd < ax; sd++) {
+        temp.copy(axisVector).multiplyScalar(ax).addScaledVector(sideVector, sd).applyAxisAngle(axis, angle * seg)
+        pts.push(temp.clone())
+      }
+    }
+  }
+  return pts
+}
+
+/* Which cell of that lattice a point falls in. */
+function hexKey(x, y) {
+  const q = ((2 / 3) * x) / HEX_R, r = (-x / 3 + (Math.sqrt(3) / 3) * y) / HEX_R
+  let rq = Math.round(q), rr = Math.round(r)
+  const rs = Math.round(-q - r)
+  const dq = Math.abs(rq - q), dr = Math.abs(rr - r), ds = Math.abs(rs + q + r)
+  if (dq > dr && dq > ds) rq = -rr - rs
+  else if (dr > ds) rr = -rq - rs
+  return rq + ',' + rr
+}
+
 function useViewport() {
   const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight })
   useEffect(() => {
@@ -381,20 +442,23 @@ function useViewport() {
   return size
 }
 
+/* A stop's position, moved onto the centre of the honeycomb cell it lands in. */
 function place(key, { w, h }) {
   const spot = SPOTS[key]
   const top = 100, bottom = 176
-  return { x: spot.x * w, y: top + spot.y * (h - top - bottom), side: spot.side }
+  const x = spot.x * w, y = top + spot.y * (h - top - bottom)
+  const [q, r] = hexKey(x - w / 2, h / 2 - y).split(',').map(Number)
+  return { x: w / 2 + HEX_R * 1.5 * q, y: h / 2 - HEX_R * Math.sqrt(3) * (r + q / 2), side: spot.side }
 }
 
 /* ------------------------------------------------------------------ WebGL */
 
 const HEAT = `
   vec3 heat(float t) {
-    vec3 a = vec3(0.16, 0.07, 0.34);
-    vec3 b = vec3(0.72, 0.13, 0.36);
-    vec3 c = vec3(1.0, 0.42, 0.1);
-    vec3 d = vec3(1.0, 0.92, 0.62);
+    vec3 a = vec3(0.05, 0.15, 0.3);     // cold: navy
+    vec3 b = vec3(0.82, 0.6, 0.12);     // warm: gold
+    vec3 c = vec3(1.0, 0.62, 0.06);     // hot: amber
+    vec3 d = vec3(1.0, 0.93, 0.62);     // hottest
     return t < 0.33 ? mix(a, b, t / 0.33) : t < 0.66 ? mix(b, c, (t - 0.33) / 0.33) : mix(c, d, (t - 0.66) / 0.34);
   }
 `
@@ -430,9 +494,38 @@ function Swarm({ mode, viewport, stops }) {
         pts.push(world({ x: p.x + (rand() - 0.5) * 6, y: p.y + (rand() - 0.5) * spread }))
       })
       pts.push(world({ x: goal.x, y: goal.y + (rand() - 0.5) * 12 }))
-      return new THREE.CatmullRomCurve3(pts, false, 'centripetal').getSpacedPoints(SAMPLES - 1)
+      const route = new THREE.CurvePath()
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1], reach = (b.x - a.x) * 0.5
+        route.add(new THREE.CubicBezierCurve3(a, new THREE.Vector3(a.x + reach, a.y, 0), new THREE.Vector3(b.x - reach, b.y, 0), b))
+      }
+      return route.getSpacedPoints(SAMPLES - 1)
     })
   }, [strands, stops, viewport])
+
+  // The hive: every cell on screen, and for the cells on a route, how many strands cross it.
+  const hexGeo = useMemo(() => {
+    const { w, h } = viewport
+    const rings = Math.ceil(Math.hypot(w, h) / 2 / (HEX_R * 1.5)) + 1
+    const cells = hexLattice(rings).filter((p) => Math.abs(p.x) < w / 2 + HEX_R && Math.abs(p.y) < h / 2 + HEX_R)
+    const index = new Map(cells.map((p, i) => [hexKey(p.x, p.y), i]))
+    const crossing = cells.map(() => new Set())
+    const first = new Float32Array(cells.length).fill(2)
+    const lead = new Float32Array(cells.length)
+    curves.forEach((pts, strand) => pts.forEach((p, k) => {
+      const i = index.get(hexKey(p.x, p.y))
+      if (i === undefined) return
+      crossing[i].add(strand)
+      const u = k / (SAMPLES - 1)
+      if (u < first[i]) { first[i] = u; lead[i] = strand }
+    }))
+    const g = new THREE.BufferGeometry().setFromPoints(cells)
+    g.setAttribute('aHeat', new THREE.BufferAttribute(Float32Array.from(crossing, (set) => Math.sqrt(set.size / STRANDS)), 1))
+    g.setAttribute('aU', new THREE.BufferAttribute(first, 1))
+    g.setAttribute('aStrand', new THREE.BufferAttribute(lead, 1))
+    return g
+  }, [curves, viewport])
+  useEffect(() => () => hexGeo.dispose(), [hexGeo])
 
   const dustGeo = useMemo(() => {
     const g = new THREE.BufferGeometry()
@@ -462,6 +555,39 @@ function Swarm({ mode, viewport, stops }) {
     curves.forEach((pts, i) => pts.forEach((p, k) => pos.setXYZ(i * SAMPLES + k, p.x, p.y, 0)))
     pos.needsUpdate = true
   }, [curves, trailGeo])
+
+  const hexMat = useMemo(() => new THREE.ShaderMaterial({
+    transparent: true, depthTest: false, blending: THREE.AdditiveBlending,
+    uniforms: {
+      uDpr: { value: gl.getPixelRatio() },
+      uProgress: { value: new Array(STRANDS).fill(0) },      // how far each strand has drawn, 0 to 1
+      uPointer: { value: new THREE.Vector2(9999, 9999) },
+      uHalf: { value: new THREE.Vector2(1, 1) },
+    },
+    vertexShader: `
+      attribute float aHeat; attribute float aU; attribute float aStrand;
+      uniform float uDpr; uniform float uProgress[${STRANDS}]; uniform vec2 uPointer; uniform vec2 uHalf;
+      varying float vHeat; varying float vNear; varying float vRim;
+      void main() {
+        vHeat = aHeat * smoothstep(0.0, 0.07, uProgress[int(aStrand)] - aU);
+        vNear = smoothstep(200.0, 0.0, distance(position.xy, uPointer));
+        vRim = smoothstep(0.35, 1.05, length(position.xy / uHalf));
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = ${(HEX_R * 2).toFixed(1)} * uDpr;
+      }`,
+    // Each point sprite is one flat-topped cell: a thin wall, and a fill that takes the route's heat.
+    fragmentShader: `
+      varying float vHeat; varying float vNear; varying float vRim;
+      void main() {
+        vec2 q = abs((gl_PointCoord - 0.5) * 2.0);
+        float d = max(q.y, q.x * 0.866025 + q.y * 0.5) / 0.866025;
+        if (d > 1.0) discard;
+        float wall = smoothstep(0.9, 0.97, d);
+        float fill = 1.0 - smoothstep(0.84, 0.9, d);
+        float a = wall * (0.03 + vRim * 0.055 + vNear * 0.2 + vHeat * 0.42) + fill * (vHeat * 0.17 + vNear * 0.025);
+        gl_FragColor = vec4(vec3(0.92, 0.67, 0.0) * a, 1.0);
+      }`,
+  }), [gl])
 
   const dustMat = useMemo(() => new THREE.ShaderMaterial({
     transparent: true, depthTest: false, blending: THREE.AdditiveBlending,
@@ -528,6 +654,9 @@ function Swarm({ mode, viewport, stops }) {
     const p = pointer.current
     p.sx += (p.x - p.sx) * Math.min(1, dt * 5); p.sy += (p.y - p.sy) * Math.min(1, dt * 5)
     const progress = trailMat.uniforms.uProgress.value
+    hexMat.uniforms.uPointer.value.set(p.sx, p.sy)
+    hexMat.uniforms.uHalf.value.set(w / 2, h / 2)
+    hexMat.uniforms.uProgress.value = progress
     const pos = dustGeo.attributes.position, size = dustGeo.attributes.aSize
     const heatAttr = dustGeo.attributes.aHeat, alpha = dustGeo.attributes.aAlpha
     const ease = Math.min(1, dt * 2.2)
@@ -574,10 +703,78 @@ function Swarm({ mode, viewport, stops }) {
 
   return (
     <>
+      <points geometry={hexGeo} material={hexMat} frustumCulled={false} />
       <points geometry={trailGeo} material={trailMat} frustumCulled={false} />
       <points geometry={dustGeo} material={dustMat} frustumCulled={false} />
     </>
   )
+}
+
+/*
+ * The centrepiece of the landing. Scrolling carries it through three poses, and it
+ * eases after the scroll position, so it keeps a little momentum.
+ * Model: "Honeycomb" by Poly by Google, CC BY 3.0, https://poly.pizza/m/6Mqdrv1n3Oo
+ */
+const POSES = [
+  { x: 0.24, y: -0.01, size: 1.55, tilt: 0.95, turn: -0.55, roll: 0.1, alpha: 1 },     // beside the opening line
+  { x: -0.26, y: 0.0, size: 1.65, tilt: 0.28, turn: 2.2, roll: -0.18, alpha: 1 },      // swung across, seen edge on
+  { x: 0.31, y: 0.22, size: 0.88, tilt: Math.PI / 2, turn: 4.4, roll: 0, alpha: 0.6 }, // face on, clear of the goal field
+]
+
+/* If the model file cannot load (a page opened straight from disk), stand in seven cells from the same lattice. */
+function standInComb() {
+  const comb = new THREE.Group()
+  const cell = new THREE.CylinderGeometry(0.98, 0.98, 1, 6, 1, true)
+  const wax = new THREE.MeshStandardMaterial({ color: '#d9a52c', roughness: 0.85, side: THREE.DoubleSide })
+  hexLattice(1).forEach((p, i) => {
+    const mesh = new THREE.Mesh(cell, wax)
+    mesh.position.set(p.x / HEX_R, 0, p.y / HEX_R)
+    mesh.rotation.y = Math.PI / 6
+    mesh.scale.y = 0.55 + (i % 3) * 0.12
+    comb.add(mesh)
+  })
+  comb.scale.setScalar(0.38)
+  return comb
+}
+
+function Hive({ scroll }) {
+  const { viewport, gl } = useThree()
+  const group = useRef()
+  const [comb, setComb] = useState(null)
+  const live = useRef({ p: 0, px: 0, py: 0, mx: 0, my: 0 })
+
+  useEffect(() => {
+    let mounted = true
+    new GLTFLoader().load('models/honeycomb.glb',
+      (gltf) => {
+        gltf.scene.position.set(0.05, 0.11, 0.07)
+        gltf.scene.traverse((o) => { if (o.isMesh) { o.material.color.set('#ffcf85'); o.material.roughness = 0.6; o.material.metalness = 0.2 } })
+        if (mounted) setComb(gltf.scene)
+      },
+      undefined,
+      () => { if (mounted) setComb(standInComb()) })
+    const move = (e) => { live.current.mx = e.clientX / window.innerWidth - 0.5; live.current.my = e.clientY / window.innerHeight - 0.5 }
+    window.addEventListener('pointermove', move)
+    return () => { mounted = false; window.removeEventListener('pointermove', move) }
+  }, [])
+
+  useFrame(({ clock }, dt) => {
+    const s = live.current, g = group.current
+    const follow = REDUCED ? 1 : 1 - Math.exp(-dt * 5)
+    s.p += (scroll.current - s.p) * follow
+    s.px += (s.mx - s.px) * follow; s.py += (s.my - s.py) * follow
+    const leg = Math.min(POSES.length - 2, Math.floor(s.p * (POSES.length - 1)))
+    const k = Math.min(1, Math.max(0, s.p * (POSES.length - 1) - leg)), f = k * k * (3 - 2 * k)
+    const a = POSES[leg], b = POSES[leg + 1]
+    const mix = (key) => a[key] + (b[key] - a[key]) * f
+    const idle = REDUCED ? 0 : clock.elapsedTime * 0.12
+    g.position.set(mix('x') * viewport.width, mix('y') * viewport.height, 0)
+    g.scale.setScalar(mix('size'))
+    g.rotation.set(mix('tilt') + s.py * 0.25, mix('turn') + idle, mix('roll') + s.px * 0.2)
+    gl.domElement.style.opacity = mix('alpha')
+  })
+
+  return <group ref={group}>{comb && <primitive object={comb} />}</group>
 }
 
 function Backdrop() {
@@ -586,9 +783,9 @@ function Backdrop() {
       <ShaderGradientCanvas style={{ position: 'absolute', inset: 0 }} pixelDensity={1} fov={45}>
         <ShaderGradient
           type="waterPlane" animate={REDUCED ? 'off' : 'on'} uSpeed={0.12} uStrength={2.6} uDensity={1.1} uFrequency={5.5}
-          color1="#ff9a3c" color2="#c4266f" color3="#241063"
+          color1="#ff8a2a" color2="#ee9b00" color3="#050c1c"
           cDistance={4.4} cPolarAngle={74} cAzimuthAngle={200} positionY={0.6}
-          lightType="3d" brightness={0.8} reflection={0.05} grain="on" enableTransition={false}
+          lightType="3d" brightness={0.72} reflection={0.05} grain="on" enableTransition={false}
         />
       </ShaderGradientCanvas>
     </div>
@@ -596,6 +793,35 @@ function Backdrop() {
 }
 
 /* ------------------------------------------------------------------ DOM */
+
+/* Flat-topped hexagon with eased corners, in a 100-unit box. Matches the lattice's orientation. */
+const HEX_PATH = (() => {
+  const c = 50, R = 49, ease = 0.17
+  const v = Array.from({ length: 6 }, (_, i) => [c + R * Math.cos((i * Math.PI) / 3), c + R * Math.sin((i * Math.PI) / 3)])
+  const toward = (p, o) => `${(p[0] + (o[0] - p[0]) * ease).toFixed(2)} ${(p[1] + (o[1] - p[1]) * ease).toFixed(2)}`
+  return v.map((p, i) => `${i ? 'L' : 'M'}${toward(p, v[(i + 5) % 6])}Q${p[0].toFixed(2)} ${p[1].toFixed(2)} ${toward(p, v[(i + 1) % 6])}`).join('') + 'Z'
+})()
+
+function Hex() {
+  return (
+    <svg className="hex" viewBox="0 0 100 100" aria-hidden="true">
+      <path className="pulse" d={HEX_PATH} />
+      <path className="base" d={HEX_PATH} />
+      <path className="hot" d={HEX_PATH} />
+      <path className="edge" d={HEX_PATH} />
+    </svg>
+  )
+}
+
+function Words({ as: Tag, className, children }) {
+  return (
+    <Tag className={className} aria-label={children}>
+      {children.split(' ').map((word, i) => (
+        <React.Fragment key={i}><span className="word" aria-hidden="true" style={{ '--i': i }}>{word}</span>{' '}</React.Fragment>
+      ))}
+    </Tag>
+  )
+}
 
 function Arrow() {
   return (
@@ -620,7 +846,7 @@ function StudentSwitch({ students, value, onChange }) {
 }
 
 function Node({ at, delay, stop, onOpen }) {
-  const d = 26 + stop.achievers * 4
+  const d = 30 + stop.achievers * 4
   const day = stop.event && api.eventDay(stop.event.starts_at)
   return (
     <button
@@ -628,7 +854,7 @@ function Node({ at, delay, stop, onOpen }) {
       style={{ transform: `translate(${at.x}px, ${at.y}px)`, '--d': `${d}px`, '--at': `${delay}ms` }}
       onClick={onOpen}
     >
-      <span className="ring" />
+      <Hex />
       <span className="tag">
         <span className="name">{stop.name}</span>
         <span className="count"><b>{stop.achievers} of 14</b> did this · {api.TYPE_LABEL[stop.type]}</span>
@@ -721,6 +947,21 @@ function Experience() {
   }, [])
 
   const submit = (e) => { e.preventDefault(); setView('map') }
+  const landing = useRef(null), goalInput = useRef(null), scroll = useRef(0)
+  const onScroll = () => {
+    const el = landing.current
+    scroll.current = el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight)
+    el.parentElement.toggleAttribute('data-scrolled', el.scrollTop > 24)
+    if (scroll.current > 0.95 && document.activeElement !== goalInput.current) goalInput.current.focus({ preventScroll: true })
+  }
+  useEffect(() => {
+    const seen = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => { if (entry.isIntersecting) entry.target.dataset.seen = 'true' })
+    }, { root: landing.current, threshold: 0.55 })
+    landing.current.querySelectorAll('.beat').forEach((beat) => seen.observe(beat))
+    return () => seen.disconnect()
+  }, [])
+  const toGoal = () => landing.current.scrollTo({ top: landing.current.scrollHeight, behavior: REDUCED ? 'auto' : 'smooth' })
   const you = place('you', viewport), goal = place('goal', viewport)
   const arrive = (x) => (REDUCED ? 0 : Math.round(1100 + x * 2300))
 
@@ -728,6 +969,22 @@ function Experience() {
     <>
       <Backdrop />
       <div className="veil" />
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+        <defs>
+          <radialGradient id="hot">
+            <stop offset="0" stopColor="#fff7dc" /><stop offset="0.3" stopColor="#ffe9a8" />
+            <stop offset="0.66" stopColor="#eaaa00" /><stop offset="1" stopColor="#8f5c00" />
+          </radialGradient>
+        </defs>
+      </svg>
+      <div className="hive" aria-hidden="true">
+        <Canvas dpr={[1, 2]} frameloop={view === 'goal' ? 'always' : 'never'} gl={{ alpha: true, antialias: true }} camera={{ fov: 35, position: [0, 0, 10] }}>
+          <hemisphereLight args={['#ffe2a0', '#160a02', 0.75]} />
+          <directionalLight position={[-3, 4, 6]} intensity={2.6} color="#fff3d6" />
+          <pointLight position={[3, -2.5, 2.5]} intensity={45} color="#ff6a1f" />
+          <Hive scroll={scroll} />
+        </Canvas>
+      </div>
       <div className="swarm" aria-hidden="true">
         <Canvas orthographic dpr={[1, 2]} gl={{ alpha: false, antialias: false }} camera={{ position: [0, 0, 10], near: 0.1, far: 100 }}>
           <color attach="background" args={['#000000']} />
@@ -742,27 +999,39 @@ function Experience() {
         </header>
 
         <section className="goal" aria-hidden={view !== 'goal'} inert={view !== 'goal'}>
-          <form onSubmit={submit}>
-            <label htmlFor="goal">Where do you want to end up?</label>
-            <div className="row">
-              <input id="goal" autoFocus autoComplete="off" spellCheck="false" value={goalText} onChange={(e) => setGoalText(e.target.value)} placeholder={api.SEEDED_GOALS[0]} />
-              <button className="go" aria-label="Trace the path"><Arrow /></button>
+          <div className="landing" ref={landing} onScroll={onScroll}>
+            <div className="beat">
+              <Words as="h1">Every year, Tech students land the internship you want.</Words>
+              <button className="jump cap" onClick={toGoal}>Set your goal</button>
             </div>
-            <ul className="seeds cap">
-              {api.SEEDED_GOALS.slice(1).map((g) => (
-                <li key={g}><button type="button" onClick={() => setGoalText(g)}>{g}</button></li>
-              ))}
-            </ul>
-          </form>
+            <div className="beat right">
+              <Words as="p" className="say">They joined certain teams and took certain classes. Then they graduated and took that knowledge with them.</Words>
+            </div>
+            <div className="beat ask">
+              <form onSubmit={submit}>
+                <label htmlFor="goal">WarmPath puts their paths on one map. Where do you want to end up?</label>
+                <div className="row">
+                  <input id="goal" ref={goalInput} autoComplete="off" spellCheck="false" value={goalText} onChange={(e) => setGoalText(e.target.value)} placeholder={api.SEEDED_GOALS[0]} />
+                  <button className="go" aria-label="Trace the path"><Arrow /></button>
+                </div>
+                <ul className="seeds cap">
+                  {api.SEEDED_GOALS.slice(1).map((g) => (
+                    <li key={g}><button type="button" onClick={() => setGoalText(g)}>{g}</button></li>
+                  ))}
+                </ul>
+              </form>
+            </div>
+          </div>
+          <p className="cue cap">Scroll</p>
           <p className="foot cap quiet">
             <span>Each point is one of {api.ALUMNI_TOTAL} alumni</span>
-            <span>Seeded demo data</span>
+            <span>Seeded demo data · Honeycomb model by <a href="https://poly.pizza/m/6Mqdrv1n3Oo" target="_blank" rel="noreferrer">Poly by Google</a>, CC BY 3.0</span>
           </p>
         </section>
 
         <section className="map" aria-hidden={view !== 'map'} inert={view !== 'map'}>
-          <button className="node end" data-have="true" data-side={you.side} style={{ transform: `translate(${you.x}px, ${you.y}px)`, '--d': '30px', '--at': '500ms' }} onClick={() => setStudentId(students.find((s) => s.id !== studentId).id)}>
-            <span className="ring" />
+          <button className="node end" data-have="true" data-side={you.side} style={{ transform: `translate(${you.x}px, ${you.y}px)`, '--d': '36px', '--at': '500ms' }} onClick={() => setStudentId(students.find((s) => s.id !== studentId).id)}>
+            <Hex />
             <span className="tag">
               <span className="name">You</span>
               <span className="count">{path.student.major}, {api.ordinal(path.student.school_year)} year</span>
@@ -771,8 +1040,8 @@ function Experience() {
           {path.stops.map((stop) => (
             <Node key={stop.activity_id} stop={stop} at={place(stop.activity_id, viewport)} delay={arrive(SPOTS[stop.activity_id].x)} onOpen={() => setPanel(stop.activity_id)} />
           ))}
-          <button className="node end" data-side={goal.side} style={{ transform: `translate(${goal.x}px, ${goal.y}px)`, '--d': '92px', '--at': `${arrive(SPOTS.goal.x)}ms` }} onClick={() => setPanel('goal')}>
-            <span className="ring" />
+          <button className="node end" data-side={goal.side} style={{ transform: `translate(${goal.x}px, ${goal.y}px)`, '--d': '100px', '--at': `${arrive(SPOTS.goal.x)}ms` }} onClick={() => setPanel('goal')}>
+            <Hex />
             <span className="tag">
               <span className="name">{path.goal.label}</span>
               <span className="count"><b>{path.goal.achievers} alumni</b> got here</span>
