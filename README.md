@@ -80,11 +80,11 @@ The resource-model decisions in #14 remain dependencies for affected schema, fix
 
 ## Team
 
-Five roles cover the expanded service. Christofort Kabamba owns role 2 and Shehryar Sardar owns role 4; owners for roles 1, 3, and 5 remain TBA.
+Five roles cover the expanded service. Ezekiel Currie owns role 1, Christofort Kabamba owns role 2, and Shehryar Sardar owns role 4; owners for roles 3 and 5 remain TBA.
 
 | # | Role | Responsibility | Done when | Owner |
 | --- | --- | --- | --- | --- |
-| 1 | Data, discovery engine, and event sources | Shared schema and migrations, development fixtures, path statistics and people ranking, resource/event ingestion and matching, normalized campus locations and alumni cities | The backend can query consistent records, ranked paths/people, and locations; imported events retain their sources | TBA |
+| 1 | Data, discovery engine, and event sources | Shared schema and migrations, development fixtures, path statistics and people ranking, resource/event ingestion and matching, normalized campus locations and alumni cities | The backend can query consistent records, ranked paths/people, and locations; imported events retain their sources | Ezekiel Currie |
 | 2 | Backend and LLM | Shared API contracts, account/access logic, persistence, resource search orchestration, LLM and speech integration, fallbacks, and deployment | All experiences use a deployed API; posts and asks persist; discovery supports the agreed text/voice behavior and failure cases | Christofort Kabamba |
 | 3 | Paths, resource discovery, and alumni connections | Path graph, resource search/results, text/voice controls, people panel, shared ties, and Ask/reply flow on web and mobile | Users discover a resource or path, inspect an alum, and send/accept an ask across devices using accessible desktop and mobile interfaces | TBA |
 | 4 | Community, profiles, and shared app design | Post composer/feed, club/event highlights and posting forms, account/profile screens, shared navigation and components, visual design, and mobile app integration | Users create posts and browse highlights; profiles and navigation work across all experiences; the shared shell supports the chosen mobile delivery approach | Shehryar Sardar |
