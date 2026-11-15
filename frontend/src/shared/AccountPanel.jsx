@@ -62,6 +62,9 @@ function SignIn() {
 function Resume({ onImported }) {
   const [draft, setDraft] = useState(null)        // the backend's draft: { id, candidates, warnings }
   const [picked, setPicked] = useState(new Set())
+  const [resources, setResources] = useState([])
+  useEffect(() => { let active=true; api.request('/profile-options').then(r=>{if(active)setResources(r.resources || [])}).catch(()=>{}); return ()=>{active=false} },[])
+  const editCourse = (id, key, value) => setDraft(d => ({...d,candidates:d.candidates.map(c => c.id === id ? {...c,value:{...c.value,[key]:value}} : c)}))
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState(null)    // { text, error }
   const run = async (work) => {
@@ -86,7 +89,7 @@ function Resume({ onImported }) {
     const skipped = await importResume(draft.id, selections)
     const added = selections.length - skipped
     setDraft(null)
-    setMessage({ text: `Added ${added} of ${selections.length}${skipped ? `; ${skipped} already on your profile` : ''}. New entries start private. Open My history to confirm timing and sharing.` })
+    setMessage({ text: `Added ${added} of ${selections.length}${skipped ? `; ${skipped} already saved` : ''}. Courses are saved to My Courses. New entries start private; review My history to confirm timing and sharing.` })
     onImported()
   })
   const discard = () => run(async () => { await api.discardResume(draft.id); setDraft(null) })
@@ -96,7 +99,7 @@ function Resume({ onImported }) {
       <h3 className="cap">Resume, optional</h3>
       {!draft ? (
         <>
-          <p className="form-hint">Upload a PDF or DOCX and choose what to add to your profile. The file itself is not kept.</p>
+          <p className="form-hint">Upload a PDF or DOCX and choose what to save. Courses go to My Courses; other entries go to your profile. The file itself is not kept.</p>
           <label className="pill file-pill" data-busy={busy}>
             {busy ? 'Reading the file' : 'Choose a file'}
             <input type="file" accept=".pdf,.docx" onChange={upload} disabled={busy} />
@@ -107,6 +110,8 @@ function Resume({ onImported }) {
           <p className="form-hint">
             {draft.candidates.length ? 'Nothing is added until you tick it. Check each one against your resume.' : 'Nothing could be read from this file. Try another, or fill in the profile by hand.'}
           </p>
+          {draft.candidates.some(c => c.section === 'courses') && <><p className="form-hint">Review course codes and titles. Confirm optional catalog links; missing terms and institutions stay unknown.</p><button type="button" className="pill" disabled={busy} onClick={() => setPicked(new Set([...picked,...draft.candidates.filter(c=>c.section==='courses').map(c=>c.id)]))}>Select all courses</button></>}
+          {draft.warnings?.map(w => <p className="form-hint" key={w}>{w}</p>)}
           <ul className="suggestions">
             {draft.candidates.map((candidate) => (
               <li key={candidate.id}>
@@ -118,15 +123,22 @@ function Resume({ onImported }) {
                     <span className="evidence">{candidate.evidence}</span>
                   </span>
                 </label>
+                {candidate.section === 'courses' && <fieldset className="form" disabled={busy}>
+                  <legend className="cap">Review course</legend>
+                  {[['code','Course code'],['title','Course title'],['institution','Institution'],['term','Term']].map(([key,label]) => <label key={key}><span>{label}</span><input className="input" maxLength={key==='code'?30:key==='term'?50:200} value={candidate.value[key] || ''} onChange={e=>editCourse(candidate.id,key,e.target.value)}/></label>)}
+                  <label><span>Course status</span><select aria-label="Course status" className="input" value={candidate.value.status || 'unspecified'} onChange={e=>editCourse(candidate.id,'status',e.target.value)}>{['unspecified','planned','in_progress','taken','completed'].map(v=><option value={v} key={v}>{v.replace('_',' ')}</option>)}</select></label>
+                  <label><span>Course resource (optional; confirm the match)</span><select aria-label="Course resource (optional; confirm the match)" className="input" value={candidate.value.resource_id || ''} onChange={e=>editCourse(candidate.id,'resource_id',e.target.value ? Number(e.target.value) : null)}><option value="">No linked resource</option>{resources.filter(r=>r.kind==='Course').map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label>
+                </fieldset>}
               </li>
             ))}
           </ul>
           <div className="acts">
             <button type="button" className="pill" onClick={discard} disabled={busy}>Discard</button>
-            <button type="button" className="pill hot" onClick={add} disabled={busy || !picked.size}>Add {picked.size ? `${picked.size} ` : ''}to profile</button>
+            <button type="button" className="pill hot" onClick={add} disabled={busy || !picked.size}>Add {picked.size ? `${picked.size} ` : ''}selected entries</button>
           </div>
         </>
       )}
+      {message && !message.error && <a className="pill" href="#/courses" onClick={closeAccount}>Open My Courses</a>}
       {message && <p className={message.error ? 'form-error' : 'form-hint'} role={message.error ? 'alert' : 'status'}>{message.text}</p>}
     </section>
   )

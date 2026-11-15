@@ -76,3 +76,12 @@ Salted scrypt protects passwords (N=131072, r=8, p=1). Random session tokens are
 Synthetic profiles/documents remain in `warmpath_test`; the browser test cleans up its account. Browser checks require Edge and internet for existing CDN dependencies. Tests cover isolation, session revocation, visibility, conflicts, reviewed import, duplicate preservation, partial dates, parser errors, expiry/deletion and UI persistence. Screenshots stay in ignored `.local/`. Test server: 8001; normal server: 8000.
 
 No AWS spend is needed. OCR, LLM processing and production file storage were not provisioned. Continue using the $100-total budget policy before cloud work.
+
+
+## Resume course extraction improvements
+
+Course review recognizes mixed coded/uncoded lists, code/title pairs, titles before parenthesized codes, DOCX `code | title` table rows, shared-subject lists such as `CS 2200/3210`, and headings such as Selected Courses or Academic Coursework. Explicit term headings retain separate course attempts; repeated mentions of the same code/term are deduplicated. Skills sections and GPA metadata are not course suggestions. Codes outside an explicit course section remain conservative, code-only suggestions.
+
+Both clients offer **Select all courses** as an explicit review action. The React account drawer now lets users edit course codes, titles, institution, term and status and confirm an optional catalog resource link before importing. Selected courses save to **My Courses**, using its independent revision, and remain private and unconfirmed. No institution, attendance, completion, chronology or catalog match is inferred merely from a course mention. Users still review history before it contributes to paths. Existing edits are preserved on re-import; ambiguous duplicates still require correction through the existing workflow.
+
+Verification uses synthetic pasted text and DOCX course lists, existing PDF extraction coverage, and `python -m backend.tests.check_resume_courses` against the isolated test API after an API-mode frontend build. No real user resume was supplied for this change; scanned PDFs and unusual layouts may still require manual entry.
