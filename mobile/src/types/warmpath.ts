@@ -32,6 +32,13 @@ export interface Student {
   school: string;
 }
 
+export interface ProfileInfo {
+  name: string;
+  headline: string;
+  location: string;
+  about: string;
+}
+
 export interface Alum {
   id: number;
   name: string;
@@ -39,6 +46,8 @@ export interface Alum {
   major: string;
   grad_year: number;
   city?: string;
+  headline?: string;
+  about?: string;
   shared_tie: string;
   score: number;
   draft: string;
@@ -54,7 +63,16 @@ export interface Ask {
   goal_id: number;
   shared_tie: string;
   message: string;
+  messages?: AskMessage[];
   status: 'sent' | 'accepted' | 'ignored' | 'completed';
+  created_at: string;
+}
+
+export interface AskMessage {
+  id: number;
+  sender: 'student' | 'alum';
+  sender_name: string;
+  text: string;
   created_at: string;
 }
 

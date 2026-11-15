@@ -9,6 +9,7 @@ export type TabId = 'home' | 'map' | 'buzz' | 'feed';
 interface BottomTabBarProps {
   currentTab: TabId;
   onSelectTab: (tab: TabId) => void;
+  showMap?: boolean;
 }
 
 interface TabConfig {
@@ -45,15 +46,21 @@ const TABS: TabConfig[] = [
   },
 ];
 
-export default function BottomTabBar({ currentTab, onSelectTab }: BottomTabBarProps) {
+export default function BottomTabBar({
+  currentTab,
+  onSelectTab,
+  showMap = true,
+}: BottomTabBarProps) {
   const handlePress = (tab: TabId) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onSelectTab(tab);
   };
 
+  const visibleTabs = showMap ? TABS : TABS.filter((tab) => tab.id !== 'map');
+
   return (
     <View style={styles.container}>
-      {TABS.map((tab) => {
+      {visibleTabs.map((tab) => {
         const isActive = currentTab === tab.id;
 
         return (

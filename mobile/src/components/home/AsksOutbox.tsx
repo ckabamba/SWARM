@@ -57,7 +57,7 @@ export default function AsksOutbox({ asks, onOpenReplyDemo }: AsksOutboxProps) {
               {/* Test link hint */}
               <View style={styles.testLinkRow}>
                 <Text style={styles.testLinkText}>
-                  {isAccepted ? 'Tap to view confirmation →' : 'Tap to simulate Alum Reply →'}
+                  {isAccepted ? 'Tap to open conversation →' : 'Tap to open conversation →'}
                 </Text>
               </View>
             </TouchableOpacity>

@@ -128,8 +128,20 @@ const INITIAL_POSTS: FeedPost[] = [
 const FILTER_TABS = ['All', 'Alumni', 'Students', 'Clubs'] as const;
 type FilterTab = (typeof FILTER_TABS)[number];
 
-export default function FeedScreen() {
-  const { student } = useWarmPathStore();
+interface FeedScreenProps {
+  isAlumDemo?: boolean;
+}
+
+export default function FeedScreen({ isAlumDemo = false }: FeedScreenProps) {
+  const { student, alumni } = useWarmPathStore();
+  const demoAlum = alumni[0];
+  const author = isAlumDemo ? demoAlum.name : student.name;
+  const authorInitials = isAlumDemo
+    ? demoAlum.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase()
+    : student.initials;
+  const authorRole = isAlumDemo
+    ? `${demoAlum.major} '${String(demoAlum.grad_year).slice(-2)} · ${demoAlum.headline || 'Software Engineer · NVIDIA'}`
+    : `${student.major} · ${student.yearLabel}`;
   const [posts, setPosts] = useState<FeedPost[]>(INITIAL_POSTS);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('All');
   const [expandedCommentsPostId, setExpandedCommentsPostId] = useState<number | null>(null);
@@ -174,8 +186,8 @@ export default function FeedScreen() {
 
     const newComment: Comment = {
       id: Date.now(),
-      author: student.name,
-      role: `${student.major} · ${student.yearLabel}`,
+      author,
+      role: authorRole,
       text: commentInputText.trim(),
       time: 'Just now',
     };
@@ -200,15 +212,16 @@ export default function FeedScreen() {
 
     const createdPost: FeedPost = {
       id: Date.now(),
-      authorType: 'student',
-      authorName: student.name,
-      authorRole: `${student.major} · ${student.yearLabel}`,
-      authorInitials: student.initials,
+      authorType: isAlumDemo ? 'alumni' : 'student',
+      authorName: author,
+      authorRole,
+      authorInitials,
       content: newPostContent.trim(),
       time: 'Just now',
       likes: 0,
       isLiked: false,
       comments: [],
+      ...(isAlumDemo && { alumId: 87 }),
     };
 
     setPosts([createdPost, ...posts]);
@@ -241,7 +254,7 @@ export default function FeedScreen() {
           activeOpacity={0.8}
         >
           <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarText}>{student.initials}</Text>
+            <Text style={styles.avatarText}>{authorInitials}</Text>
           </View>
           <Text style={styles.composerPlaceholder}>
             Share an update, milestone, or ask your network...
@@ -430,12 +443,12 @@ export default function FeedScreen() {
 
             <View style={styles.modalAuthorRow}>
               <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarText}>{student.initials}</Text>
+                <Text style={styles.avatarText}>{authorInitials}</Text>
               </View>
               <View>
-                <Text style={styles.modalAuthorName}>{student.name}</Text>
+                <Text style={styles.modalAuthorName}>{author}</Text>
                 <Text style={styles.modalAuthorSub}>
-                  {student.major} · {student.yearLabel}
+                  {authorRole}
                 </Text>
               </View>
             </View>

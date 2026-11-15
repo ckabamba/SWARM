@@ -6,20 +6,20 @@ import ThermalShell from './src/components/shell/ThermalShell';
 import BottomTabBar from './src/components/shell/BottomTabBar';
 import type { TabId } from './src/components/shell/BottomTabBar';
 import HomeScreen from './src/screens/HomeScreen';
+import AlumniProfileScreen from './src/screens/AlumniProfileScreen';
 import MapScreen from './src/screens/MapScreen';
 import BuzzScreen from './src/screens/BuzzScreen';
 import FeedScreen from './src/screens/FeedScreen';
-import ReplyScreenModal from './src/components/modals/ReplyScreenModal';
 import { useWarmPathStore } from './src/store/warmPathStore';
 import { THEME } from './src/theme/tokens';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<TabId>('home');
+  const [isAlumDemo, setIsAlumDemo] = useState(false);
   const [mapFocusId, setMapFocusId] = useState<number | null>(null);
   const [panX, setPanX] = useState(0);
-  const [replyModalVisible, setReplyModalVisible] = useState(false);
 
-  const { preferences, asks, acceptAsk } = useWarmPathStore();
+  const { preferences } = useWarmPathStore();
 
   const handleOpenMap = (focusActivityId?: number) => {
     if (focusActivityId !== undefined) {
@@ -28,13 +28,17 @@ export default function App() {
     setCurrentTab('map');
   };
 
+  const handleToggleDemo = () => {
+    setIsAlumDemo((current) => !current);
+    setMapFocusId(null);
+    setCurrentTab('home');
+  };
+
   const handleSelectTab = (tab: TabId) => {
+    if (isAlumDemo && tab === 'map') return;
     if (tab === 'home') setMapFocusId(null);
     setCurrentTab(tab);
   };
-
-  // Pick the most recent pending ask for the reply demo, or the latest ask
-  const replyAsk = asks.find((a) => a.status === 'sent') || asks[0] || null;
 
   const renderScreen = () => {
     switch (currentTab) {
@@ -48,10 +52,14 @@ export default function App() {
       case 'buzz':
         return <BuzzScreen />;
       case 'feed':
-        return <FeedScreen />;
+        return <FeedScreen isAlumDemo={isAlumDemo} />;
       case 'home':
       default:
-        return <HomeScreen onOpenMap={handleOpenMap} />;
+        return isAlumDemo ? (
+          <AlumniProfileScreen />
+        ) : (
+          <HomeScreen onOpenMap={handleOpenMap} />
+        );
     }
   };
 
@@ -64,22 +72,18 @@ export default function App() {
           setMapFocusId(null);
           setCurrentTab('home');
         }}
-        onOpenAlumDemo={() => setReplyModalVisible(true)}
+        isAlumDemo={isAlumDemo}
+        onToggleDemo={handleToggleDemo}
         panX={currentTab === 'map' ? panX : 0}
         lowBatteryMode={preferences.lowBatteryMode}
       >
         <View style={styles.screenWrapper}>{renderScreen()}</View>
       </ThermalShell>
 
-      {/* Persistent Bottom Tab Bar with @expo/vector-icons */}
-      <BottomTabBar currentTab={currentTab} onSelectTab={handleSelectTab} />
-
-      {/* Alum Reply Demo Modal */}
-      <ReplyScreenModal
-        visible={replyModalVisible}
-        ask={replyAsk}
-        onAccept={acceptAsk}
-        onClose={() => setReplyModalVisible(false)}
+      <BottomTabBar
+        currentTab={currentTab}
+        onSelectTab={handleSelectTab}
+        showMap={!isAlumDemo}
       />
     </GestureHandlerRootView>
   );
