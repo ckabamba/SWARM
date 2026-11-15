@@ -104,6 +104,8 @@ In the existing path-feature draft, a goal is one target Activity row, so `goal_
 
 The current Ask flow creates and accepts requests. The listed ignored/completed states do not yet have specified transitions.
 
+Of these, `person`, `activity`, and `person_activity` exist as migrations under `backend/engine/`. They differ from the draft above in three ways: `person.city_id` references a normalized `alumni_city` row instead of holding free text; `activity` and `person` carry an `is_fixture` flag for generated demo rows; and `person_activity` holds one row per person and activity, where `school_year` is the year the person first did it. Event and Ask are not migrated yet.
+
 ### Proposed shared data additions
 
 | Area | Data to define with the data owner |
@@ -118,7 +120,7 @@ The current Ask flow creates and accepts requests. The listed ignored/completed 
 
 These are requirements to design, not finalized table definitions or migrations. Map coordinates represent campus places or cities, not live alumni positions. Decide how profile visibility affects both city counts and people lists.
 
-Resolve existing contract gaps before backend integration: `school_year` appears in student responses but is absent from Person; prototypes add `stops[].typical_year` for layout; Ask responses below contain placeholders. Do not silently adopt those extra fields or infer missing schemas.
+Two earlier contract gaps are settled in the path engine. A student's `school_year` is not stored: it is derived from `grad_year`, assuming a four-year degree and an academic year that starts in August. `stops[].typical_year` is now returned, as described under the path contract below. One gap remains: Ask responses below contain placeholders. Do not silently adopt extra fields or infer missing schemas.
 
 ## Scoring
 
@@ -135,6 +137,13 @@ For example, 40% of goal achievers versus 10% of all alumni gives a lift of 4. A
 The original proposed defaults keep activities with a lift of 1.5 or more and at least 3 achievers, and show the top 5 by lift. Tune both numbers on the seed data. A stop is `have` when the student already has that activity, and `next` is the highest-lift stop the student does not have. Label stops with counts ("9 of 14 did this"), never with causal wording.
 
 **People.** The existing path proposal uses a weighted sum: shared activities weigh most, then same major, then year. Return the strongest shared tie as a sentence, for the people panel and the drafted message.
+
+**As implemented** in `backend/engine/paths.py`:
+
+- An activity counts as done "before the target" when its `school_year` is lower than the year the same alum reached the goal. Activities from the same year as the goal are left out, because the data cannot say which came first.
+- Only alumni with `profile_visible` set are counted or listed. Hidden profiles do not contribute to `achievers`, to lift, or to people lists.
+- The people score is `0.6 × shared activities (capped at 3, divided by 3) + 0.25 if same major + 0.15 × graduation-year closeness`, where closeness falls from 1 to 0 across 10 years. These weights are starting values to tune.
+- The shared tie sentence is built only from rows in the database. It is `null` when the student and alum share no activity and no major.
 
 ## API contract
 
@@ -189,6 +198,7 @@ Historical draft, retained for the other path prototypes and future alumni work.
       "lift": 4.1,
       "have": false,
       "next": true,
+      "typical_year": 2,
       "event": {
         "id": 40,
         "title": "Info session",
@@ -198,11 +208,21 @@ Historical draft, retained for the other path prototypes and future alumni work.
       }
     }
   ],
-  "events": []
+  "events": [],
+  "reason": null,
+  "fixture_evidence": false
 }
 ```
 
 `stops` is sorted by lift. A stop's `event` is its next event, or `null`. The top-level `events` array holds the same event objects plus `activity_id`, for the "This week on your path" strip, sorted by date.
+
+Three fields were added with the path engine:
+
+- `stops[].typical_year` is the median `school_year` in which achievers did that activity. The path map uses it to place stops left to right.
+- `reason` is `null` when there are stops. When `stops` is empty it is `"not_enough_achievers"` (fewer than 3 visible alumni reached the goal) or `"no_stop_meets_threshold"`. Thin data is a normal response, not an error.
+- `fixture_evidence` is `true` when generated demo alumni are part of the counts. Clients must label such results as demo data.
+
+The engine in `backend/engine/paths.py` produces this shape from a goal Activity id and a student id. It returns `event: null` and `events: []` until events are matched to activities ([#12](https://github.com/ckabamba/SWARM/issues/12)), and it does not parse free-text goals. Serving it over HTTP is role 2's work in [#8](https://github.com/ckabamba/SWARM/issues/8); the local `POST /path` above still returns resource matches only.
 
 `GET /people?goal_id=12&student_id=1&activity_id=3` returns the following. Leave out `activity_id` to get the alumni behind the goal itself.
 
@@ -219,6 +239,8 @@ Historical draft, retained for the other path prototypes and future alumni work.
   }
 ]
 ```
+
+The engine supplies every field above except `draft`, which the API layer adds. `shared_tie` may be `null`.
 
 `POST /asks` with `{ "student_id": 1, "alum_id": 87, "goal_id": 12, "message": "..." }` returns `{ "id": 5, "status": "sent", "reply_url": "/reply/5" }`.
 
