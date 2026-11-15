@@ -59,4 +59,11 @@ Event embeddings now use revision `0011`, after `0010_asks`. A database that app
 
 After backing up that local database, verify the old state: `event_embedding` exists, `activity_contribution` and `ask` do not, and `activity.canonical_key` and `person_activity.history_managed` are absent. For that exact state, use Alembic on one transaction/connection to stamp `0008`, upgrade through `0010`, verify the existing embedding table matches `0011_event_embedding.py`, then stamp `0011` to acknowledge the already-applied embedding schema. Preserve the embedding table and its rows. If any checks differ, inspect the actual schema before choosing a recovery path. Fresh databases and databases using main's real `0009` use the normal upgrade to head.
 
-The branch reconciliation repaired only the isolated test database. The development database still needs this explicit recovery before starting the updated API.
+Existing databases that applied the legacy embeddings revision need this explicit recovery before starting the updated API.
+
+
+### Connected path map
+
+Build `frontend/` with `VITE_DATA_SOURCE=api`, then open `/app/` (also linked from Thermal). Sign in and describe a goal, or choose a public shared goal. Ambiguous text offers candidates; an unmatched query leaves the map empty and links to resource discovery. The map reuses the prototype hexagon nodes with returned activity IDs and counts. Lines represent aggregate associations, not reconstructed individual alumni histories. Below it, a readable list includes lift and typical year. Selecting a node loads the authenticated people/ask flow. Fixture mode remains a separate demo and is never a fallback on API failure.
+
+Browser verification: after an API-mode build, run `python -m backend.tests.profile_server` and `python -m backend.tests.check_path_map`. These use temporary synthetic accounts only in `warmpath_test`, remove those accounts afterward, and check real path/text/people requests plus mobile, ambiguity, no-match, request failure and sign-out states.

@@ -1,0 +1,8 @@
+.live-map-scroll { overflow-x:auto; border:1px solid var(--line); margin:24px 0; }
+.live-map { position:relative; width:880px; }
+.live-map-lines { position:absolute; inset:0; fill:none; stroke:var(--ember); stroke-width:1; opacity:.5; }
+.live-map .node { opacity:1; transition:none; }
+.live-map .node .tag { overflow-wrap:anywhere; }
+.live-map .node[data-have='true'] .hot { fill:var(--gold); }
+.live-map .node .pulse { animation:none; }
+.live-map-scroll:focus-visible { outline:2px solid var(--glow); outline-offset:3px; }
