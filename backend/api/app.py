@@ -301,6 +301,10 @@ def create_app(url=None, *, demo_histories=False):
 
     if (ROOT / 'frontend/dist/index.html').exists():
         app.mount('/app', StaticFiles(directory=ROOT / 'frontend/dist', html=True), name='react_ui')
+    # Optional fixture-mode build (docs/demo-alumni.md): invented alumni bundled in the page and
+    # labelled as synthetic. It reads no API data, so the shared database stays free of fixtures.
+    if (ROOT / 'frontend/dist-demo/index.html').exists():
+        app.mount('/demo', StaticFiles(directory=ROOT / 'frontend/dist-demo', html=True), name='demo_ui')
     app.mount('/', StaticFiles(directory=ROOT / 'prototypes', html=True), name='ui')
     return app
 
