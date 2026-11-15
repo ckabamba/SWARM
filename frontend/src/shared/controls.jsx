@@ -1,4 +1,5 @@
 import React from 'react'
+import { PersonIcon } from './icons.jsx'
 
 /* Flat-topped hexagon with eased corners, in a 100-unit box. Matches the lattice's orientation. */
 const HEX_PATH = (() => {
@@ -56,8 +57,8 @@ export function Switch({ label, options, value, onChange }) {
   )
 }
 
-/* Initials in a circle. `ring` adds the gold outline that marks the signed-in profile. */
+/* Initials in a circle, or a plain figure when there is no name (nobody signed in). `ring` adds the gold outline that marks your own profile. */
 export function Avatar({ name, ring }) {
-  const initials = name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
-  return <span className="avatar" data-ring={ring || undefined} aria-hidden="true"><span>{initials}</span></span>
+  const initials = name && name.trim().split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase()
+  return <span className="avatar" data-ring={ring || undefined} aria-hidden="true"><span>{initials || <PersonIcon />}</span></span>
 }

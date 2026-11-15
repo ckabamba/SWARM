@@ -32,6 +32,10 @@ export function HiveIcon() {
   )
 }
 
+export function PersonIcon() {
+  return <Icon><circle cx="10" cy="7.2" r="3.2" /><path d="M3.8 16.6c.9-3 3.3-4.6 6.2-4.6s5.3 1.6 6.2 4.6" /></Icon>
+}
+
 export function SearchIcon() {
   return <Icon><circle cx="9" cy="9" r="5.5" /><path d="M13.2 13.2 17 17" /></Icon>
 }
