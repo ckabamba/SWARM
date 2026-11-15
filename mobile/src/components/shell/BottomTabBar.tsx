@@ -4,8 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { THEME } from '../../theme/tokens';
 
-// 'map' is the alumni path view (labeled Paths); 'geo' is the geographic maps.
-export type TabId = 'home' | 'map' | 'geo' | 'buzz' | 'feed';
+// 'map' is the path view; 'geo' is geographic maps.
+export type TabId = 'home' | 'map' | 'discovery' | 'feed' | 'geo' | 'profile';
 
 interface BottomTabBarProps {
   currentTab: TabId;
@@ -34,14 +34,14 @@ const TABS: TabConfig[] = [
     iconInactive: 'git-network-outline',
   },
   {
-    id: 'buzz',
-    label: 'Buzz',
-    iconActive: 'newspaper',
-    iconInactive: 'newspaper-outline',
+    id: 'discovery',
+    label: 'Discover',
+    iconActive: 'compass',
+    iconInactive: 'compass-outline',
   },
   {
     id: 'feed',
-    label: 'Feed',
+    label: 'Social',
     iconActive: 'people',
     iconInactive: 'people-outline',
   },
@@ -50,6 +50,12 @@ const TABS: TabConfig[] = [
     label: 'Maps',
     iconActive: 'map',
     iconInactive: 'map-outline',
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
+    iconActive: 'person-circle',
+    iconInactive: 'person-circle-outline',
   },
 ];
 
@@ -76,6 +82,9 @@ export default function BottomTabBar({
             style={styles.tab}
             onPress={() => handlePress(tab.id)}
             activeOpacity={0.7}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isActive }}
+            accessibilityLabel={tab.label}
           >
             <Ionicons
               name={isActive ? tab.iconActive : tab.iconInactive}

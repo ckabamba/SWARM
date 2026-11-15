@@ -7,12 +7,14 @@ import { THEME } from '../../theme/tokens';
 interface TopBarProps {
   onHomePress?: () => void;
   isAlumDemo?: boolean;
+  demoMode?: boolean;
   onToggleDemo?: () => void;
 }
 
 export default function TopBar({
   onHomePress,
   isAlumDemo = false,
+  demoMode = false,
   onToggleDemo,
 }: TopBarProps) {
   return (
@@ -32,6 +34,11 @@ export default function TopBar({
             <Text style={styles.brandTitle}>WarmPath</Text>
           </TouchableOpacity>
 
+          {demoMode && <View style={styles.demoBadge} accessibilityLabel="Demo mode using fictional data">
+            <Ionicons name="flask-outline" size={11} color={THEME.colors.gold} />
+            <Text style={styles.demoBadgeText}>DEMO MODE</Text>
+          </View>}
+
           {onToggleDemo && (
             <TouchableOpacity
               style={styles.demoBadge}
@@ -41,11 +48,11 @@ export default function TopBar({
               }}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel={isAlumDemo ? 'Switch to student demo' : 'Switch to alumni demo'}
+              accessibilityLabel={isAlumDemo ? 'Switch to student demo view' : 'Switch to alumni demo view'}
             >
               <Ionicons name="swap-horizontal" size={11} color={THEME.colors.gold} />
               <Text style={styles.demoBadgeText}>
-                {isAlumDemo ? 'STUDENT DEMO' : 'ALUM DEMO'}
+                {isAlumDemo ? 'STUDENT VIEW' : 'ALUM VIEW'}
               </Text>
             </TouchableOpacity>
           )}

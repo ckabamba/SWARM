@@ -9,13 +9,19 @@ import HomeScreen from './src/screens/HomeScreen';
 import AlumniProfileScreen from './src/screens/AlumniProfileScreen';
 import MapScreen from './src/screens/MapScreen';
 import GeoMapsScreen from './src/screens/GeoMapsScreen';
-import BuzzScreen from './src/screens/BuzzScreen';
+import DiscoveryScreen from './src/screens/DiscoveryScreen';
 import FeedScreen from './src/screens/FeedScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 import { useWarmPathStore } from './src/store/warmPathStore';
+import { AccountProvider } from './src/store/AccountContext';
+import { useAccount } from './src/store/AccountContext';
+import AuthGateScreen from './src/screens/AuthGateScreen';
 import { THEME } from './src/theme/tokens';
 
-export default function App() {
+function AppContent() {
+  const { account } = useAccount();
   const [currentTab, setCurrentTab] = useState<TabId>('home');
+  const [demoMode, setDemoMode] = useState(false);
   const [isAlumDemo, setIsAlumDemo] = useState(false);
   const [mapFocusId, setMapFocusId] = useState<number | null>(null);
   const [panX, setPanX] = useState(0);
@@ -41,6 +47,17 @@ export default function App() {
     setCurrentTab(tab);
   };
 
+  if (!account && !demoMode) {
+    return (
+      <GestureHandlerRootView style={styles.container}>
+        <StatusBar style="light" />
+        <ThermalShell currentTab="home">
+          <AuthGateScreen onEnterDemo={() => { setDemoMode(true); setCurrentTab('home'); }} />
+        </ThermalShell>
+      </GestureHandlerRootView>
+    );
+  }
+
   const renderScreen = () => {
     switch (currentTab) {
       case 'map':
@@ -52,16 +69,18 @@ export default function App() {
         );
       case 'geo':
         return <GeoMapsScreen />;
-      case 'buzz':
-        return <BuzzScreen />;
+      case 'discovery':
+        return <DiscoveryScreen demoMode={demoMode} />;
       case 'feed':
-        return <FeedScreen isAlumDemo={isAlumDemo} />;
+        return <FeedScreen demoMode={demoMode} />;
+      case 'profile':
+        return <ProfileScreen demoMode={demoMode} onExitDemo={() => setDemoMode(false)} />;
       case 'home':
       default:
         return isAlumDemo ? (
           <AlumniProfileScreen />
         ) : (
-          <HomeScreen onOpenMap={handleOpenMap} />
+          <HomeScreen onOpenMap={handleOpenMap} onOpenProfile={() => setCurrentTab('profile')} />
         );
     }
   };
@@ -76,7 +95,8 @@ export default function App() {
           setCurrentTab('home');
         }}
         isAlumDemo={isAlumDemo}
-        onToggleDemo={handleToggleDemo}
+        demoMode={demoMode}
+        onToggleDemo={demoMode ? handleToggleDemo : undefined}
         panX={currentTab === 'map' ? panX : 0}
         lowBatteryMode={preferences.lowBatteryMode}
       >
@@ -90,6 +110,10 @@ export default function App() {
       />
     </GestureHandlerRootView>
   );
+}
+
+export default function App() {
+  return <AccountProvider><AppContent /></AccountProvider>;
 }
 
 const styles = StyleSheet.create({
