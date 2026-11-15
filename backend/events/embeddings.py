@@ -133,7 +133,8 @@ def search(conn, query, limit=5, embedder=None, upcoming_only=True):
         return {"items": [], "match_basis": None, "status": "no_query"}
     try:
         embedder = embedder or default_embedder()
-        target = list(embedder.query_embed(query))[0]
+        # Plain floats: the real model returns numpy values, which JSON cannot encode.
+        target = [float(x) for x in list(embedder.query_embed(query))[0]]
     except Unavailable as exc:
         items = keyword_search(conn, query, limit, upcoming_only)
         return {"items": items, "match_basis": "keyword", "status": "matched" if items else "no_match",

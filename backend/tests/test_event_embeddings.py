@@ -146,5 +146,49 @@ def test_real_model_when_cached(conn):
     embed_events(conn)
     top = search(conn, "I want to get into robotics")["items"][0]
     assert top["url"].endswith("robots")
+    assert type(top["score"]) is float  # numpy values would break the JSON response
     vector = conn.execute(text("SELECT vector FROM event_embedding LIMIT 1")).scalar_one()
     assert len(vector) == 384 and math.isfinite(sum(vector))
+
+
+def test_search_route(monkeypatch):
+    """GET /api/events/search ranks by meaning, validates input and falls back to keywords."""
+    from fastapi.testclient import TestClient
+    from backend.api.app import create_app
+    from backend.migrate import migrate
+
+    url = database_url(test=True)
+    migrate(url)
+    engine = create_engine(url)
+    source = "test-search-" + uuid4().hex
+    now = datetime.now(timezone.utc)
+    events = {"robots": ("Robotics club", "Build a robot with the robotics club."),
+              "dinner": ("Friday dinner", "Food and dinner together.")}
+    with engine.begin() as connection:
+        assert connection.scalar(text("SELECT current_database()")) == "warmpath_test"
+        for key, (title, description) in events.items():
+            connection.execute(text(
+                "INSERT INTO api_public_events (url, title, starts_at, ends_at, fetched_at, source, description) "
+                "VALUES (:url, :title, :start, :end, :now, :source, :description)"
+            ), {"url": f"https://example.edu/{source}/{key}", "title": title, "description": description,
+                "now": now, "start": now + timedelta(days=1), "end": now + timedelta(days=1, hours=2), "source": source})
+        embed_events(connection, WordCounts())
+    try:
+        monkeypatch.setattr(embeddings, "_model", WordCounts())
+        with TestClient(create_app(url)) as client:
+            body = client.get("/api/events/search", params={"q": "robot", "limit": 20}).json()
+            ours = [item for item in body["items"] if source in item["url"]]
+            assert body["match_basis"] == "description_similarity"
+            assert ours and ours[0]["url"].endswith("/robots")
+            assert client.get("/api/events/search", params={"q": ""}).status_code == 422
+            assert client.get("/api/events/search", params={"q": "x", "limit": 21}).status_code == 422
+            assert client.get("/api/events/search").status_code == 422
+
+            monkeypatch.setattr(embeddings, "_model", Broken())
+            body = client.get("/api/events/search", params={"q": "robotics club", "limit": 20}).json()
+            assert body["match_basis"] == "keyword" and "fallback_reason" in body
+            assert any(item["url"].endswith(f"{source}/robots") for item in body["items"])
+    finally:
+        with engine.begin() as connection:
+            connection.execute(text("DELETE FROM api_public_events WHERE source = :source"), {"source": source})
+        engine.dispose()

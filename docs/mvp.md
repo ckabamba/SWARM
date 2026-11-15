@@ -275,7 +275,7 @@ LLM capabilities may include goal understanding, campus resource discovery, grou
 - If a goal or resource cannot be matched, return a clear no-result or clarification response rather than silently substituting an unrelated goal.
 - Voice is a way to access the same discovery capabilities. Define input/output behavior and providers separately; speech transcription and synthesis need not be performed by the language model.
 - Keep text access available when microphone access, speech services, or AI are unavailable. Describe degraded behavior accurately rather than promising all speech works offline.
-- Event embeddings exist for semantic search: `backend/events/embeddings.py` embeds each event's title, organizer, location and description locally with fastembed (`BAAI/bge-small-en-v1.5`, an optional dependency in `backend/requirements-embeddings.txt`) into `event_embedding`, and `search(conn, query)` returns upcoming events by similarity, labelled `match_basis: description_similarity`, or by keyword with a `fallback_reason` when embeddings are unavailable. No API route serves it yet, and similarity is never alumni evidence.
+- Event embeddings exist for semantic search: `backend/events/embeddings.py` embeds each event's title, organizer, location and description locally with fastembed (`BAAI/bge-small-en-v1.5`, an optional dependency in `backend/requirements-embeddings.txt`) into `event_embedding`, and `search(conn, query)` returns upcoming events by similarity, labelled `match_basis: description_similarity`, or by keyword with a `fallback_reason` when embeddings are unavailable. `GET /api/events/search?q=...&limit=5` (limit 1 to 20) serves it with the same response. Similarity is never alumni evidence.
 
 ## Development and demo data
 

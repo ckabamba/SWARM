@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 import secrets
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -269,6 +269,17 @@ def create_app(url=None):
     @app.get('/api/people')
     def people():
         return {'items': [], 'status': 'not_available', 'message': 'No authorized alumni-history dataset is connected.'}
+
+    @app.get('/api/events/search')
+    def search_events(q: str = Query(min_length=1, max_length=300), limit: int = Query(default=5, ge=1, le=20)):
+        """Upcoming public events closest in meaning to q (backend/events/embeddings.py).
+
+        Results are similarity rankings, labelled match_basis, never alumni evidence.
+        Falls back to keyword matching, with fallback_reason, when embeddings are unavailable.
+        """
+        from backend.events.embeddings import search
+        with engine.connect() as conn:
+            return search(conn, q, limit=limit)
 
     @app.get('/api/events')
     def public_events():
