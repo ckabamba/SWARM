@@ -7,7 +7,11 @@ from alembic.config import Config
 import pytest
 from sqlalchemy import create_engine, text
 
-from backend.engine.paths import NotFound, path_for_goal, people_for_goal, school_year
+from functools import partial
+from backend.engine.paths import NotFound, path_for_goal as real_path, people_for_goal as real_people, school_year
+
+path_for_goal = partial(real_path, include_fixtures=True)
+people_for_goal = partial(real_people, include_fixtures=True)
 from backend.manage import ROOT, database_url
 from backend.seed import path_fixtures
 
@@ -105,8 +109,8 @@ def test_unknown_ids_raise(loaded):
         path_for_goal(conn, -1, student)
     with pytest.raises(NotFound):
         path_for_goal(conn, goal, -1)
-    with pytest.raises(NotFound):
-        path_for_goal(conn, goal, ids['achievers'][0])  # an alum is not a student
+    # Alumni can browse using their own history as well.
+    assert path_for_goal(conn, goal, ids['achievers'][0])['student']['id'] == ids['achievers'][0]
     with pytest.raises(NotFound):
         people_for_goal(conn, goal, student, activity_id=-1)
 

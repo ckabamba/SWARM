@@ -38,13 +38,21 @@ CASES = [
     ('Georgia Tech Police Department - Conference Room ', 'campus', 'Georgia Tech Police Department', 'Conference Room'),
     ('MFG. Related Disciplines Complex(MRDC)-135-2405 Classroom MRDC ', 'campus',
      'Manufacturing Related Disciplines Complex', '135-2405 Classroom'),
+    # Calendar and Engage text from 2026-11-15, buildings added from OpenStreetMap.
+    ('George Tower (TS3 0210)', 'campus', 'George Tower', 'TS3 0210'),
+    ('Room 232, George/Scheller Tower', 'campus', 'George Tower', 'Room 232'),
+    ('Classroom 0210 George | Scheller Tower', 'campus', 'George Tower', 'Classroom 0210'),
+    ('L1125 Ford ES&T', 'campus', 'Ford Environmental Science and Technology Building', 'L1125'),
+    ('Room 357, Clough Undergraduate Learning Commons', 'campus', 'Clough Undergraduate Learning Commons', 'Room 357'),
+    ('Scholars Event Theater, Price Gilbert Library', 'campus', 'Price Gilbert Memorial Library', 'Scholars Event Theater'),
+    ('West Village Dining Hall', 'campus', 'West Village Dining Commons', None),
     ('Online', 'online', None, None),
     ('Virtual (Zoom link sent after RSVP)', 'online', None, None),
     # Not known buildings: never guessed.
     ('ATLAS Center Peachtree Corners', 'unknown', None, None),
-    ('George Tower (TS3 0210)', 'unknown', None, None),
     ('Barnes and Noble', 'unknown', None, None),
     ('Flex Space', 'unknown', None, None),
+    ('Brittain Rec Room', 'unknown', None, None),
     # Short aliases only match whole words.
     ('Epic Picnic Spot', 'unknown', None, None),
     ('', 'unknown', None, None),
@@ -59,7 +67,7 @@ def test_match(location, kind, place, room):
 
 def test_place_data_is_usable():
     names = [place['name'] for place in PLACES]
-    assert len(names) == len(set(names)) == 22
+    assert len(names) == len(set(names)) == 28
     for place in PLACES:
         # Roughly the Atlanta campus and Tech Square.
         assert 33.76 < place['latitude'] < 33.79 and -84.41 < place['longitude'] < -84.38
@@ -83,7 +91,7 @@ def test_events_link_to_places():
         command.upgrade(config, 'head')
 
         assert load_places(conn) == load_places(conn)  # repeatable, same ids
-        assert conn.scalar(text('SELECT count(*) FROM campus_place')) == 22
+        assert conn.scalar(text('SELECT count(*) FROM campus_place')) == 28
 
         def add(key, location):
             conn.execute(text(

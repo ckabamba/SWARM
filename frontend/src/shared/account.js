@@ -6,7 +6,7 @@ import { DATA_SOURCE } from './data-source.js'
  * The signed-in account, shared by every page.
  *
  * status
- *   'demo'     fixture mode, or api mode with the backend unreachable: the app shows the demo students
+ *   'demo'     explicit fixture mode only; backend failures never switch identity to a demo student
  *   'loading'  api mode, before the first answer from GET /api/me
  *   'out'      api mode, nobody signed in
  *   'in'       api mode, signed in; `me` is { person_id, email, version, courses_version, profile }
@@ -34,10 +34,14 @@ export function loadAccount() {
     (me) => set({ status: 'in', me }),
     (error) => {
       if (error.status === 401) return set({ status: 'out' })
-      console.warn(`[WarmPath] Account: the backend call failed (${error.message}). Showing the demo students instead.`)
-      set({ status: 'demo' })
+      set({ status: 'error', me: null, error: error.message })
     },
   )
+}
+
+export async function refreshAccount() {
+  try { const me = await api.me(); set({ status: 'in', me, error: '' }); return me }
+  catch (error) { set({ status: error.status === 401 ? 'out' : 'error', me: null, error: error.message }); throw error }
 }
 
 export const openAccount = () => set({ open: true })
@@ -54,8 +58,10 @@ export async function signOut() {
   await api.logout()
   set({ status: 'out', me: null })
 }
-export async function saveProfile(profile) {
-  set({ me: await api.saveProfile({ version: state.me.version, profile }) })
+export async function saveProfile(profile, version = state.me.version) {
+  const me = await api.saveProfile({ version, profile })
+  set({ me })
+  return me
 }
 /* Add the chosen resume suggestions to the profile. Resolves to how many were already there and skipped. */
 export async function importResume(draftId, selections) {

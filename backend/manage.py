@@ -113,7 +113,7 @@ def initialize():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', choices=['init', 'start', 'stop', 'run', 'migrate'])
+    parser.add_argument('command', choices=['init', 'start', 'stop', 'run', 'migrate', 'init-catalog'])
     args = parser.parse_args()
     if args.command == 'init':
         initialize()
@@ -125,6 +125,10 @@ def main():
         from backend.migrate import migrate
         migrate()
         print('Shared schema migrations applied. Existing resource data is preserved.')
+    elif args.command == 'init-catalog':
+        from backend.api.catalog_setup import initialize_catalog
+        result = initialize_catalog()
+        print(f"Loaded {result['resources']} public resources and {result['job_examples']} job examples. No personal records were imported.")
     else:
         host, port = server_address()
         # An explicit database URL points at a separately managed database
