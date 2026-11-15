@@ -294,3 +294,8 @@ The original path fixture plan remains useful:
 - Seed one goal Activity each for research, a startup and grad school, a `city` on every alum, and about 20 events attached to stops.
 
 Extend the fixture plan with authored sample posts, clubs/resources, campus locations, and several alumni cities to exercise both map views. Keep invented events explicitly marked as placeholders; any claimed real listings must retain their actual source and details. A demo should not imply that fixture counts establish real alumni outcomes.
+
+
+### Explicit local synthetic-history mode
+
+`WARMPATH_DEMO_HISTORIES=1` enables fixture histories on a loopback database only, with no public deployment origin. `/health` adds `synthetic_histories`; path/people/goals responses label this mode with `evidence: "synthetic_demo"` and fixture metadata. Authentication still identifies the viewer, private real histories remain excluded, and generated people have no accounts or sendable asks. Default mode still excludes all fixtures. This opt-in supports the user's temporary local demo dataset; it is not production evidence. See [demo setup](demo-alumni.md).

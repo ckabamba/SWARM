@@ -29,21 +29,22 @@ class AskCreate(BaseModel):
 
 
 class PathwayService:
-    def __init__(self, profiles):
+    def __init__(self, profiles, demo_histories=False):
         self.profiles = profiles
+        self.demo_histories = demo_histories
 
     def path(self, conn, actor, goal_id):
         try:
-            result = path_for_goal(conn, goal_id, actor['person_id'])
+            result = path_for_goal(conn, goal_id, actor['person_id'], include_fixtures=self.demo_histories)
         except NotFound as error:
             raise HTTPException(404, str(error)) from None
-        return {**result, 'mode': 'alumni', 'evidence': 'self_reported',
-                'population': 'Public alumni with explicitly shared history',
+        return {**result, 'mode': 'alumni', 'evidence': 'synthetic_demo' if self.demo_histories else 'self_reported',
+                'population': 'Includes invented demo alumni' if self.demo_histories else 'Public alumni with explicitly shared history',
                 'school_year_basis': 'estimated_from_graduation_year'}
 
     def people(self, conn, actor, goal_id, activity_id, limit):
         try:
-            people = people_for_goal(conn, goal_id, actor['person_id'], activity_id, limit=limit)
+            people = people_for_goal(conn, goal_id, actor['person_id'], activity_id, limit=limit, include_fixtures=self.demo_histories)
         except NotFound as error:
             raise HTTPException(404, str(error)) from None
         goals = self.profiles.tables['activity']
@@ -55,13 +56,13 @@ class PathwayService:
             introduction = (' ' + tie + '.') if tie else ''
             person.update(can_ask=person['id'] in reachable,
                 draft=f"Hi {person['name']},{introduction} I'm exploring {goal}. Would you be open to a short conversation about your experience?",
-                evidence='self_reported')
-        return {'items': people, 'evidence': 'self_reported', 'fixture_evidence': False}
+                evidence='synthetic_demo' if self.demo_histories else 'self_reported')
+        return {'items': people, 'evidence': 'synthetic_demo' if self.demo_histories else 'self_reported', 'fixture_evidence': self.demo_histories}
 
 
-def install_pathways(app, service):
+def install_pathways(app, service, *, demo_histories=False):
     engine = service.engine
-    pathways = PathwayService(service)
+    pathways = PathwayService(service, demo_histories)
 
     @app.get('/api/goals')
     def goals(q: str = Query(default='', max_length=100), limit: int = Query(default=50, ge=1, le=100)):
@@ -72,12 +73,13 @@ def install_pathways(app, service):
                 SELECT a.id, a.name AS label, a.type, count(*) AS achievers
                 FROM activity a JOIN person_activity pa ON pa.activity_id = a.id
                 JOIN person p ON p.id = pa.person_id
-                WHERE NOT a.is_fixture AND NOT p.is_fixture AND p.profile_visible
-                  AND p.kind = 'alum' AND pa.history_managed AND pa.public_school_year IS NOT NULL
+                WHERE p.profile_visible AND p.kind = 'alum' AND (
+                    (:demo AND a.is_fixture AND p.is_fixture) OR
+                    (NOT a.is_fixture AND NOT p.is_fixture AND pa.history_managed AND pa.public_school_year IS NOT NULL))
                   AND strpos(lower(a.name), lower(:query)) > 0
                 GROUP BY a.id ORDER BY lower(a.name), a.id LIMIT :limit
-            """), {'query': q.strip(), 'limit': limit}).mappings()
-            return {'items': [dict(row) for row in rows], 'evidence': 'self_reported', 'fixture_evidence': False}
+            """), {'query': q.strip(), 'limit': limit, 'demo': demo_histories}).mappings()
+            return {'items': [dict(row) for row in rows], 'evidence': 'synthetic_demo' if demo_histories else 'self_reported', 'fixture_evidence': demo_histories}
 
     @app.get('/api/people')
     def people(request: Request, goal_id: int | None = Query(default=None, ge=1),

@@ -58,7 +58,7 @@ _PUBLIC_HISTORY = """
     FROM person_activity pa
     JOIN person p ON p.id = pa.person_id
     JOIN activity a ON a.id = pa.activity_id
-    WHERE :include_fixtures OR (
+    WHERE (:include_fixtures AND p.is_fixture AND a.is_fixture) OR (
         pa.history_managed AND pa.public_school_year IS NOT NULL
         AND NOT p.is_fixture AND NOT a.is_fixture
     )
@@ -68,7 +68,7 @@ _ALUMNI = f"""
     SELECT p.id FROM person p
     WHERE p.kind = 'alum' AND p.profile_visible
       AND (:include_fixtures OR NOT p.is_fixture)
-      AND (:include_fixtures OR EXISTS (SELECT 1 FROM ({_PUBLIC_HISTORY}) h WHERE h.person_id = p.id))
+      AND ((:include_fixtures AND p.is_fixture) OR EXISTS (SELECT 1 FROM ({_PUBLIC_HISTORY}) h WHERE h.person_id = p.id))
 """
 
 _ACHIEVER = f"""
@@ -144,7 +144,7 @@ _SHARED = text(f"""
 def _goal(conn, goal_id, person_id, include_fixtures):
     row = conn.execute(text(f"""
         SELECT a.id, a.name FROM activity a WHERE a.id = :id AND (
-            :include_fixtures OR (NOT a.is_fixture AND (
+            (:include_fixtures AND a.is_fixture) OR (NOT a.is_fixture AND (
                 a.resource_id IS NOT NULL
                 OR EXISTS (SELECT 1 FROM person_activity own
                            WHERE own.activity_id = a.id AND own.person_id = :person_id

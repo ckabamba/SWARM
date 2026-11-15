@@ -8,6 +8,7 @@ import asyncio
 from contextlib import suppress
 from datetime import datetime, timedelta, timezone
 import hashlib
+import os
 import re
 import secrets
 from typing import Literal
@@ -65,9 +66,11 @@ STOP_WORDS = set('i me my a an the to for in of at and or want would like find g
 
 
 
-def create_app(url=None):
+def create_app(url=None, *, demo_histories=False):
     origin = public_origin()
     engine = create_engine(url or database_url(), pool_pre_ping=True)
+    if demo_histories and (engine.url.host not in ('localhost', '127.0.0.1', '::1') or origin):
+        raise ValueError('Synthetic history mode is local-only.')
 
     @asynccontextmanager
     async def lifespan(app):
@@ -92,7 +95,7 @@ def create_app(url=None):
     from backend.api.profiles import install_profiles
     profile_service = install_profiles(app, engine)
     from backend.api.pathways import install_pathways
-    pathways = install_pathways(app, profile_service)
+    pathways = install_pathways(app, profile_service, demo_histories=demo_histories)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts(origin))
 
     @app.middleware('http')
@@ -144,7 +147,7 @@ def create_app(url=None):
 
     @app.get('/api/health')
     def health():
-        return {'status': 'ok', 'mode': 'local-real-resources'}
+        return {'status': 'ok', 'mode': 'local-real-resources', 'synthetic_histories': demo_histories}
 
     @app.get('/api/ready')
     def ready():
@@ -195,7 +198,7 @@ def create_app(url=None):
                 if body.goal_id is not None:
                     return pathways.path(conn, actor, body.goal_id)
                 from backend.engine.goals import match_goal
-                match = match_goal(conn, body.goal)
+                match = match_goal(conn, body.goal, include_fixtures=demo_histories)
                 result = pathways.path(conn, actor, match['goal']['id']) if match['status'] == 'matched' else None
                 return {'match': match, 'path': result}
         terms = sorted(set(re.findall(r'[a-z0-9]+', body.goal.lower())) - STOP_WORDS)[:20]
@@ -302,4 +305,4 @@ def create_app(url=None):
     return app
 
 
-app = create_app()
+app = create_app(demo_histories=os.environ.get("WARMPATH_DEMO_HISTORIES") == "1")

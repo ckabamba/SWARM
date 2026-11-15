@@ -102,7 +102,7 @@ def match_goal(conn, goal, embedder=None, limit=3, *, include_fixtures=False):
         return {"status": "no_query", "goal": None, "candidates": [], "match_basis": None}
     rows = conn.execute(text("""
         SELECT a.id, a.name, a.type, a.company, a.role FROM activity a
-        WHERE :include_fixtures OR (NOT a.is_fixture AND EXISTS (
+        WHERE (:include_fixtures AND a.is_fixture) OR (NOT a.is_fixture AND EXISTS (
             SELECT 1 FROM person_activity pa JOIN person p ON p.id = pa.person_id
             WHERE pa.activity_id = a.id AND NOT p.is_fixture AND p.profile_visible
               AND p.kind = 'alum' AND pa.history_managed AND pa.public_school_year IS NOT NULL

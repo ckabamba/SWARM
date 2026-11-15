@@ -122,7 +122,7 @@ export function Experience({ active = true, students, studentId, onStudent, live
           </div>
           <p className="cue cap">Scroll</p>
           <p className="foot cap quiet">
-            <span>{live ? "Shared histories, not verified outcomes" : `${api.ALUMNI_TOTAL} synthetic alumni ? Invented histories`}</span>
+            <span>{live ? (live.demo ? "Synthetic demo ? Invented alumni and histories" : "Shared histories, not verified outcomes") : `${api.ALUMNI_TOTAL} synthetic alumni ? Invented histories`}</span>
             <span>{live ? "WarmPath" : "Seeded demo data"} · Honeycomb model by <a href="https://poly.pizza/m/6Mqdrv1n3Oo" target="_blank" rel="noreferrer">Poly by Google</a>, CC BY 3.0</span>
           </p>
         </section>
@@ -147,7 +147,7 @@ export function Experience({ active = true, students, studentId, onStudent, live
           </button>
 
           <div className="strip">
-            {!live && <p className="cap">Synthetic demo ? 1,000 invented alumni</p>}
+            {(!live || live.demo || path.fixture_evidence) && <p className="cap">Synthetic demo ? Invented alumni and histories</p>}
             <h2 className="cap">{live ? "Your path" : "This week on your path"}</h2>
             {live && <><button className="pill" onClick={() => { setView("goal"); setPanel(null) }}>Change goal</button><p className="quiet">{path.reason === "not_enough_achievers" ? "At least three shared alumni histories are needed to show stops." : path.reason ? "No earlier activity meets the evidence thresholds." : "Lines show aggregate associations, not individual alumni routes."}</p></>}
             <ol>

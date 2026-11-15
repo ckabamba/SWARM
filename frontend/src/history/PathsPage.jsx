@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import api from '../shared/api.js'
 import { useAccount } from '../shared/account.js'
 import { Experience } from '../map/Experience.jsx'
@@ -10,6 +10,8 @@ export function PathsPage({ who }) {
 function LiveExperience({ who }) {
   const [query,setQuery] = useState(''), [path,setPath] = useState(null)
   const [match,setMatch] = useState(null), [error,setError] = useState(''), [busy,setBusy] = useState(false)
+  const [demo,setDemo] = useState(false)
+  useEffect(() => { let active=true; api.request('/health').then(r=>{if(active)setDemo(!!r.synthetic_histories)}).catch(()=>{}); return ()=>{active=false} },[])
   const generation = useRef(0)
   const submit = async (goalId) => {
     const token = ++generation.current
@@ -20,5 +22,5 @@ function LiveExperience({ who }) {
     } catch(e) { if(token === generation.current) setError(e.message) }
     finally { if(token === generation.current) setBusy(false) }
   }
-  return <Experience {...who} live={{query,setQuery,path,match,error,busy,submit}}/>
+  return <Experience {...who} live={{query,setQuery,path,match,error,busy,submit,demo}}/>
 }

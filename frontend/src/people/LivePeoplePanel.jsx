@@ -30,7 +30,7 @@ export function LivePeoplePanel({open,path,activityId,onClose}) {
   const stop=path.stops.find(s=>s.activity_id===activityId)
   return <aside className="panel" data-open={open} aria-label="Matching alumni" aria-hidden={!open} inert={!open}>
     <button className="close cap" onClick={onClose}>Close</button><h2>{stop?.name || path.goal.label}</h2>
-    <p className="lede">Public alumni with explicitly shared histories. Participation is self-reported.</p>
+    <p className="lede">{path.fixture_evidence ? 'Synthetic demo alumni. These invented people cannot receive real asks.' : 'Public alumni with explicitly shared histories. Participation is self-reported.'}</p>
     {error ? <><p role="alert">{error}</p><button className="pill" onClick={()=>setRetry(n=>n+1)}>Retry</button></> : people === null ? <p role="status">Loading alumni...</p> : people.length ? people.map(p=><Person key={`${path.goal.id}:${activityId}:${p.id}`} person={p} goalId={path.goal.id}/>) : <p>No eligible alumni are available for this selection.</p>}
   </aside>
 }
