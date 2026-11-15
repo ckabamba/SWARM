@@ -120,6 +120,8 @@ Of these, `person`, `activity`, and `person_activity` exist as migrations under 
 
 These are requirements to design, not finalized table definitions or migrations. Map coordinates represent campus places or cities, not live alumni positions. Decide how profile visibility affects both city counts and people lists.
 
+The event location reference exists. `campus_place` holds 22 campus buildings with coordinates from OpenStreetMap, and `event_place` links each imported public event to one of them with a `kind` of `campus`, `online`, or `unknown`, plus the room when the listing gave one. `backend/events/places.py` writes the links by matching the listing's location text against known building names, and `events_with_places(conn)` returns each event with `location_kind`, `room`, and a `place` of `{ id, name, latitude, longitude }` or `null`. No API route serves this yet. Links from events to clubs, activities, and resources are still to be built.
+
 Two earlier contract gaps are settled in the path engine. A student's `school_year` is not stored: it is derived from `grad_year`, assuming a four-year degree and an academic year that starts in August. `stops[].typical_year` is now returned, as described under the path contract below. One gap remains: Ask responses below contain placeholders. Do not silently adopt extra fields or infer missing schemas.
 
 ## Scoring
