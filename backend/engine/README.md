@@ -73,10 +73,29 @@ Migration `0001` creates four tables. It covers only the parts that the open res
 | `person` | A student or alum profile: name, kind, major, graduation year, optional city | `share_city` and `profile_visible` control what others see; `is_fixture` marks generated demo people |
 | `post` | A community post: author, body, timestamps | Links to clubs, events, and resources come later |
 
+Migrations `0002` to `0004` add accounts, profiles, courses, and post links for the API. Migration `0005` adds the two tables the path engine reads:
+
+| Table | Holds | Notes |
+| --- | --- | --- |
+| `activity` | A club, VIP team, course, lab, internship, or job | A path goal is one activity row; `is_fixture` marks invented demo activities |
+| `person_activity` | Which person did which activity | One row per person and activity; `school_year` is the year they first did it (5 or more means after graduation) |
+
 Not modeled yet:
 
-- **Activity, PersonActivity, Event, and Ask** from the path feature, plus clubs and resources. These wait for the decision in issue #14.
-- **Accounts and login.** The identity approach is undecided ([issue #16](https://github.com/ckabamba/SWARM/issues/16)). An account table will reference `person`.
-- **School year.** `docs/mvp.md` returns `school_year` for students but the Person draft has no such column. Whether to store it or derive it from `grad_year` is undecided.
+- **Event and Ask** from the path feature, plus clubs and resources. Issue #14 may also add activity types or source fields.
 - **Finer visibility rules.** `profile_visible` is a single on/off switch. Issue #16 may need more levels.
 - **PostGIS.** Coordinates are plain latitude and longitude columns for now.
+
+## Path engine
+
+[paths.py](paths.py) computes the alumni-path results from `person`, `activity`, and `person_activity`. It only reads; the API layer calls it with an open database connection.
+
+| Function | Returns |
+| --- | --- |
+| `path_for_goal(conn, goal_id, student_id)` | The `POST /path` data: goal, student, lift-scored stops with `have`, `next`, and `typical_year`, plus `reason` and `fixture_evidence` |
+| `people_for_goal(conn, goal_id, student_id, activity_id=None)` | Ranked alumni behind the goal or one stop, each with a factual `shared_tie` sentence and a `score` |
+| `school_year(grad_year)` | A student's current school year, derived from graduation year |
+
+Both raise `NotFound` for an unknown goal, student, or activity id. The exact shapes and scoring rules are in [docs/mvp.md](../../docs/mvp.md#scoring).
+
+Generated test data with planted patterns lives in [backend/seed/path_fixtures.py](../seed/path_fixtures.py). It is for local and test databases only; keep it out of the shared database, where it would be counted alongside real profiles. From the repo root, `python -m backend.seed.path_fixtures` loads it into the local database, replacing any earlier fixture rows, and refuses a database on another host unless `--allow-remote` is added. Every row it creates is marked `is_fixture`. The engine's tests are in `backend/tests/test_path_engine.py`.
