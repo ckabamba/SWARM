@@ -17,3 +17,6 @@ dist/
 .claude/settings.local.json
 .DS_Store
 Thumbs.db
+.local/
+.pytest_cache/
+test-results/

@@ -1,39 +1,30 @@
-# Design direction prototypes
+# WarmPath interfaces and prototypes
 
-Three throwaway prototypes of the four WarmPath screens (goal box, path map, people panel, alum reply page). They exist so the team can pick a look and a motion budget. None of this is production code, and nothing here is wired to the backend.
+[Thermal](thermal/index.html) is the connected main UI: real campus resources/events, private browser-workspace saves, local accounts/profiles, reviewed resume imports, and a separate My Courses page with transcript import. It uses FastAPI/PostgreSQL and does not load the fictional path API.
 
-| Direction | Look | Motion | Built with |
-| --- | --- | --- | --- |
-| [Thermal](thermal/index.html) | Near-black and Georgia Tech gold: one strand per alum who reached the goal, over a honeycomb whose cells fill by how many strands cross them | High: WebGL particles, routes that draw themselves | React, react-three-fiber, ShaderGradient, loaded from a CDN |
-| [Transit](transit/index.html) | Yellow ground, black transit lines, one line per activity type | Medium: lines draw on, riders move, the next-stop flag slides | Plain SVG and the Web Animations API |
-| [Engineering pad](pad/index.html) | Green grid paper, a worked Given / Find / Solution problem | Low: press feedback and 200ms reveals | HTML and CSS, a little script |
+[Social Jackets](thermal/community.html) connects Shehryar Sardar's community design to the same FastAPI/PostgreSQL backend. Real account holders can publish, edit and delete posts, link campus resources/events and open explicitly shared profiles. The light/dark theme remains. Thermal links to it; `thermal/index.html#/community` redirects there. Navigation returns to resources, My Profile and My Courses.
 
-![Thermal](shots/thermal.jpg)
-![Transit](shots/transit.jpg)
-![Engineering pad](shots/pad.jpg)
+Transit and Engineering Pad were removed upstream. The React/Vite app under `frontend/` and Expo app under `mobile/` remain separate prototypes, not consumers of these backend features yet.
 
-## Running them
+## Run
 
-Open [index.html](index.html) in a browser, or serve the folder:
+From the repository root after installing `backend/requirements-dev.txt` and initializing PostgreSQL:
 
-```
-cd prototypes
-python -m http.server 4712
+```powershell
+.\.venv\Scripts\python.exe -m backend.manage start
+.\.venv\Scripts\python.exe -m backend.manage migrate
+.\.venv\Scripts\python.exe -m backend.manage run
 ```
 
-Then visit `http://localhost:4712`. Thermal needs an internet connection for its libraries, and it has to be served like this for its 3D honeycomb model to load; opened straight from disk it shows a simpler stand-in. The prototypes are laid out for a laptop screen; the alum reply page (`#/reply/5` on any of them) is the one screen sized for a phone.
+Open **http://127.0.0.1:8000/thermal/** or **http://127.0.0.1:8000/thermal/community.html**. Both load CDN libraries and need internet. Both need the backend; a static server cannot provide their APIs. See [local setup](../docs/backend-local-testing.md), [profiles/resumes](../docs/profiles-and-resumes.md), and [courses/transcripts](../docs/courses-and-transcripts.md).
 
-To try the two-device beat, send an ask from the people panel, follow its "open the reply page" link into a second tab, and accept there. The first tab updates on its own.
+## Evidence and persistence
 
-## Data
+Connected Thermal uses source-linked resources and public event snapshots. User-entered profiles/course histories are not verified attendance or alumni outcomes. It does not invent alumni counts, lift or sendable asks.
 
-[shared/fake-api.js](shared/fake-api.js) holds invented data and one function per endpoint in [docs/mvp.md](../docs/mvp.md#api-contract), returning the same JSON shapes. Every person is made up and the events are placeholders.
-
-One field is not in the contract: each stop carries `typical_year`. All three maps need some way to place a stop left to right, and lift alone does not give one. If the team wants any of these layouts, the path engine would need to return something like it (the median `school_year` from PersonActivity would do), and the contract in `docs/mvp.md` would change with it.
-
-Whatever goal is typed, the prototypes draw the one seeded path, the NVIDIA internship.
+Social Jackets does not load fixtures. Posts persist in the shared `post` table, authors come from signed-in accounts, and the events panel uses sourced public snapshots. Posts are publicly readable while the author's profile is public. Private contacts, resumes and transcripts are not exposed through posts; course/experience details appear only when explicitly shared. See [community contracts and checks](../docs/community.md). Geographic maps and alumni-history integration remain pending.
 
 ## Credits
 
-- Honeycomb model in Thermal: "Honeycomb" by Poly by Google, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), via [Poly Pizza](https://poly.pizza/m/6Mqdrv1n3Oo). Stored at [thermal/models/honeycomb.glb](thermal/models/honeycomb.glb).
-- Hexagonal lattice in Thermal: adapted from [prisoner849's fiddle](https://jsfiddle.net/prisoner849/jzLdcemb/).
+- Honeycomb: "Honeycomb" by Poly by Google, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), via [Poly Pizza](https://poly.pizza/m/6Mqdrv1n3Oo), stored under `thermal/models/`.
+- Hexagonal lattice: adapted from [prisoner849's fiddle](https://jsfiddle.net/prisoner849/jzLdcemb/).

@@ -1,0 +1,322 @@
+  :root {
+    --void: #06040b;
+    --ash: #8f8798;          /* quiet text on the void */
+    --bone: #f4eee6;         /* body text */
+    --ember: #ff6a1f;
+    --gold: #eaaa00;         /* Georgia Tech Buzz Gold */
+    --glow: #ffe9a8;         /* hottest: actions, the lit state */
+    --line: rgba(244, 238, 230, 0.16);
+    --panel: rgba(9, 6, 15, 0.84);
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--void);
+    color: var(--bone);
+    font-family: 'Mona Sans', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection { background: var(--ember); color: var(--void); }
+  button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 1px solid var(--glow); outline-offset: 4px; }
+
+  /* ---------- layers ---------- */
+  .field, .swarm, .veil, .hive { position: fixed; inset: 0; }
+  .hive { pointer-events: none; transition: opacity 500ms ease; }
+  [data-view='map'] .hive { opacity: 0; }
+  .field { opacity: 0.72; transition: opacity 1400ms var(--ease-out); }
+  [data-view='map'] .field { opacity: 0.5; }
+  [data-view='reply'] .field { opacity: 0.55; }
+  [data-accepted='true'] .field { opacity: 1; }
+  .swarm { mix-blend-mode: screen; pointer-events: none; }
+  .veil {
+    pointer-events: none;
+    background: radial-gradient(78% 74% at 50% 50%, rgba(6, 4, 11, 0.94) 0%, rgba(6, 4, 11, 0.8) 48%, rgba(6, 4, 11, 0.1) 100%);
+  }
+  .ui { position: fixed; inset: 0; }
+
+  /* small tracked caps: the one label voice */
+  .cap {
+    font-size: 10.5px;
+    font-stretch: 118%;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .quiet { color: var(--ash); }
+
+  /* ---------- top bar ---------- */
+  .bar {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 30px 40px;
+    z-index: 5;
+  }
+  .mark { display: flex; align-items: center; gap: 10px; font-stretch: 112%; font-weight: 600; letter-spacing: 0.02em; background: none; border: 0; padding: 0; }
+  .mark i {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--glow);
+  }
+  .switch {
+    position: relative;
+    display: grid; grid-template-columns: 1fr 1fr;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(9, 6, 15, 0.6);
+  }
+  .switch button {
+    position: relative; z-index: 1;
+    padding: 9px 18px;
+    border: 0; background: none; border-radius: 999px;
+    color: var(--ash);
+    transition: color 200ms ease;
+    white-space: nowrap;
+  }
+  .switch button[aria-pressed='true'] { color: var(--void); }
+  .switch .thumb {
+    position: absolute; top: 4px; bottom: 4px; left: 4px;
+    width: calc(50% - 4px);
+    border-radius: 999px;
+    background: var(--glow);
+    transition: transform 320ms var(--ease-in-out);
+  }
+  .switch[data-index='1'] .thumb { transform: translateX(100%); }
+
+  /* ---------- goal view ---------- */
+  .goal {
+    position: absolute; inset: 0;
+    transition: opacity 420ms ease, filter 420ms ease, transform 420ms var(--ease-out);
+  }
+  [data-view='map'] .goal { opacity: 0; filter: blur(10px); transform: scale(0.985); pointer-events: none; }
+
+  /* The landing is three screens tall. Scrolling it turns the honeycomb. */
+  .landing {
+    position: absolute; inset: 0; overflow-y: auto; scroll-snap-type: y proximity; overscroll-behavior: contain; scrollbar-width: none;
+    mask-image: linear-gradient(to bottom, transparent 40px, #000 150px, #000 calc(100% - 130px), transparent calc(100% - 60px));
+  }
+  .landing::-webkit-scrollbar { display: none; }
+  .beat { position: relative; min-height: 100%; display: grid; align-content: center; justify-items: start; padding: 0 8vw; scroll-snap-align: start; }
+  .beat h1, .beat .say {
+    margin: 0; max-width: 10.5em;
+    font-size: clamp(32px, 4.3vw, 64px); font-weight: 300; font-stretch: 108%;
+    letter-spacing: -0.03em; line-height: 1.08; text-wrap: balance;
+  }
+  /* Words arrive one at a time, out of a blur. After React Bits' BlurText, done in CSS. */
+  .word { display: inline-block; }
+  .beat:not([data-seen]) .word { opacity: 0; }
+  .beat[data-seen] .word { animation: word-in 700ms var(--ease-out) both; animation-delay: calc(var(--i) * 45ms); }
+  @keyframes word-in { from { opacity: 0; filter: blur(10px); transform: translateY(0.25em); } }
+  .beat.right { justify-items: end; }
+  .beat.right .say { text-align: right; }
+  .beat .jump { margin-top: 34px; padding: 4px 0; border: 0; background: none; color: var(--ash); transition: color 160ms ease; }
+  .beat .jump::before { content: '->'; margin-right: 10px; color: var(--ember); }
+  @media (hover: hover) and (pointer: fine) { .beat .jump:hover { color: var(--bone); } }
+  .cue { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); margin: 0; color: var(--ash); transition: opacity 300ms ease; pointer-events: none; }
+  .goal[data-scrolled] .cue { opacity: 0; }
+  .beat.ask { justify-items: center; }
+  .goal form { width: min(1040px, 84vw); }
+  .goal label { display: block; margin-bottom: 26px; color: var(--ash); font-size: 17px; }
+  .goal .row { display: flex; align-items: flex-end; gap: 22px; border-bottom: 1px solid var(--line); padding-bottom: 16px; transition: border-color 200ms ease; }
+  .goal .row:focus-within { border-color: rgba(255, 233, 168, 0.7); }
+  .goal input {
+    flex: 1; min-width: 0;
+    background: none; border: 0; outline: 0; padding: 0;
+    font-size: clamp(34px, 5.2vw, 76px);
+    font-weight: 300;
+    font-stretch: 108%;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    caret-color: var(--ember);
+  }
+  .goal input::placeholder { color: rgba(244, 238, 230, 0.5); }
+  .go {
+    flex: none;
+    width: 58px; height: 58px; margin-bottom: 6px;
+    display: grid; place-items: center;
+    border-radius: 50%; border: 1px solid var(--line);
+    background: none;
+    transition: transform 160ms var(--ease-out), background-color 200ms ease, border-color 200ms ease;
+  }
+  .go:active { transform: scale(0.95); }
+  .go svg { width: 20px; height: 20px; transition: transform 240ms var(--ease-out); }
+  @media (hover: hover) and (pointer: fine) {
+    .go:hover { background: var(--glow); border-color: var(--glow); color: var(--void); }
+    .go:hover svg { transform: translateX(3px); }
+  }
+  .seeds { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 26px 0 0; padding: 0; list-style: none; }
+  .seeds button { background: none; border: 0; padding: 4px 0; color: var(--ash); transition: color 160ms ease; }
+  .seeds button::before { content: '->'; margin-right: 10px; color: var(--ember); }
+  @media (hover: hover) and (pointer: fine) { .seeds button:hover { color: var(--bone); } }
+
+  .foot { position: absolute; left: 40px; right: 40px; bottom: 30px; margin: 0; display: flex; justify-content: space-between; gap: 24px; pointer-events: none; }
+  .foot a { color: inherit; pointer-events: auto; text-underline-offset: 4px; }
+
+  /* ---------- map view ---------- */
+  .map { position: absolute; inset: 0; pointer-events: none; }
+  .map > * { pointer-events: auto; }
+  .node {
+    position: absolute; left: 0; top: 0;
+    width: var(--d); height: var(--d);
+    margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
+    background: none; border: 0; padding: 0;
+    text-align: left;
+    opacity: 0;
+    transition: opacity 700ms var(--ease-out);
+  }
+  [data-view='map'] .node { opacity: 1; transition-delay: var(--at, 0ms); }
+  /* Each checkpoint is one cell of the honeycomb: same flat-topped shape, sized by its count. */
+  .node .hex { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; transition: transform 200ms var(--ease-out); }
+  .hex path { vector-effect: non-scaling-stroke; }
+  .hex .base { fill: rgba(6, 4, 11, 0.5); }
+  .hex .hot { fill: url(#hot); opacity: 0; transition: opacity 500ms ease; }
+  .hex .edge { fill: none; stroke: rgba(244, 238, 230, 0.55); stroke-width: 1; stroke-linejoin: round; transition: stroke 500ms ease; }
+  .hex .pulse { fill: none; stroke: var(--glow); stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
+  .node[data-have='true'] .hot { opacity: 1; }
+  .node[data-have='true'] .edge { stroke: var(--glow); }
+  .node[data-next='true'] .edge { stroke: var(--glow); stroke-dasharray: 5 4; }
+  .node[data-next='true'] .pulse { animation: ping 2200ms var(--ease-out) infinite; }
+  @keyframes ping { from { transform: scale(1); opacity: 0.75; } to { transform: scale(2); opacity: 0; } }
+  @media (hover: hover) and (pointer: fine) { .node:hover .hex { transform: scale(1.08); } }
+  .node:active .hex { transform: scale(0.96); }
+  .node:focus-visible { outline: 0; }
+  .node:focus-visible .edge { stroke: var(--glow); stroke-width: 2.5; stroke-dasharray: none; }
+
+  .node .tag {
+    position: absolute;
+    left: calc(100% + 16px); top: 50%;
+    width: 230px;
+    transform: translateY(-50%);
+  }
+  .node[data-side='left'] .tag { left: auto; right: calc(100% + 16px); text-align: right; }
+  .node[data-side='below'] .tag { left: 50%; margin-left: -115px; top: calc(100% + 14px); transform: none; text-align: center; }
+  .node[data-side='above'] .tag { left: 50%; margin-left: -115px; top: auto; bottom: calc(100% + 14px); transform: none; text-align: center; }
+  .node .state, .node .when { animation: settle 400ms ease both; }
+  @keyframes settle { from { opacity: 0; } }
+  .node .name { display: block; font-size: 17px; font-weight: 500; font-stretch: 105%; letter-spacing: -0.005em; line-height: 1.2; }
+  .node .count { display: block; margin-top: 5px; color: var(--ash); font-size: 13.5px; }
+  .node .count b { color: var(--bone); font-weight: 600; }
+  .node .state { display: block; margin-top: 7px; color: var(--glow); }
+  .node .when { display: block; margin-top: 4px; font-size: 13px; color: var(--bone); }
+
+  .end .name { font-size: 21px; }
+
+  .strip {
+    position: absolute; left: 40px; bottom: 30px;
+    width: min(500px, 38vw);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+  }
+  [data-view='map'] .strip { opacity: 1; transform: none; transition-delay: 3700ms; }
+  .strip h2, .closest h2 { margin: 0 0 12px; font-weight: 500; color: var(--ash); }
+  .strip ol { margin: 0; padding: 0; list-style: none; }
+  .strip li { display: grid; grid-template-columns: 62px 1fr; gap: 14px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+  .strip li div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .strip li b { font-weight: 600; }
+  .strip li span { color: var(--ash); }
+
+  .closest {
+    position: absolute; right: 40px; bottom: 30px;
+    width: min(300px, 26vw);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+  }
+  [data-view='map'] .closest { opacity: 1; transform: none; transition-delay: 3900ms; }
+  .closest button {
+    width: 100%;
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 8px 0; border: 0; border-top: 1px solid var(--line);
+    background: none; text-align: left; font-size: 13.5px;
+  }
+  .closest button b { font-weight: 600; transition: color 160ms ease; }
+  .closest button span { color: var(--ash); }
+  @media (hover: hover) and (pointer: fine) { .closest button:hover b { color: var(--glow); } }
+
+  /* ---------- people panel ---------- */
+  .panel {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: min(460px, 92vw);
+    padding: 96px 34px 34px;
+    background: var(--panel);
+    backdrop-filter: blur(22px);
+    border-left: 1px solid var(--line);
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 240ms var(--ease-out);
+    z-index: 4;
+  }
+  .panel[data-open='true'] { transform: none; transition: transform 460ms var(--ease-drawer); }
+  .panel h2 { margin: 0 70px 0 0; font-size: 26px; font-weight: 400; font-stretch: 106%; letter-spacing: -0.02em; line-height: 1.15; }
+  .panel .lede { margin: 12px 0 26px; color: var(--ash); font-size: 14px; max-width: 34ch; }
+  .panel .close { position: absolute; top: 102px; right: 34px; background: none; border: 0; padding: 6px 0; color: var(--ash); }
+  .person { padding: 18px 0; border-top: 1px solid var(--line); }
+  .person header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .person h3 { margin: 0; font-size: 17px; font-weight: 600; }
+  .person .who { color: var(--ash); font-size: 13px; }
+  .person .tie { margin: 8px 0 12px; font-size: 14px; color: #f6cfa6; max-width: 38ch; }
+  .person .more { margin: 14px 0 0; color: var(--ash); font-size: 13px; }
+  .pill {
+    padding: 9px 18px;
+    border-radius: 999px; border: 1px solid var(--line);
+    background: none;
+    transition: transform 160ms var(--ease-out), background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+  }
+  .pill:active { transform: scale(0.97); }
+  .pill.hot { background: var(--glow); border-color: var(--glow); color: var(--void); }
+  @media (hover: hover) and (pointer: fine) {
+    .pill:hover { border-color: var(--glow); }
+    .pill.hot:hover { background: #fff5d3; }
+  }
+  .draft { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 260ms var(--ease-out); }
+  .draft[data-open='true'] { grid-template-rows: 1fr; }
+  .draft > div { overflow: hidden; }
+  .draft textarea {
+    width: 100%; min-height: 168px; margin-top: 14px; padding: 14px 16px;
+    border: 1px solid var(--line); border-radius: 12px;
+    background: rgba(244, 238, 230, 0.04);
+    font-size: 14px; line-height: 1.55; resize: vertical;
+    caret-color: var(--ember);
+  }
+  .draft textarea:focus { outline: 0; border-color: rgba(255, 233, 168, 0.6); }
+  .draft .acts { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  .status { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
+  .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--ash); }
+  .status[data-status='accepted'] { color: var(--glow); }
+  .status[data-status='accepted'] i { background: var(--glow); }
+  .status a { color: inherit; text-underline-offset: 4px; }
+
+  /* ---------- alum reply page ---------- */
+  .reply { position: absolute; inset: 0; overflow-y: auto; display: grid; place-items: center; padding: 40px 22px; }
+  .reply article { width: min(400px, 100%); }
+  .reply h1 { margin: 34px 0 10px; font-size: 34px; font-weight: 300; font-stretch: 106%; letter-spacing: -0.03em; line-height: 1.1; text-wrap: balance; }
+  .reply .who { margin: 0 0 28px; color: var(--ash); }
+  .reply dl { margin: 0; }
+  .reply dt { margin: 22px 0 8px; color: var(--ash); }
+  .reply dd { margin: 0; }
+  .reply .tie { color: #f6cfa6; font-size: 16px; }
+  .reply .msg { padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: rgba(9, 6, 15, 0.55); font-size: 14.5px; line-height: 1.6; }
+  .accept {
+    position: relative; overflow: hidden;
+    width: 100%; margin-top: 30px; padding: 20px;
+    border-radius: 999px; border: 0;
+    background: var(--glow); color: var(--void);
+    font-size: 16px; font-weight: 600;
+    transition: transform 160ms var(--ease-out), background-color 300ms ease, color 300ms ease;
+  }
+  .accept:active { transform: scale(0.97); }
+  .accept[disabled] { background: rgba(255, 233, 168, 0.14); color: var(--glow); cursor: default; }
+  .reply .after { margin: 16px 0 0; text-align: center; color: var(--ash); font-size: 13.5px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: 150ms !important; transition-delay: 0ms !important; }
+    .panel, .strip, .closest, .goal { transform: none !important; }
+    .panel:not([data-open='true']) { visibility: hidden; }
+  }
