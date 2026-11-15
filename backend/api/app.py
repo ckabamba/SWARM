@@ -270,6 +270,27 @@ def create_app(url=None):
     def people():
         return {'items': [], 'status': 'not_available', 'message': 'No authorized alumni-history dataset is connected.'}
 
+    def event_places(urls):
+        """Campus place for each event url, from backend/events/places.py's event_place links.
+
+        Same fields as events_with_places(). Returns {} when the event_place migration has
+        not been applied, so the events list keeps working without place data.
+        """
+        if not urls:
+            return {}
+        try:
+            with engine.connect() as conn:
+                rows = conn.execute(text(
+                    'SELECT ep.event_url, ep.kind, ep.room, p.id, p.name, p.latitude, p.longitude '
+                    'FROM event_place ep LEFT JOIN campus_place p ON p.id = ep.place_id '
+                    'WHERE ep.event_url = ANY(:urls)'), {'urls': list(urls)}).all()
+        except SQLAlchemyError:
+            return {}
+        return {url: {'location_kind': kind, 'room': room,
+                      'place': None if place_id is None else
+                      {'id': place_id, 'name': name, 'latitude': latitude, 'longitude': longitude}}
+                for url, kind, room, place_id, name, latitude, longitude in rows}
+
     @app.get('/api/events')
     def public_events():
         now = datetime.now(timezone.utc)
@@ -279,7 +300,10 @@ def create_app(url=None):
                 .where(events.c.fetched_at == feeds.c.fetched_at, events.c.ends_at >= now)
                 .order_by(case((events.c.starts_at >= now, 0), else_=1), events.c.starts_at, events.c.url).limit(12)).mappings().all()
             fetched = min((row['fetched_at'] for row in snapshots), default=None)
-            return {'items': [dict(row) for row in rows], 'source': 'GT Engage and Georgia Tech Campus Calendar',
+            places = event_places([row['url'] for row in rows])
+            unlinked = {'location_kind': 'unknown', 'room': None, 'place': None}
+            return {'items': [dict(row) | places.get(row['url'], unlinked) for row in rows],
+                    'source': 'GT Engage and Georgia Tech Campus Calendar',
                     'source_url': 'https://gatech.campuslabs.com/engage/events', 'fetched_at': fetched,
                     'sources': [dict(row) for row in snapshots],
                     'stale': len(snapshots) < 2 or fetched is None or now - fetched > timedelta(hours=24)}
