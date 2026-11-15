@@ -1,81 +1,50 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Platform, StatusBar } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { THEME } from '../../theme/tokens';
 
 interface TopBarProps {
-  currentTab: 'home' | 'map';
-  onSelectTab: (tab: 'home' | 'map') => void;
   onHomePress?: () => void;
+  onOpenAlumDemo?: () => void;
 }
 
-export default function TopBar({
-  currentTab,
-  onSelectTab,
-  onHomePress,
-}: TopBarProps) {
-  const handleTabPress = (tab: 'home' | 'map') => {
-    if (tab !== currentTab) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      onSelectTab(tab);
-    }
-  };
-
+export default function TopBar({ onHomePress, onOpenAlumDemo }: TopBarProps) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Left: Glowing WarmPath title */}
-        <TouchableOpacity
-          style={styles.brandRow}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            if (onHomePress) onHomePress();
-            else onSelectTab('home');
-          }}
-          activeOpacity={0.8}
-        >
-          <View style={styles.glowDot} />
-          <Text style={styles.brandTitle}>WarmPath</Text>
-        </TouchableOpacity>
-
-        {/* Right: [ Home | Map ] Segmented Pill */}
-        <View style={styles.switchPill}>
+        {/* Left: Glowing WarmPath title + subtle Demo Switch badge */}
+        <View style={styles.leftGroup}>
           <TouchableOpacity
-            style={[
-              styles.switchSegment,
-              currentTab === 'home' && styles.switchSegmentActive,
-            ]}
-            onPress={() => handleTabPress('home')}
+            style={styles.brandRow}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              if (onHomePress) onHomePress();
+            }}
             activeOpacity={0.8}
           >
-            <Text
-              style={[
-                styles.switchText,
-                currentTab === 'home' && styles.switchTextActive,
-              ]}
-            >
-              HOME
-            </Text>
+            <View style={styles.glowDot} />
+            <Text style={styles.brandTitle}>WarmPath</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.switchSegment,
-              currentTab === 'map' && styles.switchSegmentActive,
-            ]}
-            onPress={() => handleTabPress('map')}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={[
-                styles.switchText,
-                currentTab === 'map' && styles.switchTextActive,
-              ]}
+          {/* Discreet Demo Switch out of the way (top-left corner, avoiding top-right Expo Go overlay) */}
+          {onOpenAlumDemo && (
+            <TouchableOpacity
+              style={styles.demoBadge}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onOpenAlumDemo();
+              }}
+              activeOpacity={0.7}
             >
-              MAP
-            </Text>
-          </TouchableOpacity>
+              <Ionicons name="swap-horizontal" size={11} color={THEME.colors.gold} />
+              <Text style={styles.demoBadgeText}>ALUM DEMO</Text>
+            </TouchableOpacity>
+          )}
         </View>
+
+        {/* Right side left clear to avoid Expo Go floating settings button */}
+        <View style={styles.rightSpacer} />
       </View>
     </SafeAreaView>
   );
@@ -96,6 +65,11 @@ const styles = StyleSheet.create({
     borderBottomColor: THEME.colors.line,
     backgroundColor: THEME.colors.void,
   },
+  leftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -114,30 +88,25 @@ const styles = StyleSheet.create({
     color: THEME.colors.bone,
     letterSpacing: -0.2,
   },
-  switchPill: {
+  demoBadge: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(9, 6, 15, 0.6)',
-    borderRadius: THEME.rounded.pill,
-    padding: 3,
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(234, 170, 0, 0.12)',
     borderWidth: 1,
-    borderColor: THEME.colors.line,
-  },
-  switchSegment: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    borderColor: 'rgba(234, 170, 0, 0.35)',
     borderRadius: THEME.rounded.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
   },
-  switchSegmentActive: {
-    backgroundColor: THEME.colors.glow,
-  },
-  switchText: {
+  demoBadgeText: {
     ...THEME.typography.cap,
-    fontSize: 10,
-    color: THEME.colors.ash,
-    letterSpacing: 1.4,
-  },
-  switchTextActive: {
-    color: THEME.colors.void,
+    fontSize: 8.5,
+    color: THEME.colors.gold,
+    letterSpacing: 1,
     fontWeight: '700',
+  },
+  rightSpacer: {
+    width: 44, // preserves clear area for Expo Go top-right menu
   },
 });

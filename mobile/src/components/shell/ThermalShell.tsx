@@ -4,18 +4,32 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ThermalHexBackground from './ThermalHexBackground';
 import TopBar from './TopBar';
 import { THEME } from '../../theme/tokens';
+import type { TabId } from './BottomTabBar';
 
 interface ThermalShellProps {
-  currentTab: 'home' | 'map';
-  onSelectTab: (tab: 'home' | 'map') => void;
+  currentTab: TabId;
+  onHomePress?: () => void;
+  onOpenAlumDemo?: () => void;
   panX?: number;
   lowBatteryMode?: boolean;
   children: React.ReactNode;
 }
 
+function getVeilStyle(tab: TabId) {
+  switch (tab) {
+    case 'map':
+      return { backgroundColor: 'rgba(6, 4, 11, 0.45)' }; // Lightest — strands glow
+    case 'home':
+      return { backgroundColor: 'rgba(6, 4, 11, 0.55)' }; // Lighter — hex lattice visible
+    default:
+      return { backgroundColor: 'rgba(6, 4, 11, 0.68)' }; // Medium — buzz, feed
+  }
+}
+
 export default function ThermalShell({
   currentTab,
-  onSelectTab,
+  onHomePress,
+  onOpenAlumDemo,
   panX = 0,
   lowBatteryMode = false,
   children,
@@ -27,8 +41,8 @@ export default function ThermalShell({
         <LinearGradient
           colors={[
             THEME.colors.fogNavy,
-            'rgba(238, 155, 0, 0.18)', // Faint amber
-            'rgba(255, 138, 42, 0.14)', // Faint orange
+            'rgba(238, 155, 0, 0.18)',
+            'rgba(255, 138, 42, 0.14)',
             THEME.colors.void,
           ]}
           locations={[0, 0.25, 0.6, 1]}
@@ -39,17 +53,14 @@ export default function ThermalShell({
       {/* Layer 1 — Persistent Hex Lattice & Thermal Dust */}
       <ThermalHexBackground panX={panX} lowBatteryMode={lowBatteryMode} />
 
-      {/* Layer 2 — Adaptive Veil */}
+      {/* Layer 2 — Adaptive Veil (honeycomb lattice visible) */}
       <View
-        style={[
-          styles.adaptiveVeil,
-          currentTab === 'home' ? styles.veilHome : styles.veilMap,
-        ]}
+        style={[styles.adaptiveVeil, getVeilStyle(currentTab)]}
         pointerEvents="none"
       />
 
       {/* Layer 3 — Top Navigation Bar */}
-      <TopBar currentTab={currentTab} onSelectTab={onSelectTab} />
+      <TopBar onHomePress={onHomePress} onOpenAlumDemo={onOpenAlumDemo} />
 
       {/* Layer 4 — Active Screen Content */}
       <View style={styles.content}>{children}</View>
@@ -68,12 +79,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  veilHome: {
-    backgroundColor: 'rgba(6, 4, 11, 0.84)', // Darker scrim for clean readability of frosted cards
-  },
-  veilMap: {
-    backgroundColor: 'rgba(6, 4, 11, 0.45)', // Lighter scrim so thermal strands glow through
   },
   content: {
     flex: 1,
