@@ -73,6 +73,15 @@ export default function HexNode({
 
         {/* SVG Hexagon Node */}
         <Svg width={diameter} height={diameter}>
+          {have && (
+            <Path
+              d={hexPath}
+              fill="none"
+              stroke={THEME.colors.gold}
+              strokeWidth={10}
+              strokeOpacity={0.45}
+            />
+          )}
           <Path
             d={hexPath}
             fill={

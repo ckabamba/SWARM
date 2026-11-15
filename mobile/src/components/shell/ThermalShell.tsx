@@ -9,7 +9,8 @@ import type { TabId } from './BottomTabBar';
 interface ThermalShellProps {
   currentTab: TabId;
   onHomePress?: () => void;
-  onOpenAlumDemo?: () => void;
+  isAlumDemo?: boolean;
+  onToggleDemo?: () => void;
   panX?: number;
   lowBatteryMode?: boolean;
   children: React.ReactNode;
@@ -29,7 +30,8 @@ function getVeilStyle(tab: TabId) {
 export default function ThermalShell({
   currentTab,
   onHomePress,
-  onOpenAlumDemo,
+  isAlumDemo = false,
+  onToggleDemo,
   panX = 0,
   lowBatteryMode = false,
   children,
@@ -60,7 +62,11 @@ export default function ThermalShell({
       />
 
       {/* Layer 3 — Top Navigation Bar */}
-      <TopBar onHomePress={onHomePress} onOpenAlumDemo={onOpenAlumDemo} />
+      <TopBar
+        onHomePress={onHomePress}
+        isAlumDemo={isAlumDemo}
+        onToggleDemo={onToggleDemo}
+      />
 
       {/* Layer 4 — Active Screen Content */}
       <View style={styles.content}>{children}</View>

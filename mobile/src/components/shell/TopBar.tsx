@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -6,14 +6,19 @@ import { THEME } from '../../theme/tokens';
 
 interface TopBarProps {
   onHomePress?: () => void;
-  onOpenAlumDemo?: () => void;
+  isAlumDemo?: boolean;
+  onToggleDemo?: () => void;
 }
 
-export default function TopBar({ onHomePress, onOpenAlumDemo }: TopBarProps) {
+export default function TopBar({
+  onHomePress,
+  isAlumDemo = false,
+  onToggleDemo,
+}: TopBarProps) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Left: Glowing WarmPath title + subtle Demo Switch badge */}
+        {/* Left: Glowing WarmPath title and account actions */}
         <View style={styles.leftGroup}>
           <TouchableOpacity
             style={styles.brandRow}
@@ -27,18 +32,21 @@ export default function TopBar({ onHomePress, onOpenAlumDemo }: TopBarProps) {
             <Text style={styles.brandTitle}>WarmPath</Text>
           </TouchableOpacity>
 
-          {/* Discreet Demo Switch out of the way (top-left corner, avoiding top-right Expo Go overlay) */}
-          {onOpenAlumDemo && (
+          {onToggleDemo && (
             <TouchableOpacity
               style={styles.demoBadge}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onOpenAlumDemo();
+                onToggleDemo();
               }}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={isAlumDemo ? 'Switch to student demo' : 'Switch to alumni demo'}
             >
               <Ionicons name="swap-horizontal" size={11} color={THEME.colors.gold} />
-              <Text style={styles.demoBadgeText}>ALUM DEMO</Text>
+              <Text style={styles.demoBadgeText}>
+                {isAlumDemo ? 'STUDENT DEMO' : 'ALUM DEMO'}
+              </Text>
             </TouchableOpacity>
           )}
         </View>

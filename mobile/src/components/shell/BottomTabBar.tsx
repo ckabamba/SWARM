@@ -4,11 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { THEME } from '../../theme/tokens';
 
-export type TabId = 'home' | 'map' | 'buzz' | 'feed';
+// 'map' is the alumni path view (labeled Paths); 'geo' is the geographic maps.
+export type TabId = 'home' | 'map' | 'geo' | 'buzz' | 'feed';
 
 interface BottomTabBarProps {
   currentTab: TabId;
   onSelectTab: (tab: TabId) => void;
+  showMap?: boolean;
 }
 
 interface TabConfig {
@@ -27,9 +29,9 @@ const TABS: TabConfig[] = [
   },
   {
     id: 'map',
-    label: 'Map',
-    iconActive: 'map',
-    iconInactive: 'map-outline',
+    label: 'Paths',
+    iconActive: 'git-network',
+    iconInactive: 'git-network-outline',
   },
   {
     id: 'buzz',
@@ -43,17 +45,29 @@ const TABS: TabConfig[] = [
     iconActive: 'people',
     iconInactive: 'people-outline',
   },
+  {
+    id: 'geo',
+    label: 'Maps',
+    iconActive: 'map',
+    iconInactive: 'map-outline',
+  },
 ];
 
-export default function BottomTabBar({ currentTab, onSelectTab }: BottomTabBarProps) {
+export default function BottomTabBar({
+  currentTab,
+  onSelectTab,
+  showMap = true,
+}: BottomTabBarProps) {
   const handlePress = (tab: TabId) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onSelectTab(tab);
   };
 
+  const visibleTabs = showMap ? TABS : TABS.filter((tab) => tab.id !== 'map');
+
   return (
     <View style={styles.container}>
-      {TABS.map((tab) => {
+      {visibleTabs.map((tab) => {
         const isActive = currentTab === tab.id;
 
         return (

@@ -27,6 +27,7 @@ export default function ConstellationStage({
   onPanChange,
 }: ConstellationStageProps) {
   const scrollRef = useRef<any>(null);
+  const hasUserScrolled = useRef(false);
 
   // Generate the 14 thermal SVG strands
   const strands = useMemo(() => {
@@ -44,18 +45,26 @@ export default function ConstellationStage({
     }));
   }, [stops]);
 
-  // Auto-scroll on mount to center the NEXT stop
-  useEffect(() => {
-    const nextStop = stopPositions.find((s) => s.next);
-    const targetX = nextStop ? nextStop.pos.x : youPos.x;
-    const scrollTarget = Math.max(0, targetX - SCREEN_W / 2);
+  const initialScrollTarget = useRef(0);
+  const nextStop = stopPositions.find((s) => s.next);
+  initialScrollTarget.current = Math.max(
+    0,
+    (nextStop ? nextStop.pos.x : youPos.x) - SCREEN_W / 2,
+  );
 
+  // Center the next stop once; later store updates and scroll renders must not reset the map.
+  useEffect(() => {
     const timer = setTimeout(() => {
-      scrollRef.current?.scrollTo({ x: scrollTarget, animated: true });
+      if (!hasUserScrolled.current) {
+        scrollRef.current?.scrollTo({
+          x: initialScrollTarget.current,
+          animated: true,
+        });
+      }
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [stopPositions, youPos]);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -64,6 +73,9 @@ export default function ConstellationStage({
         horizontal
         showsHorizontalScrollIndicator={false}
         decelerationRate="fast"
+        onScrollBeginDrag={() => {
+          hasUserScrolled.current = true;
+        }}
         onScroll={(e) => {
           if (onPanChange) onPanChange(e.nativeEvent.contentOffset.x);
         }}
