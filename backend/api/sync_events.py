@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import insert
 from backend.manage import database_url
 from backend.api.resource_tables import verify_schema, events, feeds
+from backend.events.places import link_events
 
 FEED_URL = 'https://calendar.gatech.edu/event-calendar-week.xml'
 ENGAGE_URL = 'https://gatech.campuslabs.com/engage/api/discovery/event/search'
@@ -46,6 +47,21 @@ def calendar_description(markup):
     return plain_text(body)
 
 
+# The "Location" label sits on its own line in the feed, with the place on the next
+# line. Matching the whole line keeps "Location URL" and body text from matching.
+_CALENDAR_LOCATION = re.compile(r'^[ \t]*Location[ \t]*\r?\n[ \t]*(\S[^\n]*)$', re.MULTILINE)
+
+
+def calendar_location(markup):
+    """The free-text place from a calendar listing's Location field, or None.
+
+    Only the line after the label is taken: the contact block that can follow it
+    holds names and email addresses, which are not imported.
+    """
+    found = _CALENDAR_LOCATION.search(html.unescape(markup).partition('Event time')[2])
+    return plain_text(found.group(1), 500) if found else None
+
+
 def parse_feed(payload, fetched_at):
     if len(payload) > 4_000_000 or b'<!DOCTYPE' in payload.upper() or b'<!ENTITY' in payload.upper():
         raise ValueError('Unsupported or oversized calendar feed.')
@@ -75,7 +91,7 @@ def parse_feed(payload, fetched_at):
         if start.tzinfo is None or end.tzinfo is None or end < start:
             continue
         rows[url] = dict(url=url, title=title[:500], starts_at=start, ends_at=end, fetched_at=fetched_at, source='gt-calendar',
-                        description=calendar_description(markup))
+                        location=calendar_location(markup), description=calendar_description(markup))
     if root.findall('./channel/item') and not rows:
         raise ValueError('No event timestamps could be parsed; keeping previous import.')
     return list(rows.values())
@@ -141,6 +157,17 @@ def sync(url=None):
         except Exception as exc:
             failures.append(source)
             print(f'{source}: refresh failed ({type(exc).__name__}); previous snapshot retained.')
+    # Link every stored event to a campus place, so the campus map and event details
+    # see new imports without a separate command. Imported events are kept either way.
+    try:
+        with engine.begin() as conn:
+            counts = link_events(conn)
+        print(f"Event places: {counts['campus']} on campus, {counts['online']} online, "
+              f"{counts['unknown']} with an unknown location.")
+    except Exception as exc:
+        failures.append('places')
+        print(f'places: linking failed ({type(exc).__name__}); run python -m backend.manage migrate, '
+              'then python -m backend.events.places.')
     engine.dispose()
     if failures:
         raise SystemExit(1)
