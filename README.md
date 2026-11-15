@@ -36,17 +36,19 @@ Generated profiles remain useful for development and demos. The service will sup
 
 ## Proposed stack
 
-Hosting is decided: Google Cloud, with Firebase Hosting for the web frontend and Cloud Run for the backend in a shared project, as recorded in [issue #3](https://github.com/ckabamba/SWARM/issues/3). The remaining choices below are proposals, not an implemented or finalized architecture. Database hosting depends on the database decision; billing ownership, trial eligibility, and current costs must be verified before provisioning.
+Hosting is decided: AWS, with PostgreSQL as the database, hosted on Amazon RDS for PostgreSQL. This replaces the earlier Google Cloud decision recorded in [issue #3](https://github.com/ckabamba/SWARM/issues/3). Local development uses the same PostgreSQL major version as RDS.
+
+Within AWS, the working proposal is AWS Amplify Hosting for the web frontend and a containerized FastAPI backend on Amazon ECS Express Mode (Fargate), with the image stored in Amazon ECR. AWS App Runner is not an option because it closed to new customers on April 30, 2026. These service and framework choices stay proposals until the owning roles confirm them in issue #3; the remaining rows below are likewise proposals, not an implemented or finalized architecture. Billing ownership, free-plan credit eligibility, and current costs must be verified before provisioning; the backend's load balancer and the database are billed while they run, even when idle.
 
 | Layer | Working proposal | Still to decide |
 | --- | --- | --- |
-| Web | React; React Flow for the path graph | Navigation and integration across the three experiences |
-| Backend | FastAPI, with Django as an existing alternative | Final framework and shared service interfaces |
-| Database | Postgres | Hosting and schema for the expanded service |
+| Web | React, served as a static build from AWS Amplify Hosting; React Flow for the path graph | Navigation and integration across the three experiences |
+| Backend | FastAPI in a container on Amazon ECS Express Mode (Fargate) | Shared service interfaces; confirmation of FastAPI over Django by role 2 |
+| Database | PostgreSQL on Amazon RDS (decided); PostGIS for campus places and alumni cities | Schema for the expanded service; whether pgvector is needed for resource matching (#14) |
 | AI and voice | Provider-backed language and speech capabilities | Provider, models, speech behavior, and fallbacks |
 | Geographic maps | Campus and alumni-city views | Map provider and library |
 | Mobile | All three experiences using the shared backend | Native, cross-platform, or web-based approach |
-| Deployment | Google Cloud: Cloud Run backend and Firebase Hosting web frontend (decided) | Shared project/environment setup; Cloud SQL if Postgres is chosen; mobile distribution after its delivery decision |
+| Deployment | AWS (decided): Amplify Hosting for the web frontend, ECS Express Mode (Fargate) with ECR for the backend, RDS for PostgreSQL for the database, and AWS Secrets Manager for credentials | Confirmation of these services; shared account and billing owner, region, IAM access, and environment setup; mobile distribution after its delivery decision |
 
 ## Build order
 
