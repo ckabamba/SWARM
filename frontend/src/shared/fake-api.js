@@ -1,3 +1,4 @@
+import demo from './demo-alumni.json'
 /*
  * WarmPath prototype data. Everything here is invented: no real people, and the
  * events are placeholders, not real listings.
@@ -11,9 +12,9 @@
  * Copied from prototypes/shared/fake-api.js as an ES module. Development fixture only.
  */
 
-  var GOAL = { id: 12, label: 'SWE internship at NVIDIA', achievers: 14 }
-  var ALUMNI_TOTAL = 300
-  var ASKS_KEY = 'warmpath.prototype.asks'
+  var GOAL = { ...demo.goals[0], achievers: demo.alumni.filter(a => a.goal_id === demo.goals[0].id).length }
+  var ALUMNI_TOTAL = demo.alumni.length
+  var ASKS_KEY = 'warmpath.synthetic1000.asks'
 
   var STUDENTS = [
     { id: 1, name: 'Maya Chen', major: 'CompE', school_year: 2 },
@@ -104,18 +105,7 @@
     },
   ]
 
-  // Eight named achievers. The other six of the 14 stay unnamed in the prototype.
-  var ALUMNI = [
-    // did: activity id -> the school year they did it in
-    { id: 87, name: 'Priya Raman', major: 'CompE', grad_year: 2023, did: { 3: 2, 4: 3, 7: 3 } },
-    { id: 64, name: 'Marcus Oyelaran', major: 'CompE', grad_year: 2022, did: { 3: 2, 5: 2, 9: 3 } },
-    { id: 140, name: 'Aisha Bello', major: 'CompE', grad_year: 2024, did: { 3: 2, 4: 3 } },
-    { id: 112, name: 'Hannah Lindqvist', major: 'CS', grad_year: 2024, did: { 3: 2, 7: 3 } },
-    { id: 95, name: 'Sofia Marin', major: 'CS', grad_year: 2023, did: { 5: 1, 3: 2, 4: 3 } },
-    { id: 131, name: 'Jordan Kim', major: 'CS', grad_year: 2024, did: { 5: 1, 4: 3, 7: 3 } },
-    { id: 77, name: 'Wei-Lin Tao', major: 'CS', grad_year: 2022, did: { 5: 1, 7: 3, 9: 3 } },
-    { id: 58, name: 'Tobias Engel', major: 'EE', grad_year: 2021, did: { 3: 2, 7: 3, 9: 3 } },
-  ]
+  var ALUMNI = demo.alumni
 
   var ORDINAL = ['', 'first', 'second', 'third', 'fourth']
 
@@ -170,7 +160,7 @@
     var line = tie.replace(/^You are both/, 'We are both').replace(/^You both/, 'We both').replace(', your next stop', ', which looks like my next stop')
     return (
       'Hi ' + first + ', I am a ' + ORDINAL[student.school_year] + '-year ' + student.major +
-      ' student at Georgia Tech. ' + line + '. I am working toward a ' + GOAL.label +
+      ' student at Georgia Tech. ' + line + '. I am exploring ' + (demo.goals.find(g=>g.id===alum.goal_id)?.label || GOAL.label) +
       (next ? ' and deciding whether ' + next.name + ' should come next' : '') +
       '. Would you have 15 minutes for a call about how you approached it?'
     )
@@ -217,7 +207,7 @@
   var api = {
     TYPE_LABEL: TYPE_LABEL,
     ALUMNI_TOTAL: ALUMNI_TOTAL,
-    SEEDED_GOALS: ['SWE internship at NVIDIA', 'get into robotics research', 'launch a startup', 'grad school for machine learning'],
+    SEEDED_GOALS: ['Software engineer at NVIDIA', 'Software engineer at Google', 'Software engineer at Microsoft', 'Software engineer at Apple'],
 
     /** GET /students */
     getStudents: function () {
@@ -228,29 +218,28 @@
     postPath: function (body) {
       var student = studentById(body.student_id)
       var have = HAVE[student.id] || []
-      var next = nextStopFor(student.id)
-      var stops = STOPS.map(function (s) {
-        var stop = clone(s)
-        stop.have = have.indexOf(s.activity_id) !== -1
-        stop.next = !!next && next.activity_id === s.activity_id
-        return stop
-      })
-      var events = stops
-        .filter(function (s) { return s.event })
-        .map(function (s) {
-          var event = clone(s.event)
-          event.activity_id = s.activity_id
-          return event
-        })
-        .sort(function (a, b) { return a.starts_at < b.starts_at ? -1 : 1 })
-      return { goal: clone(GOAL), student: clone(student), stops: stops, events: events }
+      const matches = demo.goals.filter(g => (body.goal || '').toLowerCase().includes(g.company.toLowerCase()))
+      const selected = matches.length === 1 ? matches[0] : null
+      if (!selected) return { goal:{id:null,label:body.goal,achievers:0}, student:clone(student), stops:[],events:[],fixture_evidence:true,reason:'no_match' }
+      const achievers = ALUMNI.filter(a => a.goal_id === selected.id)
+      const stops = STOPS.map(s => {
+        const count = achievers.filter(a => a.did[s.activity_id]).length
+        const base = ALUMNI.filter(a => a.did[s.activity_id]).length
+        const years = achievers.filter(a=>a.did[s.activity_id]).map(a=>a.did[s.activity_id]).sort((a,b)=>a-b)
+        return {...clone(s),event:null,achievers:count,lift:base ? (count/achievers.length)/(base/ALUMNI_TOTAL) : 0,
+          typical_year:years[Math.floor(years.length/2)] ?? null,have:have.includes(s.activity_id),next:false}
+      }).filter(s=>s.achievers>=3 && s.lift>=1.5).sort((a,b)=>b.lift-a.lift)
+      const next = stops.find(s=>!s.have)
+      if(next) next.next=true
+      return {goal:{...selected,achievers:achievers.length},student:clone(student),stops,events:[],fixture_evidence:true,
+        reason:stops.length ? null : 'no_stop_meets_threshold'}
     },
 
     /** GET /people?goal_id&student_id&activity_id  (leave out activity_id for the goal itself) */
     getPeople: function (query) {
       var student = studentById(query.student_id)
       return ALUMNI
-        .filter(function (a) { return !query.activity_id || a.did[query.activity_id] })
+        .filter(function (a) { return a.goal_id === Number(query.goal_id) && (!query.activity_id || a.did[query.activity_id]) })
         .map(function (a) {
           var r = rank(student, a)
           return {
@@ -258,6 +247,8 @@
             name: a.name,
             major: a.major,
             grad_year: a.grad_year,
+            company: a.company,
+            is_fixture: true,
             shared_tie: r.tie,
             score: r.score,
             draft: draftFor(student, a, r.tie),

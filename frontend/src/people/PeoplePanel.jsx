@@ -35,7 +35,7 @@ export function PeoplePanel({ open, path, activityId, onClose }) {
           <section className="person" key={person.id}>
             <header>
               <h3>{person.name}</h3>
-              <span className="who">{person.major} ’{String(person.grad_year).slice(2)}</span>
+              <span className="who">{person.company} ? {person.major} ’{String(person.grad_year).slice(2)}</span>
             </header>
             <p className="tie">{person.shared_tie}</p>
             {ask ? (

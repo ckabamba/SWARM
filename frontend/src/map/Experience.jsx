@@ -20,9 +20,9 @@ export function Experience({ active = true, students, studentId, onStudent, live
   const [goalText, setGoalText] = useState('')
   const [panel, setPanel] = useState(null)           // activity id, 'goal', or null
   const viewport = useViewport()
-  const fixturePath = useMemo(() => live ? null : api.postPath({ goal: goalText || api.SEEDED_GOALS[0], student_id: studentId }), [studentId, view, !!live])
+  const fixturePath = useMemo(() => live ? null : api.postPath({ goal: goalText || api.SEEDED_GOALS[0], student_id: studentId }), [studentId, view, goalText, !!live])
   const path = live ? (live.path || { student: {name:'You'}, goal:{label:'',achievers:0}, stops:[], events:[] }) : fixturePath
-  const spots = useMemo(() => live ? spotsFor(path.stops) : SPOTS, [path.stops, !!live])
+  const spots = useMemo(() => spotsFor(path.stops), [path.stops, !!live])
   useEffect(() => { if (live) { setView(live.path ? 'map' : 'goal'); setPanel(null) } }, [live?.path])
   const closest = live ? [] : api.getPeople({ goal_id: path.goal.id, student_id: studentId }).slice(0, 3)
 
@@ -37,7 +37,7 @@ export function Experience({ active = true, students, studentId, onStudent, live
     return () => window.removeEventListener('keydown', key)
   }, [])
 
-  const submit = (e) => { e.preventDefault(); if (live) live.submit(); else setView('map') }
+  const submit = (e) => { e.preventDefault(); if (live) live.submit(); else if (fixturePath.reason !== 'no_match') setView('map') }
   const landing = useRef(null), goalInput = useRef(null), scroll = useRef(0)
   const onScroll = () => {
     const el = landing.current
@@ -82,7 +82,7 @@ export function Experience({ active = true, students, studentId, onStudent, live
       <div className="swarm" aria-hidden="true">
         <Canvas orthographic dpr={[1, 2]} gl={{ alpha: false, antialias: false }} camera={{ position: [0, 0, 10], near: 0.1, far: 100 }}>
           <color attach="background" args={['#000000']} />
-          <Swarm key={live ? `${path.goal.id || 'empty'}:${path.stops.length}` : 'demo'} mode={view} viewport={viewport} stops={path.stops} spots={spots} aggregate={!!live}/>
+          <Swarm key={`${path.goal.id || 'empty'}:${path.stops.length}`} mode={view} viewport={viewport} stops={path.stops} spots={spots} aggregate={true}/>
         </Canvas>
       </div>
 
@@ -111,6 +111,7 @@ export function Experience({ active = true, students, studentId, onStudent, live
                     <li key={g}><button type="button" onClick={() => setGoalText(g)}>{g}</button></li>
                   ))}
                 </ul>
+                {!live && goalText && fixturePath.reason === 'no_match' && <p role="status">Choose one company, such as NVIDIA, Google, Microsoft or Apple. This demo has synthetic histories for 25 companies.</p>}
                 {live?.busy && <p role="status">Finding your path...</p>}
                 {live?.error && <p role="alert">{live.error}</p>}
                 {live?.match?.status === 'no_match' && <p role="status">No shared alumni goal matches yet. Try another goal or <a href="/thermal/">browse campus resources</a>.</p>}
@@ -121,7 +122,7 @@ export function Experience({ active = true, students, studentId, onStudent, live
           </div>
           <p className="cue cap">Scroll</p>
           <p className="foot cap quiet">
-            <span>{live ? "Shared histories, not verified outcomes" : `Each point is one of ${api.ALUMNI_TOTAL} alumni`}</span>
+            <span>{live ? "Shared histories, not verified outcomes" : `${api.ALUMNI_TOTAL} synthetic alumni ? Invented histories`}</span>
             <span>{live ? "WarmPath" : "Seeded demo data"} · Honeycomb model by <a href="https://poly.pizza/m/6Mqdrv1n3Oo" target="_blank" rel="noreferrer">Poly by Google</a>, CC BY 3.0</span>
           </p>
         </section>
@@ -146,6 +147,7 @@ export function Experience({ active = true, students, studentId, onStudent, live
           </button>
 
           <div className="strip">
+            {!live && <p className="cap">Synthetic demo ? 1,000 invented alumni</p>}
             <h2 className="cap">{live ? "Your path" : "This week on your path"}</h2>
             {live && <><button className="pill" onClick={() => { setView("goal"); setPanel(null) }}>Change goal</button><p className="quiet">{path.reason === "not_enough_achievers" ? "At least three shared alumni histories are needed to show stops." : path.reason ? "No earlier activity meets the evidence thresholds." : "Lines show aggregate associations, not individual alumni routes."}</p></>}
             <ol>
