@@ -15,8 +15,8 @@ import { DATA_SOURCE, load } from '../shared/data-source.js'
  *
  * In api mode (see shared/data-source.js) the feed comes from GET /api/posts and the events
  * from GET /api/events, adapted to the shapes above in this file. If either call fails, that
- * list falls back to its fixture. Clubs, the composer and the signed-in profile stay on
- * fixtures until the backend has endpoints the page can use for them.
+ * list falls back to its fixture. A signed-in account (shared/account.js) posts through
+ * POST /api/posts. Clubs stay on fixtures: the backend has campus resources, not clubs.
  */
 const PATH = fake.postPath({ goal: fake.SEEDED_GOALS[0], student_id: 1 })
 
@@ -65,6 +65,11 @@ const SEED_POSTS = [
   { id: 'post:fixture-devon-2', authorId: 'person:2', createdAt: '2026-11-13T15:20:00-05:00', text: 'I made a short checklist for my first robotics build: test one thing, write down what changed, and ask for another set of eyes when I get stuck.', linkedRecordId: 'club:5' },
   { id: 'post:fixture-maya-2', authorId: 'person:1', createdAt: '2026-11-12T12:05:00-05:00', text: 'A good campus event for me is one where I leave with a new question to try. I’m adding this week’s demo night to my calendar.', linkedRecordId: 'event:41' },
 ]
+
+/* What a new post can link to, as { value, label } for the composer's menu. */
+const FIXTURE_LINKS = [...EVENTS, ...CLUBS].map((record) => ({ value: record.id, label: `${record.type === 'event' ? 'Event' : 'Club'}: ${record.title}` }))
+/* For the backend a link is a kind and a key. The menu carries both in one value: "event|<url>" or "resource|<id>". */
+const eventLinks = (events) => events.filter((event) => event.link).map((event) => ({ value: `event|${event.link}`, label: `Event: ${event.title}` }))
 
 const FIXTURE_NOTE = 'Demo data. The profiles, posts and events here are invented, and the events are not real listings.'
 
@@ -141,8 +146,8 @@ function adaptPost(post) {
 
 /* In api mode the lists start empty and `loading`, so fixture people never flash in a feed of real posts. */
 let state = DATA_SOURCE === 'api'
-  ? { posts: [], events: [], loading: true, note: '' }
-  : { posts: SEED_POSTS, events: EVENTS, loading: false, note: FIXTURE_NOTE }
+  ? { posts: [], events: [], links: [], loading: true, note: '' }
+  : { posts: SEED_POSTS, events: EVENTS, links: FIXTURE_LINKS, loading: false, note: FIXTURE_NOTE }
 const listeners = new Set()
 
 function set(next) {
@@ -154,7 +159,7 @@ function noteFor(postsSource, eventsSource) {
   if (postsSource === 'fixture' && eventsSource === 'fixture') return FIXTURE_NOTE
   const posts = postsSource === 'api' ? 'Posts are from WarmPath accounts with a public profile.' : 'The posts here are invented demo data.'
   const events = eventsSource === 'api' ? 'Events are public Georgia Tech listings; confirm details at the source.' : 'The events here are invented, not real listings.'
-  return `${posts} ${events} Clubs and your own profile are still demo data.`
+  return `${posts} ${events} Clubs are still demo data.`
 }
 
 let started = false
@@ -168,11 +173,59 @@ export function loadCommunity() {
   ]).then(([posts, events]) => {
     // Keep anything written in the composer while the request was in flight.
     const written = state.posts.filter(isSessionPost)
-    set({ posts: [...written, ...posts.data], events: events.data, loading: false, note: noteFor(posts.source, events.source) })
+    // With real events a post links to real records; on fixtures it links to the fixture ones.
+    const links = events.source === 'api' ? [...eventLinks(events.data), ...resourceLinks] : FIXTURE_LINKS
+    set({ posts: [...written, ...posts.data], events: events.data, links, loading: false, note: noteFor(posts.source, events.source), live: posts.source === 'api' })
   })
 }
 
-/* { posts, events, loading, note } for the page. `note` is the line under the stream that says where the data is from. */
+/* Read the feed again, for example after your own name changes. Keeps the current lists on screen meanwhile. */
+export function reloadCommunity() {
+  if (DATA_SOURCE !== 'api') return
+  started = false
+  fetched.clear()
+  loadCommunity()
+}
+
+let resourceLinks = []
+let askedForResources = false
+/* Add campus resources to the composer's link menu. GET /api/community/options needs a signed-in account. */
+export function loadResourceLinks() {
+  if (askedForResources || DATA_SOURCE !== 'api') return
+  askedForResources = true
+  api.communityOptions().then(({ resources }) => {
+    resourceLinks = resources.map((resource) => ({ value: `resource|${resource.id}`, label: `${resource.kind}: ${resource.name}` }))
+    if (state.live) set({ links: [...eventLinks(state.events), ...resourceLinks] })
+  }, (error) => {
+    askedForResources = false
+    console.warn(`[WarmPath] Link options: the backend call failed (${error.message}). Posts can still link to events.`)
+  })
+}
+
+/* Share a post as the signed-in account. Rejects with the backend's message, for the composer to show. */
+export async function publishPost(text, link) {
+  const [kind, ...key] = link ? link.split('|') : []
+  const saved = await api.createPost({ body: text, link_kind: kind || null, link_key: key.join('|') || null, request_id: crypto.randomUUID() })
+  set({ posts: [adaptPost(saved), ...state.posts] })
+}
+
+const fetched = new Set()
+/* Fill in a backend author's public profile the first time their drawer opens. The feed only carries name, kind and major. */
+export function loadProfile(id) {
+  if (!id.startsWith('person:api:') || fetched.has(id)) return
+  fetched.add(id)
+  api.profile(id.slice('person:api:'.length)).then(({ profile }) => {
+    PROFILES[id] = {
+      ...PROFILES[id],
+      majorName: profile.major || 'Not shared',
+      year: [KIND_NAMES[profile.kind] || profile.kind, profile.grad_year && `class of ${profile.grad_year}`].filter(Boolean).join(', '),
+      summary: profile.introduction || 'No introduction yet.',
+    }
+    set({})
+  }, () => fetched.delete(id))
+}
+
+/* { posts, events, links, loading, note, live } for the page. `live` is true when the feed is the backend's. `note` is the line under the stream that says where the data is from. */
 export function useCommunity() {
   return useSyncExternalStore((fn) => { listeners.add(fn); return () => listeners.delete(fn) }, () => state)
 }

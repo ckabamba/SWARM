@@ -4,11 +4,12 @@ import api from '../shared/fake-api.js'
 import { REDUCED } from '../shared/motion.js'
 import { Backdrop } from '../shared/Backdrop.jsx'
 import { TopBar } from '../shared/TopBar.jsx'
+import { openAccount, useAccount } from '../shared/account.js'
 import { Arrow, Avatar, Switch } from '../shared/controls.jsx'
 import { HexIcon, hexPoints } from '../shared/icons.jsx'
 import { useViewport } from '../map/layout.js'
 import { Swarm } from '../map/Swarm.jsx'
-import { CLUBS, EVENTS, PROFILES, RECORDS, addSessionPost, formatPostTime, isSessionPost, loadCommunity, useCommunity } from './data.js'
+import { CLUBS, EVENTS, PROFILES, RECORDS, addSessionPost, formatPostTime, isSessionPost, loadCommunity, loadProfile, loadResourceLinks, publishPost, reloadCommunity, useCommunity } from './data.js'
 import { Bee } from './Bee.jsx'
 import { Details } from './Details.jsx'
 import './community.css'
@@ -59,7 +60,7 @@ function Post({ post, index, onProfile, onRecord }) {
 
 export function Community({ students, studentId, onStudent }) {
   // Posts and events come from the data layer, which reads fixtures or the backend. See data.js.
-  const { posts, events, loading, note } = useCommunity()
+  const { posts, events, links, loading, note } = useCommunity()
   useEffect(loadCommunity, [])
   const [query, setQuery] = useState('')
   const [view, setView] = useState('posts')       // where the switch points
@@ -73,7 +74,23 @@ export function Community({ students, studentId, onStudent }) {
   const draftInput = useRef(null), opener = useRef(null), stage = useRef(null)
   const viewport = useViewport()
 
-  const me = PROFILES[`person:${studentId}`]
+  const me = PROFILES[`person:${studentId}`]      // the demo student, used while nobody can sign in
+  // With the backend connected, the card and composer belong to the signed-in account instead.
+  const account = useAccount()
+  const demo = account.status === 'demo'
+  const real = account.status === 'in' ? account.me.profile : null
+  const myName = real ? real.name : demo ? me.name : null
+  const canPost = demo || Boolean(real && real.profile_visible)
+  const [posting, setPosting] = useState(false)
+  const [postError, setPostError] = useState('')
+  const version = account.me && account.me.version
+  const lastVersion = useRef(version)
+  useEffect(() => {
+    if (real) loadResourceLinks()
+    // A saved profile can change your name on your own posts, so read the feed again.
+    if (version && lastVersion.current && version !== lastVersion.current) reloadCommunity()
+    lastVersion.current = version
+  }, [version])
   const path = useMemo(() => api.postPath({ goal: api.SEEDED_GOALS[0], student_id: studentId }), [studentId])
   const have = path.stops.filter((stop) => stop.have).length
   const next = path.stops.find((stop) => stop.next)
@@ -112,6 +129,7 @@ export function Community({ students, studentId, onStudent }) {
 
   const openDetail = (target) => {
     if (!detail) opener.current = document.activeElement
+    if (target.kind === 'profile') loadProfile(target.id)
     setDetail(target)
   }
   const closeDetail = () => {
@@ -137,16 +155,30 @@ export function Community({ students, studentId, onStudent }) {
     ? plural(visiblePosts.length, 'post')
     : `${plural(visibleEvents.length, 'event')}, ${plural(visibleClubs.length, 'club')}`
 
+  const writing = composing && canPost             // signing out closes an open draft
   const startPost = () => {
     setComposing(true)
     draftInput.current.focus({ preventScroll: true })
   }
   const cancelPost = () => { setComposing(false); setDraft(''); setLinked('') }
-  const publish = (e) => {
+  const publish = async (e) => {
     e.preventDefault()
     const text = draft.trim()
-    if (!text) return
-    addSessionPost({ id: 'post:session:' + Date.now(), authorId: me.id, createdAt: new Date().toISOString(), text, linkedRecordId: linked || null })
+    if (!text || posting) return
+    if (demo) {
+      addSessionPost({ id: 'post:session:' + Date.now(), authorId: me.id, createdAt: new Date().toISOString(), text, linkedRecordId: linked || null })
+    } else {
+      setPosting(true)
+      setPostError('')
+      try {
+        await publishPost(text, linked)
+      } catch (failure) {
+        setPostError(failure.message)   // the draft stays open, so nothing typed is lost
+        return
+      } finally {
+        setPosting(false)
+      }
+    }
     cancelPost()
     setQuery('')
     go('posts')
@@ -243,17 +275,37 @@ export function Community({ students, studentId, onStudent }) {
         <div className="community-scroll">
           <div className="community-grid">
             <aside className="card me" aria-label="Your profile">
-              <div className="me-banner"><PathComb stops={path.stops} /></div>
+              <div className="me-banner">{demo && <PathComb stops={path.stops} />}</div>
               <div className="me-body">
-                <Avatar name={me.name} ring />
-                <h2>{me.name}</h2>
-                <p className="me-standing">{me.majorName}, {me.year}</p>
-                <a className="me-path" href="#">
-                  <span className="cap">Your path</span>
-                  <span><b>{have} of {path.stops.length}</b> stops toward {path.goal.label}</span>
-                  {next && <span className="me-next">Next for you · {next.name}</span>}
-                </a>
-                <button className="pill" onClick={() => openDetail({ kind: 'profile', id: me.id })}>View profile</button>
+                <Avatar name={myName} ring />
+                {demo ? (
+                  <>
+                    <h2>{me.name}</h2>
+                    <p className="me-standing">{me.majorName}, {me.year}</p>
+                    <a className="me-path" href="#">
+                      <span className="cap">Your path</span>
+                      <span><b>{have} of {path.stops.length}</b> stops toward {path.goal.label}</span>
+                      {next && <span className="me-next">Next for you · {next.name}</span>}
+                    </a>
+                    <button className="pill" onClick={() => openDetail({ kind: 'profile', id: me.id })}>View profile</button>
+                  </>
+                ) : real ? (
+                  <>
+                    <h2>{real.name}</h2>
+                    <p className="me-standing">{[real.major || 'Major not set', real.kind === 'alum' ? 'alum' : 'student', real.grad_year && `class of ${real.grad_year}`].filter(Boolean).join(', ')}</p>
+                    <div className="me-path">
+                      <span className="cap">Your profile</span>
+                      <span>{real.profile_visible ? 'Public. You can post, and people can open your profile.' : 'Private. Make it public to post.'}</span>
+                    </div>
+                    <button className="pill" onClick={openAccount}>Edit profile</button>
+                  </>
+                ) : (
+                  <>
+                    <h2>Join Social Jackets</h2>
+                    <p className="me-standing">Sign in to post and to set up your profile.</p>
+                    <button className="pill hot" onClick={openAccount}>Sign in</button>
+                  </>
+                )}
               </div>
             </aside>
 
@@ -261,29 +313,30 @@ export function Community({ students, studentId, onStudent }) {
               <h1 className="sr-only">Social Jackets</h1>
               <div className="card composer">
                 <div className="composer-row">
-                  <Avatar name={me.name} />
-                  {composing
-                    ? <p className="composer-as">Posting as <b>{me.name}</b></p>
-                    : <button className="composer-prompt" onClick={startPost}>Share an update, {me.name.split(' ')[0]}</button>}
+                  <Avatar name={myName} />
+                  {writing
+                    ? <p className="composer-as">Posting as <b>{myName}</b></p>
+                    : <button className="composer-prompt" onClick={canPost ? startPost : openAccount}>
+                        {canPost ? `Share an update, ${myName.split(' ')[0]}` : real ? 'Make your profile public to post' : 'Sign in to share an update'}
+                      </button>}
                 </div>
-                <form className="draft" data-open={composing} inert={!composing} onSubmit={publish}>
+                <form className="draft" data-open={writing} inert={!writing} onSubmit={publish}>
                   <div>
                     <textarea ref={draftInput} maxLength={POST_LIMIT} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="What did you try this week?" aria-label="Post text" />
                     <div className="composer-link">
                       <label className="cap" htmlFor="post-link">Link a club or event</label>
                       <select id="post-link" value={linked} onChange={(e) => setLinked(e.target.value)}>
                         <option value="">None</option>
-                        {[...EVENTS, ...CLUBS].map((record) => (
-                          <option key={record.id} value={record.id}>{record.type === 'event' ? 'Event' : 'Club'}: {record.title}</option>
-                        ))}
+                        {links.map((link) => <option key={link.value} value={link.value}>{link.label}</option>)}
                       </select>
                     </div>
                     <div className="acts">
                       <button type="button" className="pill" onClick={cancelPost}>Cancel</button>
-                      <button className="pill hot" disabled={!draft.trim()}>Post</button>
+                      <button className="pill hot" disabled={!draft.trim() || posting}>{posting ? 'Posting' : 'Post'}</button>
                     </div>
+                    {postError && <p className="form-error" role="alert">{postError}</p>}
                     <p className="composer-note">
-                      Demo only. Your post stays in this browser tab and is gone after a reload.
+                      {demo ? 'Demo only. Your post stays in this browser tab and is gone after a reload.' : 'Your post is saved to WarmPath, and anyone here can read it.'}
                       {POST_LIMIT - draft.length <= 60 && ` ${POST_LIMIT - draft.length} characters left.`}
                     </p>
                   </div>
