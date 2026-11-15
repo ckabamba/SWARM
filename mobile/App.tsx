@@ -8,6 +8,7 @@ import type { TabId } from './src/components/shell/BottomTabBar';
 import HomeScreen from './src/screens/HomeScreen';
 import AlumniProfileScreen from './src/screens/AlumniProfileScreen';
 import MapScreen from './src/screens/MapScreen';
+import GeoMapsScreen from './src/screens/GeoMapsScreen';
 import BuzzScreen from './src/screens/BuzzScreen';
 import FeedScreen from './src/screens/FeedScreen';
 import { useWarmPathStore } from './src/store/warmPathStore';
@@ -49,6 +50,8 @@ export default function App() {
             onPanChange={(x) => setPanX(x)}
           />
         );
+      case 'geo':
+        return <GeoMapsScreen />;
       case 'buzz':
         return <BuzzScreen />;
       case 'feed':

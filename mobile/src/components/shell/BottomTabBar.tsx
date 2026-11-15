@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { THEME } from '../../theme/tokens';
 
-export type TabId = 'home' | 'map' | 'buzz' | 'feed';
+// 'map' is the alumni path view (labeled Paths); 'geo' is the geographic maps.
+export type TabId = 'home' | 'map' | 'geo' | 'buzz' | 'feed';
 
 interface BottomTabBarProps {
   currentTab: TabId;
@@ -28,9 +29,9 @@ const TABS: TabConfig[] = [
   },
   {
     id: 'map',
-    label: 'Map',
-    iconActive: 'map',
-    iconInactive: 'map-outline',
+    label: 'Paths',
+    iconActive: 'git-network',
+    iconInactive: 'git-network-outline',
   },
   {
     id: 'buzz',
@@ -43,6 +44,12 @@ const TABS: TabConfig[] = [
     label: 'Feed',
     iconActive: 'people',
     iconInactive: 'people-outline',
+  },
+  {
+    id: 'geo',
+    label: 'Maps',
+    iconActive: 'map',
+    iconInactive: 'map-outline',
   },
 ];
 
