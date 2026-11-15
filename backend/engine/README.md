@@ -82,6 +82,8 @@ Migrations `0002` to `0004` add accounts, profiles, courses, and post links for 
 | `activity` | A club, VIP team, course, lab, internship, or job | A path goal is one activity row; `is_fixture` marks invented demo activities |
 | `person_activity` | Which person did which activity | One row per person and activity; `school_year` is the year they first did it (5 or more means after graduation) |
 
+Migration `0006` creates the six `api_` tables that `backend/api/app.py` defines: the resource catalog, job examples, browser workspaces, saved resources, public events, and feed snapshots. The API still creates any that are missing when it starts, so the two must stay in step: a change to those table definitions in `app.py` needs a matching migration. The migration creates empty tables; the API loads the catalog and job examples when it starts.
+
 Not modeled yet:
 
 - **Event and Ask** from the path feature, plus clubs and resources. Issue #14 may also add activity types or source fields.
