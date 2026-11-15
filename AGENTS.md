@@ -26,7 +26,7 @@ The five roles and their folder ownership are defined in [README.md](README.md#t
 4. **Community, profiles, and shared app design:** feed/posts, club/event highlights and forms, account/profile UI, shared design/navigation, and mobile integration.
 5. **Geographic maps and demo coordination:** campus and alumni-city map interfaces, location details, and integrated demo/pitch coordination.
 
-Roles 3–5 each own their feature's web and mobile implementation. Role 4 coordinates the shared client shell and mobile delivery; role 1 supplies event/location data and role 2 serves it. Concrete mobile paths depend on the chosen delivery approach. Follow the spec's handoffs rather than assigning all mobile work to one person or returning event ingestion to the old role 5 boundary.
+Roles 3–5 each own their feature's web and mobile implementation. Role 4 coordinates the shared client shell and mobile delivery; role 1 supplies event/location data and role 2 serves it. An Expo Go prototype now exists in `mobile/`; coordinate shared store/types and client integration with role 4. Follow the spec's handoffs rather than assigning all mobile work to one person or returning event ingestion to the old role 5 boundary.
 
 Edit within the assigned role or the user's explicitly authorized task scope; coordinate changes across other owners' folders, including shared frontend routes/components owned by role 4. Coordinate schema changes with role 1. The four remaining teammate names are TBA, but feature ownership by role is assigned. Documentation is shared and may be updated together to keep product guidance consistent.
 
@@ -36,8 +36,16 @@ The existing draft JSON shapes in [docs/mvp.md](docs/mvp.md#api-contract) suppor
 
 ## Product rules
 
+- **Courses have their own page and revision.** Use `/me/courses`; do not reintroduce course writes through general profile saves. Transcript drafts retain only course suggestions and source locations, excluding raw text, grades and GPA. Preserve attempts in different terms and require review for ambiguous duplicates. See `docs/courses-and-transcripts.md`.
+
+- **Profiles and resumes are user-owned.** Local password accounts, manual profiles and reviewed PDF/DOCX/text imports are implemented. Apply shared migrations explicitly, keep drafts private/expiring, and preserve manual edits on re-import. Parsed/self-reported histories are not verified attendance or outcomes. See `docs/profiles-and-resumes.md`; production identity/recovery/GT verification remain pending.
+
+- **Thermal is the current main UI.** Integrate the backend with `prototypes/thermal/index.html` first. Transit, Engineering Pad, and Expo remain prototypes for now; web/mobile scope and feature ownership still apply. See `docs/backend-local-testing.md` for the testing sequence.
+- **Use real data in connected Thermal.** Source public campus resources/events with provenance. Do not seed generated people into this UI or infer alumni participation/outcomes from event listings. Fixtures are for isolated tests and the other explicitly labeled prototypes; alumni/Ask features wait for authorized histories and accounts.
+- **Course/VIP relevance is independent of alumni attendance.** Use sourced descriptions to explain topic overlap with goals/jobs, explicitly label the evidence basis, and keep alumni counts/lift unavailable without actual histories. Follow `docs/data-evidence-and-linkedin.md` for the conditional LinkedIn data-access decision; no unauthorized bulk profile collection is enabled.
+- **AWS has a $100 total project budget.** Prefer local development and automated tests. Cost any scheduled cloud window and retained resources before provisioning; follow the budget/cleanup plan in `docs/backend-design.md`. Do not assume budget alerts or free-tier eligibility guarantee a cap.
 - **Support the three core experiences:** paths and resource discovery through text and voice; a community feed with student/alumni posts and club/event highlights; and interactive geographic maps for campus activities and alumni cities.
-- **Web and mobile are product scope.** Plan layouts, navigation, and shared APIs for both. The mobile delivery technology remains undecided.
+- **Web and mobile are product scope.** Plan layouts, navigation, and shared APIs for both. The current mobile prototype uses Expo Go; release packaging and distribution remain open decisions.
 - **AI helps users access real resources.** Goal understanding, resource discovery, explanations, and drafted asks are supported uses. Ground factual responses in application data. Compute counts and statistical scores in application/database logic, not by asking a model to invent them.
 - **Use scoring appropriate to the feature.** Lift remains the proposed alumni-path association measure, with counts and minimum sample support. It is not a universal filter for campus resources, community posts, or map locations.
 - **Show evidence accurately.** Say "9 of 14 did this" without claiming it caused the outcome. Do not present generated fixtures as real alumni evidence.

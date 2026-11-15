@@ -6,9 +6,17 @@ The project began with the Georgia Tech SGA hackathon prompt on connecting stude
 
 ## Current status
 
-Planning and interactive design prototypes. Three browser prototypes exist under [prototypes/](prototypes/README.md), with a shared fake API, invented people, and placeholder events. They demonstrate the original path, people, and Ask flow; every typed goal currently resolves to the same NVIDIA example. Ask acceptance synchronizes browser tabs through local storage, not separate devices.
+**Courses now have their own page:** [My Courses](http://127.0.0.1:8000/thermal/#/courses) supports term-grouped history, search/filters, manual edits, and reviewed PDF/pasted-text transcript import. Grades and GPA are excluded. Existing courses are migrated without losing edits. Run the new migration before startup; see [course/transcript setup and API changes](docs/courses-and-transcripts.md).
 
-The production backend, database, community feed, geographic maps, voice interaction, and mobile application are not implemented yet. [DESIGN.md](DESIGN.md) defines the visual direction derived from the Thermal prototype.
+**My Profile now works locally:** create a password account; edit experiences, contacts and classes; upload PDF/DOCX or paste resume text; review selected suggestions; save with explicit sharing controls. These accounts do not verify email/GT membership and have no password recovery yet. See [profile/resume setup and API](docs/profiles-and-resumes.md), including the migration command before first startup. Anonymous resource saves remain separate from accounts.
+
+Thermal now runs against a local FastAPI/PostgreSQL backend: search real campus resources, open official sources, save resources, and explore public GT Engage/Campus Calendar event snapshots. It uses a private browser workspace, not production login. The Transit, Engineering Pad, and Expo prototypes still use invented/local data.
+
+**Thermal is the main UI:** [prototypes/thermal/index.html](prototypes/thermal/index.html). From the repository root run `.\.venv\Scripts\python.exe -m backend.manage run`, then open **http://127.0.0.1:8000/thermal/**. The [local testing guide](docs/backend-local-testing.md) covers setup, public data refresh, and verified test commands.
+
+No authorized alumni-history dataset exists yet, so connected Thermal does not invent alumni, path counts, lift, or sendable asks. CareerBuzz links to the real service; its authenticated job listings have not been imported. Production accounts, community posting, geographic maps, voice, and mobile API integration remain pending. [DESIGN.md](DESIGN.md) defines the visual direction derived from Thermal.
+
+Course and VIP discovery works independently of alumni histories: the catalog includes eight CS courses and three specific VIP projects, with description-topic matches to two source-checked employer listings. Open a job example in the goal form to compare topics. [The evidence/source policy](docs/data-evidence-and-linkedin.md) explains these matches and why unauthorized LinkedIn scraping is not enabled.
 
 ## Three core experiences
 
@@ -22,7 +30,7 @@ The path map describes relationships and possible steps toward a goal. The geogr
 
 Alumni location means a city shared through a profile, not live tracking. City markers with counts and filters for industry, company, major, or shared clubs are proposed interaction details, not finalized requirements.
 
-Mobile support covers all three experiences. Native, cross-platform, or web-based mobile delivery remains to be decided. Voice access is confirmed scope; speech input, spoken output, and conversational behavior still need an interaction specification. Private messaging, reactions, comments, and follows are undecided.
+Mobile support covers all three experiences. The current prototype uses Expo Go; release packaging and distribution remain to be decided. Voice access is confirmed scope; speech input, spoken output, and conversational behavior still need an interaction specification. Private messaging, reactions, comments, and follows are undecided.
 
 Campus-map reference supplied by the project owner: [cs2340-project2](https://github.com/jmmachacek/cs2340-project2). Its implementation has not been verified; this is a reference for intended behavior, not an adopted dependency or stack.
 
@@ -38,6 +46,8 @@ Generated profiles remain useful for development and demos. The service will sup
 
 Hosting is decided: AWS, with PostgreSQL as the database, hosted on Amazon RDS for PostgreSQL. This replaces the earlier Google Cloud decision recorded in [issue #3](https://github.com/ckabamba/SWARM/issues/3). Local development uses the same PostgreSQL major version as RDS.
 
+**Budget: $100 total for AWS.** Develop and test locally, then use scheduled cloud integration/demo windows. Specific AWS services below are candidates subject to a configuration-specific cost estimate, not an always-on deployment commitment. The [budget plan](docs/backend-design.md#100-total-aws-budget) allocates $60 for planned operations and keeps $40 in reserve; alerts do not guarantee a spending cap.
+
 Within AWS, the working proposal is AWS Amplify Hosting for the web frontend and a containerized FastAPI backend on Amazon ECS Express Mode (Fargate), with the image stored in Amazon ECR. AWS App Runner is not an option because it closed to new customers on April 30, 2026. These service and framework choices stay proposals until the owning roles confirm them in issue #3; the remaining rows below are likewise proposals, not an implemented or finalized architecture. Billing ownership, free-plan credit eligibility, and current costs must be verified before provisioning; the backend's load balancer and the database are billed while they run, even when idle.
 
 | Layer | Working proposal | Still to decide |
@@ -47,7 +57,7 @@ Within AWS, the working proposal is AWS Amplify Hosting for the web frontend and
 | Database | PostgreSQL on Amazon RDS (decided); PostGIS for campus places and alumni cities | Schema for the expanded service; whether pgvector is needed for resource matching (#14) |
 | AI and voice | Provider-backed language and speech capabilities | Provider, models, speech behavior, and fallbacks |
 | Geographic maps | Campus and alumni-city views | Map provider and library |
-| Mobile | All three experiences using the shared backend | Native, cross-platform, or web-based approach |
+| Mobile | Current Expo Go prototype; all three experiences will use the shared backend | Connected API integration, release packaging, and distribution |
 | Deployment | AWS (decided): Amplify Hosting for the web frontend, ECS Express Mode (Fargate) with ECR for the backend, RDS for PostgreSQL for the database, and AWS Secrets Manager for credentials | Confirmation of these services; shared account and billing owner, region, IAM access, and environment setup; mobile distribution after its delivery decision |
 
 ## Build order
@@ -77,6 +87,8 @@ The issue tracker follows the expanded scope. Checklists distinguish completed p
 | Shared delivery | [Client shell/theme #9](https://github.com/ckabamba/SWARM/issues/9), [mobile integration #20](https://github.com/ckabamba/SWARM/issues/20), [deployment and release checks #21](https://github.com/ckabamba/SWARM/issues/21) |
 
 The resource-model decisions in #14 remain dependencies for affected schema, fixture, and engine work in #5–#7. Role 2 coordinates API contracts with the other owners; each feature issue records its UI/data/backend handoffs.
+
+The [backend design plan](docs/backend-design.md) refines Christofort's implementation sequence, data/access boundaries, client migration, and AI/voice fallbacks. Its [14 backend issue drafts](docs/backend-issue-drafts.md) map to the existing feature trackers; they are proposals and have not been published as GitHub issues.
 
 ## Team
 
