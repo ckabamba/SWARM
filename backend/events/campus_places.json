@@ -46,6 +46,18 @@
     {"name": "Georgia Tech Police Department", "latitude": 33.7812, "longitude": -84.40329,
      "aliases": ["Georgia Tech Police Department", "Georgia Tech Police", "GTPD"]},
     {"name": "Environmental Science, Health, and Safety Building", "latitude": 33.77442, "longitude": -84.40475,
-     "aliases": ["Environmental Science, Health, and Safety", "EHS Building"]}
+     "aliases": ["Environmental Science, Health, and Safety", "EHS Building"]},
+    {"name": "Clough Undergraduate Learning Commons", "latitude": 33.77465, "longitude": -84.39642,
+     "aliases": ["G. Wayne Clough Undergraduate Learning Commons", "Clough Undergraduate Learning Commons", "Clough Commons", "CULC"]},
+    {"name": "Price Gilbert Memorial Library", "latitude": 33.7744, "longitude": -84.39578,
+     "aliases": ["Price Gilbert Memorial Library", "Price Gilbert Library", "Price Gilbert"]},
+    {"name": "Ford Environmental Science and Technology Building", "latitude": 33.77884, "longitude": -84.39596,
+     "aliases": ["Ford Motor Company Environmental Science and Technology Building", "Ford Environmental Science and Technology Building", "Ford ES&T"]},
+    {"name": "West Village Dining Commons", "latitude": 33.77936, "longitude": -84.40485,
+     "aliases": ["West Village Dining Commons", "West Village Dining Hall", "West Village"]},
+    {"name": "Brittain Dining Hall", "latitude": 33.77243, "longitude": -84.39131,
+     "aliases": ["Marion L. Brittain Dining Hall", "Brittain Dining Hall"]},
+    {"name": "George Tower", "latitude": 33.77724, "longitude": -84.38806,
+     "aliases": ["George Tower", "Scheller Tower", "George/Scheller Tower"]}
   ]
 }

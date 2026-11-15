@@ -89,7 +89,7 @@ def _keywords(goal, rows, limit, reason):
     return _result(status, scored, "keyword", limit, fallback_reason=reason)
 
 
-def match_goal(conn, goal, embedder=None, limit=3):
+def match_goal(conn, goal, embedder=None, limit=3, *, include_fixtures=False):
     """The activity a typed goal refers to.
 
     Returns {"status", "goal", "candidates", "match_basis"}: goal is
@@ -100,7 +100,14 @@ def match_goal(conn, goal, embedder=None, limit=3):
     goal = (goal or "").strip()
     if not goal:
         return {"status": "no_query", "goal": None, "candidates": [], "match_basis": None}
-    rows = conn.execute(text("SELECT id, name, type, company, role FROM activity ORDER BY id")).mappings().all()
+    rows = conn.execute(text("""
+        SELECT a.id, a.name, a.type, a.company, a.role FROM activity a
+        WHERE :include_fixtures OR (NOT a.is_fixture AND EXISTS (
+            SELECT 1 FROM person_activity pa JOIN person p ON p.id = pa.person_id
+            WHERE pa.activity_id = a.id AND NOT p.is_fixture AND p.profile_visible
+              AND p.kind = 'alum' AND pa.history_managed AND pa.public_school_year IS NOT NULL
+        )) ORDER BY a.id
+    """), {"include_fixtures": include_fixtures}).mappings().all()
     if not rows:
         return {"status": "no_match", "goal": None, "candidates": [], "match_basis": None,
                 "reason": "No activities are loaded."}

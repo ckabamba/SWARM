@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 
 from fastapi.testclient import TestClient
@@ -9,6 +9,7 @@ from backend.api.app import create_app
 from backend.api.sync_events import parse_feed, parse_engage
 from backend.manage import database_url
 from backend.migrate import migrate
+from backend.api.catalog_setup import initialize_catalog, catalog_records
 
 
 @pytest.fixture
@@ -19,6 +20,7 @@ def app():
         assert conn.scalar(text('SELECT current_database()')) == 'warmpath_test', 'Use the isolated warmpath_test database.'
     engine.dispose()
     migrate(url)
+    initialize_catalog(url)
     return create_app(url)
 
 
@@ -27,7 +29,7 @@ def test_real_resources_and_goal_matching(app):
         assert client.get('/api/ready').json()['database'] == 'PostgreSQL'
         assert client.get('/api/resources').status_code == 401
         session = client.get('/api/session').json()
-        assert session['resource_count'] == 18
+        assert session['resource_count'] == len(catalog_records()[0])
         startup = client.post('/api/path', json={'goal': 'Launch a startup'}).json()
         robotics = client.post('/api/path', json={'goal': 'Explore robotics research'}).json()
         assert startup['resources'] and robotics['resources']
@@ -67,7 +69,7 @@ def test_validation_permissions_and_missing_data(app):
         assert client.put('/api/saved/987654').status_code == 404
         assert client.put('/api/saved/3', headers={'Origin':'https://unrelated.example'}).status_code == 403
         assert client.get('/api/people').json()['items'] == []
-        assert client.get('/api/asks/5').status_code == 404
+        assert client.get('/api/asks/5').status_code == 401
         assert client.get('/api/resources').headers['Cache-Control'] == 'no-store'
         assert client.get('/api/health', headers={'Host':'unrelated.example'}).status_code == 400
 
@@ -118,3 +120,36 @@ def test_courses_and_vip_match_job_topics_without_alumni_claims(app):
                 assert set(job['matched_topics']) == set(resource['topics']) & set(job['topics'])
                 assert job['match_basis'] == 'description_topic_overlap'
         assert client.post('/api/path', json={'goal':'unknown', 'job_id':'invented'}).status_code == 404
+
+
+def test_events_carry_their_campus_place(app):
+    """GET /api/events adds location_kind, room and place from the event_place links."""
+    from uuid import uuid4
+    from backend.events.places import link_events
+    engine = create_engine(database_url(test=True))
+    source = 'test-places-' + uuid4().hex
+    now = datetime.now(timezone.utc)
+    soon, later = now + timedelta(minutes=1), now + timedelta(days=1)  # first in the 12-item list
+    urls = {loc: f'https://example.edu/{source}/{i}' for i, loc in enumerate(['Klaus 1443', 'Online', 'Somewhere else'])}
+    with engine.begin() as conn:
+        conn.execute(text('INSERT INTO api_feeds (name, fetched_at) VALUES (:s, :t)'), {'s': source, 't': now})
+        for location, url in urls.items():
+            conn.execute(text(
+                'INSERT INTO api_public_events (url, title, starts_at, ends_at, fetched_at, source, location) '
+                'VALUES (:u, :title, :start, :end, :f, :s, :loc)'),
+                {'u': url, 'title': location, 'start': soon, 'end': later, 'f': now, 's': source, 'loc': location})
+        link_events(conn)
+    try:
+        with TestClient(app) as client:
+            items = {item['url']: item for item in client.get('/api/events').json()['items']}
+        klaus = items[urls['Klaus 1443']]
+        assert klaus['location_kind'] == 'campus' and klaus['room'] == '1443'
+        assert klaus['place']['name'] == 'Klaus Advanced Computing Building'
+        assert {'id', 'latitude', 'longitude'} <= klaus['place'].keys()
+        assert items[urls['Online']]['location_kind'] == 'online' and items[urls['Online']]['place'] is None
+        assert items[urls['Somewhere else']]['location_kind'] == 'unknown'
+    finally:
+        with engine.begin() as conn:
+            conn.execute(text('DELETE FROM api_public_events WHERE source = :s'), {'s': source})
+            conn.execute(text('DELETE FROM api_feeds WHERE name = :s'), {'s': source})
+        engine.dispose()

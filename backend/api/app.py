@@ -8,58 +8,30 @@ import asyncio
 from contextlib import suppress
 from datetime import datetime, timedelta, timezone
 import hashlib
-import json
-from pathlib import Path
 import re
 import secrets
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import (Column, DateTime, ForeignKey, Integer, MetaData, String,
-                        Table, Text, case, create_engine, delete, func, select, text, update)
-from sqlalchemy.dialects.postgresql import ARRAY, insert
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from sqlalchemy import case, create_engine, delete, func, select, text, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from backend.manage import ROOT, database_url
 from backend.api.settings import allowed_hosts, public_origin
 
-metadata = MetaData()
-resources = Table('api_resources', metadata,
-    Column('id', Integer, primary_key=True), Column('name', Text, nullable=False),
-    Column('kind', Text, nullable=False), Column('summary', Text, nullable=False),
-    Column('url', Text, nullable=False), Column('source_url', Text, nullable=False),
-    Column('access', Text, nullable=False), Column('tags', Text, nullable=False),
-    Column('verified_on', String(10), nullable=False),
-    Column('topics', ARRAY(Text), nullable=False, server_default='{}'))
-jobs = Table('api_job_examples', metadata,
-    Column('id', Text, primary_key=True), Column('title', Text, nullable=False),
-    Column('employer', Text, nullable=False), Column('summary', Text, nullable=False),
-    Column('url', Text, nullable=False), Column('topics', ARRAY(Text), nullable=False),
-    Column('context', Text, nullable=False), Column('location', Text, nullable=False),
-    Column('verified_on', String(10), nullable=False))
-workspaces = Table('api_workspaces', metadata,
-    Column('id', String(64), primary_key=True), Column('goal', Text, nullable=False, default=''),
-    Column('expires_at', DateTime(timezone=True), nullable=False))
-saved = Table('api_saved_resources', metadata,
-    Column('workspace_id', ForeignKey('api_workspaces.id', ondelete='CASCADE'), primary_key=True),
-    Column('resource_id', ForeignKey('api_resources.id'), primary_key=True))
-events = Table('api_public_events', metadata,
-    Column('url', Text, primary_key=True), Column('title', Text, nullable=False),
-    Column('starts_at', DateTime(timezone=True), nullable=False),
-    Column('ends_at', DateTime(timezone=True), nullable=False),
-    Column('fetched_at', DateTime(timezone=True), nullable=False),
-    Column('source', Text, nullable=False, server_default='gt-calendar'),
-    Column('location', Text, nullable=True), Column('organizer', Text, nullable=True),
-    # Plain text from the public listing. Untrusted: render as text, never as HTML.
-    Column('description', Text, nullable=True))
-feeds = Table('api_feeds', metadata, Column('name', Text, primary_key=True),
-    Column('fetched_at', DateTime(timezone=True), nullable=False))
+from backend.api.resource_tables import (metadata, resources, jobs, workspaces, saved, events, feeds, verify_schema)
+from backend.api.catalog_setup import verify_catalog
+
 
 class GoalInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    mode: Literal['resources'] = 'resources'
     goal: str = Field(min_length=1, max_length=300)
     job_id: str | None = Field(default=None, max_length=100)
 
@@ -72,20 +44,14 @@ class GoalInput(BaseModel):
         return value
 
 
+class AlumniGoalInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    mode: Literal['alumni']
+    goal_id: int = Field(ge=1, le=2147483647)
+
+
 STOP_WORDS = set('i me my a an the to for in of at and or want would like find get into become help with how can do be am looking'.split())
 
-
-def initialize_schema(engine):
-    # Initial local schema only; serialize bootstrap and additive upgrade.
-    # Production migration ownership remains with role 1.
-    with engine.begin() as conn:
-        conn.execute(text('SELECT pg_advisory_xact_lock(78142026)'))
-        metadata.create_all(conn)
-        conn.execute(text("ALTER TABLE api_public_events ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'gt-calendar'"))
-        conn.execute(text('ALTER TABLE api_public_events ADD COLUMN IF NOT EXISTS location TEXT'))
-        conn.execute(text('ALTER TABLE api_public_events ADD COLUMN IF NOT EXISTS organizer TEXT'))
-        conn.execute(text('ALTER TABLE api_public_events ADD COLUMN IF NOT EXISTS description TEXT'))
-        conn.execute(text("ALTER TABLE api_resources ADD COLUMN IF NOT EXISTS topics TEXT[] NOT NULL DEFAULT '{}'"))
 
 
 def create_app(url=None):
@@ -94,24 +60,11 @@ def create_app(url=None):
 
     @asynccontextmanager
     async def lifespan(app):
-        initialize_schema(engine)
+        verify_schema(engine)
+        verify_catalog(engine)
         profile_service.initialize()
         cleanup_task = asyncio.create_task(profile_service.cleanup_loop())
-        catalog = json.loads(Path(__file__).with_name('catalog.json').read_text())
-        for row in json.loads(Path(__file__).with_name('curriculum.json').read_text(encoding='utf-8')):
-            if row['kind'] == 'Course':
-                row.update(url='https://catalog.gatech.edu/coursesaz/cs/',
-                    source_url='https://catalog.gatech.edu/coursesaz/cs/',
-                    access='Catalog coverage only. Check prerequisites, restrictions, and term availability in the official catalog and registration system.')
-            row['verified_on'] = '2026-11-14'
-            catalog.append(row)
         with engine.begin() as conn:
-            for row in catalog:
-                stmt = insert(resources).values(**row)
-                conn.execute(stmt.on_conflict_do_update(index_elements=['id'], set_=row))
-            for row in json.loads(Path(__file__).with_name('job_examples.json').read_text(encoding='utf-8')):
-                stmt = insert(jobs).values(**row)
-                conn.execute(stmt.on_conflict_do_update(index_elements=['id'], set_=row))
             conn.execute(delete(workspaces).where(workspaces.c.expires_at < datetime.now(timezone.utc)))
         try:
             yield
@@ -127,6 +80,8 @@ def create_app(url=None):
     app.state.engine = engine
     from backend.api.profiles import install_profiles
     profile_service = install_profiles(app, engine)
+    from backend.api.pathways import install_pathways
+    pathways = install_pathways(app, profile_service)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts(origin))
 
     @app.middleware('http')
@@ -222,7 +177,10 @@ def create_app(url=None):
                     'mode': 'curated_public_examples', 'message': 'Source-checked examples, not a live vacancy feed.'}
 
     @app.post('/api/path')
-    def path(body: GoalInput, request: Request):
+    def path(body: GoalInput | AlumniGoalInput, request: Request):
+        if isinstance(body, AlumniGoalInput):
+            with engine.connect() as conn:
+                return pathways.path(conn, profile_service.actor(request, conn), body.goal_id)
         terms = sorted(set(re.findall(r'[a-z0-9]+', body.goal.lower())) - STOP_WORDS)[:20]
         with engine.begin() as conn:
             current = workspace(request, conn)
@@ -266,9 +224,27 @@ def create_app(url=None):
             conn.execute(delete(saved).where(saved.c.workspace_id == current['id'], saved.c.resource_id == resource_id))
             return {'id': resource_id, 'saved': False}
 
-    @app.get('/api/people')
-    def people():
-        return {'items': [], 'status': 'not_available', 'message': 'No authorized alumni-history dataset is connected.'}
+    def event_places(urls):
+        """Campus place for each event url, from backend/events/places.py's event_place links.
+
+        Same fields as events_with_places(). Returns {} when the event_place migration has
+        not been applied, so the events list keeps working without place data.
+        """
+        if not urls:
+            return {}
+        try:
+            with engine.connect() as conn:
+                rows = conn.execute(text(
+                    'SELECT ep.event_url, ep.kind, ep.room, p.id, p.name, p.latitude, p.longitude '
+                    'FROM event_place ep LEFT JOIN campus_place p ON p.id = ep.place_id '
+                    'WHERE ep.event_url = ANY(:urls)'), {'urls': list(urls)}).all()
+        except SQLAlchemyError:
+            return {}
+        return {url: {'location_kind': kind, 'room': room,
+                      'place': None if place_id is None else
+                      {'id': place_id, 'name': name, 'latitude': latitude, 'longitude': longitude}}
+                for url, kind, room, place_id, name, latitude, longitude in rows}
+
 
     @app.get('/api/events')
     def public_events():
@@ -279,14 +255,13 @@ def create_app(url=None):
                 .where(events.c.fetched_at == feeds.c.fetched_at, events.c.ends_at >= now)
                 .order_by(case((events.c.starts_at >= now, 0), else_=1), events.c.starts_at, events.c.url).limit(12)).mappings().all()
             fetched = min((row['fetched_at'] for row in snapshots), default=None)
-            return {'items': [dict(row) for row in rows], 'source': 'GT Engage and Georgia Tech Campus Calendar',
+            places = event_places([row['url'] for row in rows])
+            unlinked = {'location_kind': 'unknown', 'room': None, 'place': None}
+            return {'items': [dict(row) | places.get(row['url'], unlinked) for row in rows],
+                    'source': 'GT Engage and Georgia Tech Campus Calendar',
                     'source_url': 'https://gatech.campuslabs.com/engage/events', 'fetched_at': fetched,
                     'sources': [dict(row) for row in snapshots],
                     'stale': len(snapshots) < 2 or fetched is None or now - fetched > timedelta(hours=24)}
-
-    @app.get('/api/asks/{ask_id}')
-    def missing_ask(ask_id: int):
-        raise HTTPException(404, 'This ask does not exist. Prototype asks are not real outreach.')
 
     @app.get('/api/events/search')
     def search_events(q: str = Query(min_length=1, max_length=300), limit: int = Query(default=5, ge=1, le=20)):
@@ -299,10 +274,13 @@ def create_app(url=None):
         with engine.connect() as conn:
             return search(conn, q, limit=limit)
 
+
     @app.get('/')
     def root():
         return RedirectResponse('/thermal/')
 
+    if (ROOT / 'frontend/dist/index.html').exists():
+        app.mount('/app', StaticFiles(directory=ROOT / 'frontend/dist', html=True), name='react_ui')
     app.mount('/', StaticFiles(directory=ROOT / 'prototypes', html=True), name='ui')
     return app
 

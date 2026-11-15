@@ -41,7 +41,7 @@ Only public/approved Engage records are accepted. No attendee records, resumes, 
 
 Imports update records by source URL. Failed or unparseable sources keep their last good snapshot. Listings removed from the next successful snapshot stop appearing. Old events are filtered by end time. The UI identifies stale/missing snapshots after 24 hours. There is no background refresh schedule yet. A browser's **Reload snapshot** button reloads stored data; run the command above to fetch newer data from the sources.
 
-The catalog has 18 entries: seven campus resources in `backend/api/catalog.json`, plus eight courses and three specific VIP projects in `curriculum.json`, checked against official sources on November 14, 2026. Two public NVIDIA job examples in `job_examples.json` enable description-based topic matching. Descriptions are short paraphrases; tags/topic normalization are explicit relevance choices, not endorsements or verified alumni outcomes. Updates require reviewing and editing those files, then restarting the API. See [source and evidence details](data-evidence-and-linkedin.md).
+The catalog has 32 entries: 21 campus resources in `backend/api/catalog.json`, plus eight courses and three specific VIP projects in `curriculum.json`. The [14-resource expansion](campus-resource-expansion.md) was checked against official sources on November 15, 2026; earlier entries retain their original check dates. Two public NVIDIA job examples in `job_examples.json` enable description-based topic matching. Descriptions are short paraphrases; tags/topic normalization are explicit relevance choices, not endorsements or verified alumni outcomes. Updates require reviewing and editing those files, then running `python -m backend.manage init-catalog` against the intended database. Restarting alone does not import changes. See [source and evidence details](data-evidence-and-linkedin.md).
 
 ## What to test in Thermal
 
@@ -79,6 +79,7 @@ Download PostgreSQL 17 Windows x64 binaries from the [official EDB archive page]
 ```powershell
 .\.venv\Scripts\python.exe -m backend.manage init
 .\.venv\Scripts\python.exe -m backend.manage migrate
+.\.venv\Scripts\python.exe -m backend.manage init-catalog
 .\.venv\Scripts\python.exe -m backend.api.sync_events
 .\.venv\Scripts\python.exe -m backend.manage run
 ```

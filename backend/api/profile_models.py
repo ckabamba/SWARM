@@ -58,7 +58,13 @@ class Contact(Entry):
         return self
 
 
-class Experience(Entry):
+class HistoryEntry(Entry):
+    activity_id: int | None = Field(default=None, ge=1)
+    school_year: int | None = Field(default=None, ge=1, le=80)
+    history_confirmed: bool = False
+
+
+class Experience(HistoryEntry):
     kind: Literal['job', 'internship', 'research', 'vip', 'club', 'project', 'volunteering'] = 'job'
     title: str = Field(min_length=1, max_length=200)
     organization: str = Field(default='', max_length=200)
@@ -77,7 +83,7 @@ class Experience(Entry):
         return self
 
 
-class Course(Entry):
+class Course(HistoryEntry):
     source: Literal['manual', 'resume', 'transcript'] = 'manual'
     code: str = Field(default='', max_length=30)
     title: str = Field(default='', max_length=200)
@@ -99,6 +105,7 @@ class Profile(Model):
     kind: Literal['student', 'alum'] = 'student'
     major: str = Field(default='', max_length=200)
     grad_year: int | None = Field(default=None, ge=1900, le=2100)
+    enrollment_year: int | None = Field(default=None, ge=1900, le=2100)
     introduction: str = Field(default='', max_length=2000)
     city_id: int | None = None
     share_city: bool = False

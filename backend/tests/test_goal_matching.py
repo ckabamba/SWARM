@@ -5,6 +5,7 @@ checked with plain numbers, the fallback with no model, and the real ranking
 with the local model when it is already downloaded.
 """
 from datetime import date
+from functools import partial
 from uuid import uuid4
 
 from alembic import command
@@ -19,6 +20,9 @@ from backend.events import embeddings
 from backend.events.embeddings import Unavailable
 from backend.manage import ROOT, database_url
 from backend.seed import path_fixtures
+
+
+match_goal = partial(match_goal, include_fixtures=True)
 
 
 class Broken:
@@ -142,7 +146,7 @@ def test_typed_goal_draws_its_path(loaded):
     real_model()
     conn, ids = loaded
     goal = match_goal(conn, "I want a software internship at NVIDIA")["goal"]
-    path = path_for_goal(conn, goal["id"], ids["students"]["compe"], today=date(2026, 11, 15))
+    path = path_for_goal(conn, goal["id"], ids["students"]["compe"], today=date(2026, 11, 15), include_fixtures=True)
     assert path["goal"]["label"] == "SWE internship at NVIDIA"
     assert path["stops"] and path["stops"][0]["achievers"] <= path["goal"]["achievers"]
 
@@ -152,3 +156,9 @@ def test_ambiguous_still_ranks_the_likely_goal_first(loaded):
     conn, ids = loaded
     result = match_goal(conn, "work at nvidia after graduating")
     assert result["candidates"][0]["id"] == ids["activities"]["nvidia_job"]
+
+
+def test_connected_matching_excludes_fixtures(loaded):
+    conn, _ = loaded
+    result = goals.match_goal(conn, "NVIDIA", embedder=Broken())
+    assert result["status"] == "no_match" and result["candidates"] == []
