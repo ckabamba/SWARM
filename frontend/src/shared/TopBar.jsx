@@ -65,6 +65,8 @@ export function TopBar({ active, onHome, students, studentId, onStudent, search 
           <a href="#/history" aria-current={active === 'history' ? 'page' : undefined}>My history</a>
           <a href="#/courses" aria-current={active === 'courses' ? 'page' : undefined}>My Courses</a>
           <a href="#/asks" aria-current={active === 'asks' ? 'page' : undefined}>Asks</a>
+          {/* Campus resources, courses and VIP teams are browsed in the Thermal page for now. */}
+          <a href="/thermal/">Resources</a>
         </>}
       </nav>
 

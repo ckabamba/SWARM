@@ -12,8 +12,9 @@ browser --HTTPS--> CloudFront (*.cloudfront.net, no caching)
                  RDS PostgreSQL (warmpath-db)
 ```
 
-- `/` redirects to `/thermal/`, the main UI. The React client (alumni paths, history, courses, asks) is at `/app/`.
-- `/demo/` is optional: the same React client built on fixtures, with 1,000 invented alumni bundled in the page and labelled as synthetic. It reads nothing from the API or the database. See [docs/demo-alumni.md](../../docs/demo-alumni.md).
+- `/` redirects to `/app/`, the React client (alumni paths, Social Jackets, history, courses, asks). Thermal stays at `/thermal/` as the campus resource browser the client links to.
+- `/demo/` is optional: the same React client built on fixtures, with 1,000 invented alumni bundled in the page and labelled as synthetic. Its only API read is the public event list; it writes nothing. See [docs/demo-alumni.md](../../docs/demo-alumni.md).
+- Social Jackets in both builds re-reads `/api/events` every five minutes and when the tab is shown again. That keeps the page current with the database; it does not import new listings from Georgia Tech.
 - Every AWS resource created for the demo carries the tag `Project=warmpath-demo`.
 
 ## Limits to know about

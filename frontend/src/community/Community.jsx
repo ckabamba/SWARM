@@ -9,7 +9,7 @@ import { Arrow, Avatar, Switch } from '../shared/controls.jsx'
 import { HexIcon, hexPoints } from '../shared/icons.jsx'
 import { useViewport } from '../map/layout.js'
 import { Swarm } from '../map/Swarm.jsx'
-import { CLUBS, EVENTS, PROFILES, RECORDS, addSessionPost, formatPostTime, isSessionPost, loadCommunity, loadProfile, loadResourceLinks, publishPost, reloadCommunity, useCommunity } from './data.js'
+import { CLUBS, EVENTS, PROFILES, RECORDS, addSessionPost, formatPostTime, isSessionPost, loadCommunity, loadProfile, loadResourceLinks, publishPost, reloadCommunity, useCommunity, watchEvents } from './data.js'
 import { Bee } from './Bee.jsx'
 import { Details } from './Details.jsx'
 import './community.css'
@@ -62,6 +62,7 @@ export function Community({ students, studentId, onStudent }) {
   // Posts and events come from the data layer, which reads fixtures or the backend. See data.js.
   const { posts, events, links, loading, note } = useCommunity()
   useEffect(loadCommunity, [])
+  useEffect(watchEvents, [])                      // re-read events every few minutes while this page is open
   const [query, setQuery] = useState('')
   const [view, setView] = useState('posts')       // where the switch points
   const [shown, setShown] = useState('posts')     // what is on screen; trails `view` while the old list leaves
