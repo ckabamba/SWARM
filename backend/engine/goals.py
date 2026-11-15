@@ -35,7 +35,7 @@ _STOP = set(
     "i me my a an the to for in of at and or want would like find get into become help with how can do be am "
     "looking on as some".split()
 )
-_vectors = {}  # activity text -> vector, for the default model only
+_vectors = {}  # id(model) -> {activity text: vector}, for the shared default model
 
 
 def activity_text(row):
@@ -105,8 +105,10 @@ def match_goal(conn, goal, embedder=None, limit=3):
         return {"status": "no_match", "goal": None, "candidates": [], "match_basis": None,
                 "reason": "No activities are loaded."}
     try:
-        cache = _vectors if embedder is None else {}
+        # Cache per model object, so vectors from one embedder are never read for another.
+        cache = {} if embedder is not None else None
         embedder = embedder or default_embedder()
+        cache = _vectors.setdefault(id(embedder), {}) if cache is None else cache
         target = [float(x) for x in list(embedder.query_embed(goal))[0]]
         missing = sorted({activity_text(row) for row in rows} - cache.keys())
         if missing:

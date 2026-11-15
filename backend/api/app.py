@@ -17,7 +17,7 @@ from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import (Column, DateTime, ForeignKey, Integer, MetaData, String,
                         Table, Text, case, create_engine, delete, func, select, text, update)
 from sqlalchemy.dialects.postgresql import ARRAY, insert
@@ -58,6 +58,20 @@ events = Table('api_public_events', metadata,
     Column('description', Text, nullable=True))
 feeds = Table('api_feeds', metadata, Column('name', Text, primary_key=True),
     Column('fetched_at', DateTime(timezone=True), nullable=False))
+
+class AlumniPathInput(BaseModel):
+    """A typed goal, or the goal_id of a candidate the student picked, for one student."""
+    goal: str | None = Field(default=None, max_length=300)
+    goal_id: int | None = Field(default=None, ge=1)
+    student_id: int = Field(ge=1)
+
+    @model_validator(mode='after')
+    def one_goal(self):
+        typed = self.goal is not None and bool(self.goal.strip())
+        if typed == (self.goal_id is not None):
+            raise ValueError('Send either goal text or a goal_id.')
+        return self
+
 
 class GoalInput(BaseModel):
     goal: str = Field(min_length=1, max_length=300)
@@ -266,9 +280,45 @@ def create_app(url=None):
             conn.execute(delete(saved).where(saved.c.workspace_id == current['id'], saved.c.resource_id == resource_id))
             return {'id': resource_id, 'saved': False}
 
+    @app.post('/api/alumni-path')
+    def alumni_path(body: AlumniPathInput):
+        """The alumni path for a typed goal (docs/mvp.md POST /path shape under "path").
+
+        match says how the text was resolved (backend/engine/goals.py). path is null
+        unless the goal matched or a goal_id was sent: an ambiguous goal returns
+        candidates to choose from, and an unmatched goal is never swapped for another.
+        """
+        from backend.engine.goals import match_goal
+        from backend.engine.paths import NotFound, path_for_goal
+        with engine.connect() as conn:
+            if body.goal_id is not None:
+                match = {'status': 'selected', 'goal': None, 'candidates': [], 'match_basis': 'goal_id'}
+                goal_id = body.goal_id
+            else:
+                match = match_goal(conn, body.goal)
+                goal_id = match['goal']['id'] if match['status'] == 'matched' else None
+            if goal_id is None:
+                return {'match': match, 'path': None}
+            try:
+                return {'match': match, 'path': path_for_goal(conn, goal_id, body.student_id)}
+            except NotFound as exc:
+                raise HTTPException(404, str(exc))
+
     @app.get('/api/people')
-    def people():
-        return {'items': [], 'status': 'not_available', 'message': 'No authorized alumni-history dataset is connected.'}
+    def people(goal_id: int | None = Query(default=None, ge=1), student_id: int | None = Query(default=None, ge=1),
+               activity_id: int | None = Query(default=None, ge=1), limit: int = Query(default=10, ge=1, le=50)):
+        """Ranked alumni behind a goal, or behind one stop with activity_id (backend/engine/paths.py)."""
+        if goal_id is None or student_id is None:
+            return {'items': [], 'status': 'not_available',
+                    'message': 'Send goal_id and student_id to list the alumni behind a goal.'}
+        from backend.engine.paths import NotFound, people_for_goal
+        with engine.connect() as conn:
+            try:
+                items = people_for_goal(conn, goal_id, student_id, activity_id, limit=limit)
+            except NotFound as exc:
+                raise HTTPException(404, str(exc))
+        # Drafted asks belong to the Ask flow (#11); draft stays null until it fills them.
+        return {'items': [person | {'draft': None} for person in items], 'status': 'ok' if items else 'no_people'}
 
     @app.get('/api/events')
     def public_events():
