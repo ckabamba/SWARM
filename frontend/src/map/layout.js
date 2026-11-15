@@ -81,10 +81,17 @@ export function useViewport() {
 }
 
 /* A stop's position, moved onto the centre of the honeycomb cell it lands in. */
-export function place(key, { w, h }) {
-  const spot = SPOTS[key]
+export function place(key, { w, h }, spots = SPOTS) {
+  const spot = spots[key]
   const top = 100, bottom = 176
   const x = spot.x * w, y = top + spot.y * (h - top - bottom)
   const [q, r] = hexKey(x - w / 2, h / 2 - y).split(',').map(Number)
   return { x: w / 2 + HEX_R * 1.5 * q, y: h / 2 - HEX_R * Math.sqrt(3) * (r + q / 2), side: spot.side }
+}
+
+// Reuse the original composition with real activity IDs, ordered by typical year.
+export function spotsFor(stops) {
+  const slots = [SPOTS[5], SPOTS[3], SPOTS[7], SPOTS[4], SPOTS[9]].sort((a,b) => a.x-b.x)
+  const ordered = [...stops].sort((a,b) => (a.typical_year ?? Infinity)-(b.typical_year ?? Infinity) || a.activity_id-b.activity_id)
+  return Object.fromEntries([['you',SPOTS.you],['goal',SPOTS.goal],...ordered.map((s,i) => [s.activity_id,slots[i % slots.length]])])
 }
