@@ -103,7 +103,8 @@
  * behind the bee. All three use the same transform, so they cannot drift apart.
  * The train covers the column's width plus the bee's berth, in the direction of --push.
  */
-.stream-stage { --bee-w: 150px; --bee-berth: 176px; position: relative; display: grid; }
+/* --bee-gap is the space on each side of the bee, between it and the two lists. */
+.stream-stage { --bee-w: 150px; --bee-gap: 48px; --bee-berth: calc(var(--bee-w) + 2 * var(--bee-gap)); position: relative; display: grid; }
 .stream-stage[data-push] { overflow-x: clip; }
 .stream-leaving { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; }
 .stream-leaving, .bee-lane { animation: push-out 640ms var(--ease-in-out) both; }
@@ -115,8 +116,8 @@
 /* A zero-height strip as wide as the column; the bee hangs off the edge the new list comes from. */
 .bee-lane { position: absolute; top: var(--bee-y); left: 0; z-index: 2; width: 100%; height: 0; pointer-events: none; }
 .bee { position: absolute; top: calc(var(--bee-w) * -0.37); width: var(--bee-w); aspect-ratio: 30 / 22; }
-.stream-stage[data-push='1'] .bee { right: calc(100% + 6px); }
-.stream-stage[data-push='-1'] .bee { left: calc(100% + 6px); transform: scaleX(-1); }
+.stream-stage[data-push='1'] .bee { right: calc(100% + var(--bee-gap)); }
+.stream-stage[data-push='-1'] .bee { left: calc(100% + var(--bee-gap)); transform: scaleX(-1); }
 .bee svg { display: block; width: 100%; height: 100%; overflow: visible; transform: rotate(7deg); }
 .bee-gold { fill: var(--gold); }
 .bee-dark { fill: #8f5c00; }
