@@ -66,7 +66,8 @@ const SEED_POSTS = [
   { id: 'post:fixture-devon-1', authorId: 'person:2', createdAt: '2026-11-14T08:40:00-05:00', text: 'Looking for a small first step into systems work this semester. The embedded vision demo gave me a good list of questions to explore next.', linkedRecordId: null },
   { id: 'post:fixture-devon-2', authorId: 'person:2', createdAt: '2026-11-13T15:20:00-05:00', text: 'I made a short checklist for my first robotics build: test one thing, write down what changed, and ask for another set of eyes when I get stuck.', linkedRecordId: 'club:5' },
   { id: 'post:fixture-maya-2', authorId: 'person:1', createdAt: '2026-11-12T12:05:00-05:00', text: 'A good campus event for me is one where I leave with a new question to try. I’m adding this week’s demo night to my calendar.', linkedRecordId: 'event:41' },
-]
+  // The path fixture decides which clubs and events exist. Drop a link to one it no longer has, so the page never looks up a missing record.
+].map((post) => (RECORDS.has(post.linkedRecordId) ? post : { ...post, linkedRecordId: null }))
 
 /* What a new post can link to, as { value, label } for the composer's menu. */
 const FIXTURE_LINKS = [...EVENTS, ...CLUBS].map((record) => ({ value: record.id, label: `${record.type === 'event' ? 'Event' : 'Club'}: ${record.title}` }))

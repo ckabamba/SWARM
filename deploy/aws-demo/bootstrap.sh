@@ -3,7 +3,8 @@
 #
 # Expects, uploaded beforehand by the operator:
 #   /tmp/warmpath-src.tar.gz    git archive of backend/, prototypes/ and deploy/
-#   /tmp/warmpath-dist.tar.gz   frontend/dist built with VITE_DATA_SOURCE=api
+#   /tmp/warmpath-dist.tar.gz   frontend/dist built with VITE_DATA_SOURCE=api, and optionally
+#                               frontend/dist-demo built with VITE_DATA_SOURCE=fixture (/demo/)
 #   /etc/warmpath/warmpath.env  see warmpath.env.example (0640 root:warmpath)
 #   /etc/warmpath/origin-secret the CloudFront X-Origin-Verify value (0600 root)
 #

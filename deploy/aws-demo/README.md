@@ -13,6 +13,7 @@ browser --HTTPS--> CloudFront (*.cloudfront.net, no caching)
 ```
 
 - `/` redirects to `/thermal/`, the main UI. The React client (alumni paths, history, courses, asks) is at `/app/`.
+- `/demo/` is optional: the same React client built on fixtures, with 1,000 invented alumni bundled in the page and labelled as synthetic. It reads nothing from the API or the database. See [docs/demo-alumni.md](../../docs/demo-alumni.md).
 - Every AWS resource created for the demo carries the tag `Project=warmpath-demo`.
 
 ## Limits to know about
@@ -55,10 +56,15 @@ Run from the repository root in PowerShell with an AWS CLI profile that may mana
 5. **Build and package.** `core.autocrlf=false` matters on Windows: the host needs Unix line endings.
 
    ```powershell
-   cd frontend; $env:VITE_DATA_SOURCE = 'api'; npm.cmd run build; cd ..
+   cd frontend
+   $env:VITE_DATA_SOURCE = 'api'; npm.cmd run build
+   $env:VITE_DATA_SOURCE = 'fixture'; npm.cmd run build -- --outDir dist-demo   # optional /demo/ page
+   cd ..
    git -c core.autocrlf=false archive --format=tar.gz -o .local\release\warmpath-src.tar.gz HEAD backend prototypes deploy
-   tar -czf .local\release\warmpath-dist.tar.gz -C frontend dist
+   tar -czf .local\release\warmpath-dist.tar.gz -C frontend dist dist-demo
    ```
+
+   Leave `dist-demo` out of both commands to host without the synthetic demo page. Build `dist` in `api` mode only: a fixture-mode `dist` would show invented data at `/app/`.
 
 6. **Settings on the host.** Write `/etc/warmpath/warmpath.env` from [warmpath.env.example](warmpath.env.example), with `WARMPATH_PUBLIC_ORIGIN` set to `https://<id>.cloudfront.net`, and `/etc/warmpath/origin-secret` containing the header value. Send them over SSH standard input so they never appear in a command line, shell history or this repository.
 7. **Install.** Copy both archives and `bootstrap.sh` to `/tmp` on the host, then:
