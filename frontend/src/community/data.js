@@ -16,6 +16,8 @@ import { DATA_SOURCE, load } from '../shared/data-source.js'
  * In api mode (see shared/data-source.js) the feed comes from GET /api/posts and the events
  * from GET /api/events, adapted to the shapes above in this file. If either call fails, that
  * list stays empty and the note under the stream says so; fixtures never stand in for it.
+ * Events are read again every few minutes in both modes (see watchEvents): the demo keeps its
+ * invented people and posts but shows the real public listings when a backend serves the page.
  * A signed-in account (shared/account.js) posts through POST /api/posts. The backend has
  * campus resources, not clubs, so api mode lists no clubs.
  */
@@ -69,8 +71,8 @@ const SEED_POSTS = [
   // The path fixture decides which clubs and events exist. Drop a link to one it no longer has, so the page never looks up a missing record.
 ].map((post) => (RECORDS.has(post.linkedRecordId) ? post : { ...post, linkedRecordId: null }))
 
-/* What a new post can link to, as { value, label } for the composer's menu. */
-const FIXTURE_LINKS = [...EVENTS, ...CLUBS].map((record) => ({ value: record.id, label: `${record.type === 'event' ? 'Event' : 'Club'}: ${record.title}` }))
+/* What a new post can link to in fixture mode, as { value, label } for the composer's menu. */
+const fixtureLinks = (events) => [...events, ...CLUBS].map((record) => ({ value: record.id, label: `${record.type === 'event' ? 'Event' : 'Club'}: ${record.title}` }))
 /* For the backend a link is a kind and a key. The menu carries both in one value: "event|<url>" or "resource|<id>". */
 const eventLinks = (events) => events.filter((event) => event.link).map((event) => ({ value: `event|${event.link}`, label: `Event: ${event.title}` }))
 
@@ -150,7 +152,7 @@ function adaptPost(post) {
 /* In api mode the lists start empty and `loading`, so fixture people never flash in a feed of real posts. */
 let state = DATA_SOURCE === 'api'
   ? { posts: [], events: [], links: [], loading: true, note: '' }
-  : { posts: SEED_POSTS, events: EVENTS, links: FIXTURE_LINKS, loading: false, note: FIXTURE_NOTE }
+  : { posts: SEED_POSTS, events: EVENTS, links: fixtureLinks(EVENTS), loading: false, note: FIXTURE_NOTE }
 const listeners = new Set()
 
 function set(next) {
@@ -158,27 +160,72 @@ function set(next) {
   listeners.forEach((fn) => fn())
 }
 
-/* Only called in api mode, where a source is 'api' or 'unavailable'. */
-function noteFor(postsSource, eventsSource) {
+let postsSource = DATA_SOURCE === 'api' ? 'unavailable' : 'fixture'
+let eventsInfo = null   // { stale } from the last successful GET /api/events; null until one succeeds
+
+/* The line under the stream: which parts are real, and whether anything failed to load. */
+function currentNote() {
+  const events = eventsInfo && `Events are public Georgia Tech listings, checked again every few minutes; confirm details at the source.${eventsInfo.stale ? ' The listings were last imported more than a day ago.' : ''}`
+  if (DATA_SOURCE !== 'api') return events ? `Demo data. The profiles and posts here are invented. ${events}` : FIXTURE_NOTE
   const posts = postsSource === 'api' ? 'Posts are from WarmPath accounts with a public profile.' : 'Posts could not be loaded. Reload the page to try again.'
-  const events = eventsSource === 'api' ? 'Events are public Georgia Tech listings; confirm details at the source.' : 'Events could not be loaded. Reload the page to try again.'
-  return `${posts} ${events}`
+  return `${posts} ${events || 'Events could not be loaded. They are tried again every few minutes.'}`
+}
+
+/* ---------- keeping events current ---------- */
+
+const EVENTS_REFRESH_MS = 5 * 60 * 1000
+let eventsCheckedAt = 0
+let eventsRequest = null
+let eventsOff = false   // fixture mode with no backend behind the page: stop asking
+
+/*
+ * Read GET /api/events and show what it returns. The backend only lists events that have not
+ * ended, so a re-read drops finished events and picks up a new import. A failed call keeps the
+ * events already on screen; it never substitutes fixtures.
+ */
+function refreshEvents() {
+  if (eventsRequest || eventsOff) return eventsRequest || Promise.resolve()
+  eventsCheckedAt = Date.now()
+  eventsRequest = api.events().then((result) => {
+    const events = result.items.map(adaptEvent)
+    eventsInfo = { stale: Boolean(result.stale) }
+    // In api mode a post links to real records only. The demo also offers its invented clubs.
+    const links = DATA_SOURCE === 'api' ? [...eventLinks(events), ...resourceLinks] : fixtureLinks(events)
+    set({ events, links, note: currentNote() })
+  }, (error) => {
+    if (DATA_SOURCE !== 'api' && !eventsInfo) { eventsOff = true; return }
+    console.warn(`[WarmPath] Events: the backend call failed (${error.message}). ${eventsInfo ? 'Keeping the listings already shown.' : 'Nothing is shown in their place.'}`)
+  }).finally(() => { eventsRequest = null })
+  return eventsRequest
+}
+
+/*
+ * Keep events current while Social Jackets is open: read them again every few minutes, and when
+ * the tab comes back into view after a minute or more. Returns the function that stops it.
+ * The demo (fixture mode) uses this too: its people and posts are invented, its events are real.
+ */
+export function watchEvents() {
+  const tick = () => { if (!document.hidden) refreshEvents() }
+  const shown = () => { if (!document.hidden && Date.now() - eventsCheckedAt > 60 * 1000) refreshEvents() }
+  if (DATA_SOURCE !== 'api') refreshEvents()   // api mode reads them first in loadCommunity
+  const timer = setInterval(tick, EVENTS_REFRESH_MS)
+  document.addEventListener('visibilitychange', shown)
+  return () => { clearInterval(timer); document.removeEventListener('visibilitychange', shown) }
 }
 
 let started = false
-/* Fetch the feed and events once. Does nothing in fixture mode. */
+/* Fetch the feed and events. Does nothing in fixture mode. */
 export function loadCommunity() {
   if (started || DATA_SOURCE !== 'api') return
   started = true
   Promise.all([
     load('Community feed', async () => (await api.posts({ limit: 50 })).items.map(adaptPost), () => SEED_POSTS),
-    load('Events', async () => (await api.events()).items.map(adaptEvent), () => EVENTS),
-  ]).then(([posts, events]) => {
+    refreshEvents(),
+  ]).then(([posts]) => {
     // Keep anything written in the composer while the request was in flight.
     const written = state.posts.filter(isSessionPost)
-    // A post links to real records only. If the events call failed, `events.data` is empty.
-    const links = [...eventLinks(events.data), ...resourceLinks]
-    set({ posts: [...written, ...posts.data], events: events.data, links, loading: false, note: noteFor(posts.source, events.source), live: true })
+    postsSource = posts.source
+    set({ posts: [...written, ...posts.data], loading: false, note: currentNote(), live: true })
   })
 }
 
