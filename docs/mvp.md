@@ -22,6 +22,8 @@ Accounts and login, real profiles, community content, geographic maps, and mobil
 
 ## Decisions before implementation
 
+**Recorded hosting decision:** Google Cloud, with Firebase Hosting for the web frontend and Cloud Run for the backend in one shared project ([#3](https://github.com/ckabamba/SWARM/issues/3)). Database selection and hosting are still open; Cloud SQL is conditional on that decision. The earlier proposal to use one teammate's trial credit needs verified eligibility, current pricing, and a named billing owner before provisioning. Environment setup and release checks are tracked in [#21](https://github.com/ckabamba/SWARM/issues/21).
+
 | Decision | Working proposal or open question |
 | --- | --- |
 | Backend framework | FastAPI is the existing suggestion; Django remains an alternative. Confirm for the expanded service. |
@@ -34,6 +36,8 @@ Accounts and login, real profiles, community content, geographic maps, and mobil
 | Data sources | Define user-entered profiles/posts, club-maintained information, and permitted public event sources/imports. |
 | API contracts | Preserve existing consumers; specify expanded shapes, errors, pagination, and visibility before integration. |
 | Ownership | Fill the remaining teammate names for the five assigned roles below; confirm framework-dependent mobile paths when choosing mobile delivery. |
+
+Implementation work is linked from the [README issue index](../README.md#implementation-issues). [#14](https://github.com/ckabamba/SWARM/issues/14) still holds the resource-source/model decisions affecting schema, fixtures, and the engine; expanding the product scope does not settle extraction methods or fallback semantics. The voice, mobile, and map issues likewise retain open technology and interaction decisions.
 
 ## Repo layout
 

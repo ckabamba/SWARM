@@ -36,7 +36,7 @@ Generated profiles remain useful for development and demos. The service will sup
 
 ## Proposed stack
 
-These are planning choices, not an implemented or finalized architecture.
+Hosting is decided: Google Cloud, with Firebase Hosting for the web frontend and Cloud Run for the backend in a shared project, as recorded in [issue #3](https://github.com/ckabamba/SWARM/issues/3). The remaining choices below are proposals, not an implemented or finalized architecture. Database hosting depends on the database decision; billing ownership, trial eligibility, and current costs must be verified before provisioning.
 
 | Layer | Working proposal | Still to decide |
 | --- | --- | --- |
@@ -46,7 +46,7 @@ These are planning choices, not an implemented or finalized architecture.
 | AI and voice | Provider-backed language and speech capabilities | Provider, models, speech behavior, and fallbacks |
 | Geographic maps | Campus and alumni-city views | Map provider and library |
 | Mobile | All three experiences using the shared backend | Native, cross-platform, or web-based approach |
-| Deployment | Cloud Run, Cloud SQL, and Firebase Hosting are candidates | Final hosting and environment configuration |
+| Deployment | Google Cloud: Cloud Run backend and Firebase Hosting web frontend (decided) | Shared project/environment setup; Cloud SQL if Postgres is chosen; mobile distribution after its delivery decision |
 
 ## Build order
 
@@ -59,6 +59,22 @@ Keep a working, demonstrable build at each milestone. The full product scope abo
 5. **Integration and release:** verify cross-experience navigation, persistence, deployment, and the web/mobile flows.
 
 The proposed initial-release acceptance criteria and open decisions are in [docs/mvp.md](docs/mvp.md). Deferring work to a milestone does not prohibit it from the product.
+
+## Implementation issues
+
+The issue tracker follows the expanded scope. Checklists distinguish completed planning from pending implementation; these links do not imply the features are built.
+
+| Workstream | Issues |
+| --- | --- |
+| Decisions and team | [Stack/contracts #3](https://github.com/ckabamba/SWARM/issues/3), [remaining role owners #4](https://github.com/ckabamba/SWARM/issues/4), [map decisions #13](https://github.com/ckabamba/SWARM/issues/13), [resource sources/matching #14](https://github.com/ckabamba/SWARM/issues/14) |
+| Data and events | [Schema #5](https://github.com/ckabamba/SWARM/issues/5), [fixtures #6](https://github.com/ckabamba/SWARM/issues/6), [path engine #7](https://github.com/ckabamba/SWARM/issues/7), [sourced campus events #12](https://github.com/ckabamba/SWARM/issues/12) |
+| Existing path flow | [Path/Ask API #8](https://github.com/ckabamba/SWARM/issues/8), [path UI #10](https://github.com/ckabamba/SWARM/issues/10), [people/Ask integration #11](https://github.com/ckabamba/SWARM/issues/11) |
+| Community and accounts | [Posts and event highlights #15](https://github.com/ckabamba/SWARM/issues/15), [identity/profiles #16](https://github.com/ckabamba/SWARM/issues/16) |
+| Geographic maps | [Campus activities #17](https://github.com/ckabamba/SWARM/issues/17), [alumni cities #18](https://github.com/ckabamba/SWARM/issues/18) |
+| Text and voice | [Resource discovery #19](https://github.com/ckabamba/SWARM/issues/19) |
+| Shared delivery | [Client shell/theme #9](https://github.com/ckabamba/SWARM/issues/9), [mobile integration #20](https://github.com/ckabamba/SWARM/issues/20), [deployment and release checks #21](https://github.com/ckabamba/SWARM/issues/21) |
+
+The resource-model decisions in #14 remain dependencies for affected schema, fixture, and engine work in #5–#7. Role 2 coordinates API contracts with the other owners; each feature issue records its UI/data/backend handoffs.
 
 ## Team
 
