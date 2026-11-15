@@ -1,8 +1,18 @@
 # MVP spec
 
+Community contract update: [Social Jackets](community.md#api-contract) implements public feed/detail routes, authenticated post creation, author-owned edits/deletes, keyset pagination, safe create retries and linked resources/events. It shares local accounts and explicit public-profile visibility; migration `0004` extends the shared `post` table.
+
+Course contract update: [My Courses and transcript import](courses-and-transcripts.md#migration-and-api-contract-changes) separates course persistence from general profiles. `/me` excludes the embedded course array; use `/me/courses` and `/transcripts/*`. Resume imports selecting courses require `courses_version`. Course revisions are independent, and transcript drafts exclude raw text/grade/GPA columns. These changes are implemented in connected Thermal; other clients need corresponding integration.
+
+Implemented contract update: [local profiles and resume import](profiles-and-resumes.md#api-contract) adds `/auth/*`, `/me`, `/profile-options`, `/profiles/{id}`, and `/resumes/*` alongside existing resource routes. Uses local password accounts and explicit shared migrations; production identity and the wider milestones below remain pending. Profile collection entries are self-reported and are not automatically alumni statistical evidence.
+
 This spec follows the expanded product scope in [README.md](../README.md): paths/resource discovery through text and voice, a community feed, and interactive maps for campus activities and alumni cities, across web and mobile. [alumni-path-map.md](alumni-path-map.md) is supporting rationale for the original path feature.
 
 The initial-release criteria below are proposed milestones, not a claim that these features exist. The existing path API draft is preserved; new service contracts and technology choices remain to be specified.
+
+The [backend design plan](backend-design.md) and [local issue drafts](backend-issue-drafts.md) refine backend delivery. Their endpoint outline is proposed; it does not replace the existing contract below until the contract task resolves examples and compatibility with consumers.
+
+Current delivery constraints: **$100 total AWS budget** and **Thermal as the first integrated UI** (`prototypes/thermal/index.html`). Other clients remain prototypes for now; the full release scope below remains the roadmap. Develop/test locally and use scheduled, costed cloud windows. See the [testing guide](backend-local-testing.md) and [budget plan](backend-design.md#100-total-aws-budget).
 
 ## Done means
 
@@ -32,17 +42,17 @@ Accounts and login, real profiles, community content, geographic maps, and mobil
 | Accounts and profiles | Define identity/login approach, student/alumni roles, author ownership, and visibility. |
 | AI and voice | Select providers; specify voice input, spoken output, conversation behavior, grounding, timeouts, and fallbacks. |
 | Geographic maps | Select provider/library; define campus locations and normalized alumni cities. |
-| Mobile delivery | Decide native, cross-platform, or web-based implementation; all three experiences are in scope. |
+| Mobile delivery | An Expo Go prototype exists in `mobile/`; define connected integration, release packaging, and distribution for all three experiences. |
 | Community | Define post fields and club/event highlighting. Reactions, comments, follows, and private messaging are not yet committed. |
 | Data sources | Define user-entered profiles/posts, club-maintained information, and permitted public event sources/imports. |
 | API contracts | Preserve existing consumers; specify expanded shapes, errors, pagination, and visibility before integration. |
-| Ownership | Fill the remaining teammate names for the five assigned roles below; confirm framework-dependent mobile paths when choosing mobile delivery. |
+| Ownership | Confirm the remaining full-role owner names for roles 3 and 5; confirm framework-dependent mobile paths when choosing mobile delivery. |
 
 Implementation work is linked from the [README issue index](../README.md#implementation-issues). [#14](https://github.com/ckabamba/SWARM/issues/14) still holds the resource-source/model decisions affecting schema, fixtures, and the engine; expanding the product scope does not settle extraction methods or fallback semantics. The voice, mobile, and map issues likewise retain open technology and interaction decisions.
 
 ## Repo layout
 
-The five roles in the [README](../README.md#team) own the areas below. These are planned production folders; the current implementation is under `prototypes/`. Christofort Kabamba owns role 2; the other teammate names remain TBA. This replaces the previous path-only allocation: event ingestion moves to role 1, the people/Ask flow moves to role 3, and role 5 owns geographic-map interfaces as well as demo coordination. No code is moved by this documentation update.
+The five roles in the [README](../README.md#team) own the areas below. These are planned production folders; current prototypes are under `prototypes/` and `mobile/`. Ezekiel Currie owns role 1, Christofort Kabamba owns role 2, and Shehryar Sardar owns role 4; Alfred Tang has claimed role 3 discovery UI work in #19. Remaining full-role assignments for roles 3 and 5 still need confirmation. This replaces the previous path-only allocation: event ingestion moves to role 1, the people/Ask flow moves to role 3, and role 5 owns geographic-map interfaces as well as demo coordination. No code is moved by this documentation update.
 
 | Path | Role | Holds |
 | --- | --- | --- |
@@ -66,7 +76,7 @@ The new frontend paths are a proposed folder layout with assigned role owners, n
 
 ### Mobile ownership
 
-Roles 3, 4, and 5 own mobile implementations and checks for their respective features. Role 4 coordinates the mobile delivery decision, shared app shell, navigation, packaging, and integration. Roles 1 and 2 provide the common data and APIs for both web and mobile. If a separate mobile client is chosen, assign its concrete paths along these same feature boundaries when scaffolding it; a responsive web approach retains the frontend paths above.
+Roles 3, 4, and 5 own mobile implementations and checks for their respective features. Role 4 coordinates the shared app shell, navigation, packaging, and integration. Roles 1 and 2 provide the common data and APIs for both web and mobile. The Expo Go prototype now lives in `mobile/`; coordinate its shared store and types with role 4 and assign feature changes along these same ownership boundaries. Its local-data behavior is described in [the mobile spec](WARMPATH_MOBILE_SPEC.md); backend migration is planned in [the backend design](backend-design.md#client-migration).
 
 ### Integration handoffs
 
@@ -128,9 +138,31 @@ The original proposed defaults keep activities with a lift of 1.5 or more and at
 
 ## API contract
 
+### Implemented local Thermal slice
+
+The current local service implements resource discovery and public event snapshots, not the historical alumni-path contract below. Real alumni histories are not connected. Local accounts/profiles, courses/transcripts and community posts use the separate implemented contracts linked above. All paths use `/api`; see [run/test instructions](backend-local-testing.md).
+
+| Route | Current behavior |
+| --- | --- |
+| `GET /health`, `GET /ready` | Process health and PostgreSQL readiness |
+| `GET /session` | Creates/reuses an opaque HttpOnly, SameSite=Strict browser-workspace cookie; returns saved goal, catalog count, suggestions, and unavailable alumni status |
+| `POST /path` | `{ "goal": "Explore robotics research" }`; returns original goal label, up to five real `resources`, `matched`/`no_match`, `matching: "keyword"`, and unavailable evidence with null achievers/lift |
+| `GET /jobs` | Two curated public employer examples with source links, topic labels, location/context, and check dates; not a live vacancy feed |
+| `GET /resources?saved_only=false` | `{ "items": [...] }` for the catalog or the current workspace's saved list |
+| `PUT/DELETE /saved/{resource_id}` | Idempotent save/remove in the current workspace; returns `{ "id": 9, "saved": true }` or false |
+| `GET /events` | Up to 12 unexpired public listings from the latest successful source snapshots, with source/retrieval timestamps and stale status |
+| `GET /people` | Explicit empty/unavailable result; no sample alumni |
+| `GET /asks/{id}` | 404; prototype asks are not real outreach |
+
+A resource has `id`, `name`, `kind`, `summary`, `url`, `source_url`, `access`, `verified_on`, and `saved`. Events have `url`, `title`, `starts_at`, `ends_at`, `fetched_at`, `source`, and nullable `location`/`organizer`. Dates/timestamps retain explicit time zones; the client formats event times in Eastern time. Error responses use `{ "error": { "code": "...", "message": "..." } }` with 401, 403, 404, 422, or 503 as appropriate. This local slice has no student impersonation, public ask acceptance, LLM calls, or production identity model.
+
+Resources additionally return `topics`, `evidence_basis` (`course_catalog`, `project_description`, or `public_resource`), and `related_jobs`. Each related job includes `matched_topics` and `match_basis: "description_topic_overlap"`. `POST /path` optionally accepts `job_id` from `/jobs`; it then orders resources by SQL topic overlap, returns the selected `job`, and sets `matching: "description_topic_overlap"`. Unknown job IDs return 404. Counts/lift remain null: content relevance does not require or imply verified alumni attendance. See [evidence and LinkedIn decisions](data-evidence-and-linkedin.md).
+
+The initial schema under `backend/api/` is a bounded local resource/workspace/event implementation using `api_` tables. It does not finalize role 1's broader schema or #14's extraction/matching design. Browser-workspace saves persist across restarts but are not cross-device account synchronization. The resource graph is a discovery illustration and has no statistical ranking claims.
+
 ### Existing path-feature contract
 
-Draft, retained for compatibility with the path prototypes. All bodies are JSON and all paths start with `/api`. These endpoints do not yet constitute the full service API.
+Historical draft, retained for the other path prototypes and future alumni work. These shapes are not implemented by the current real-resource Thermal slice above. All bodies are JSON and all paths start with `/api`. These endpoints do not yet constitute the full service API.
 
 | Method and path | Purpose |
 | --- | --- |
@@ -202,7 +234,7 @@ Christofort Kabamba owns the service API design, coordinating schema and UI cons
 | --- | --- |
 | Accounts/profiles | Identity, reading/updating profiles, author ownership, and visibility |
 | Resources/clubs | Search/list/detail operations and links to shared activities, people, and events |
-| Community | Post creation and retrieval, pagination, authors, linked entities, and club/event highlights |
+| Community | Local posts, pagination, ownership and resource/event links are implemented in [community.md](community.md); production moderation and club-managed event publishing remain open |
 | Events/campus map | Event retrieval, location identifiers/coordinates, date/location filtering, and details |
 | Alumni-city map | City identifiers/coordinates, relevant alumni, visibility, and any agreed counts/filters |
 | Text/voice discovery | Input representation, resource references in results, speech handling, and failure responses |

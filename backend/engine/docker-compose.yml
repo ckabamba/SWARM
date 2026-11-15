@@ -1,0 +1,22 @@
+# Local development database. Same PostgreSQL major version as the shared RDS
+# instance. The credentials below are for this local container only and are
+# reachable from this machine only.
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: warmpath
+      POSTGRES_PASSWORD: warmpath
+      POSTGRES_DB: warmpath
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - warmpath_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warmpath -d warmpath"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  warmpath_pgdata:
