@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import {
   StyleSheet,
   Text,
@@ -288,7 +289,7 @@ export default function ConstellationSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   sheetContainer: {
     position: 'absolute',
     left: 0,
@@ -564,4 +565,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 16,
   },
-});
+}));

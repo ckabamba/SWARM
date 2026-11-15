@@ -1,4 +1,5 @@
 import React from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Student } from '../../types/warmpath';
@@ -42,7 +43,7 @@ export default function StudentHeader({ student, onEditPress }: StudentHeaderPro
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -102,4 +103,4 @@ const styles = StyleSheet.create({
     color: THEME.colors.bone,
     letterSpacing: 1.2,
   },
-});
+}));

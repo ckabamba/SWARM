@@ -1,4 +1,5 @@
 import React from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, Text, View, Modal, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Student } from '../../types/warmpath';
@@ -73,7 +74,7 @@ export default function EditStudentModal({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(6, 4, 11, 0.75)',
@@ -168,4 +169,4 @@ const styles = StyleSheet.create({
     color: THEME.colors.glow,
     fontWeight: '700',
   },
-});
+}));

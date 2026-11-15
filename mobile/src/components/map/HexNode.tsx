@@ -1,9 +1,11 @@
 import React from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { getHexPath } from '../../math/hexMath';
 import { THEME } from '../../theme/tokens';
+import { getThemeMode } from '../../theme/tokens';
 
 interface HexNodeProps {
   x: number;
@@ -91,12 +93,16 @@ export default function HexNode({
                 ? THEME.colors.bone
                 : isGoal
                 ? THEME.colors.ember
-                : 'rgba(6, 4, 11, 0.7)'
+                : getThemeMode() === 'light'
+                  ? 'rgba(255, 255, 255, 0.72)'
+                  : 'rgba(6, 4, 11, 0.7)'
             }
             stroke={
               isSelected || next || have
                 ? THEME.colors.glow
-                : 'rgba(244, 238, 230, 0.55)'
+                : getThemeMode() === 'light'
+                  ? 'rgba(11, 31, 69, 0.5)'
+                  : 'rgba(244, 238, 230, 0.55)'
             }
             strokeWidth={isSelected ? 2 : next ? 1.5 : 1}
             strokeDasharray={next ? '4,3' : undefined}
@@ -130,7 +136,7 @@ export default function HexNode({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   nodeContainer: {
     position: 'absolute',
     justifyContent: 'center',
@@ -214,4 +220,4 @@ const styles = StyleSheet.create({
     color: THEME.colors.gold,
     marginTop: 2,
   },
-});
+}));

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createThemedStyles } from '../theme/themedStyles';
 import { StyleSheet, View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '../theme/tokens';
@@ -29,7 +30,7 @@ export default function GeoMapsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -71,4 +72,4 @@ const styles = StyleSheet.create({
     ...THEME.typography.bodyAsh,
     textAlign: 'center',
   },
-});
+}));

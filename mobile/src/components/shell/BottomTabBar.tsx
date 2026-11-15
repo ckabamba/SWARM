@@ -1,4 +1,5 @@
 import React from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, Text, View, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -94,7 +95,7 @@ export default function BottomTabBar({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: 'rgba(9, 6, 15, 0.94)',
@@ -131,4 +132,4 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.colors.glow,
     marginTop: 3,
   },
-});
+}));

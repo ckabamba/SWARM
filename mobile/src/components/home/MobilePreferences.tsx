@@ -1,4 +1,5 @@
 import React from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, Text, View, Switch } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { MobilePreferences as PrefsType } from '../../store/warmPathStore';
@@ -57,7 +58,7 @@ export default function MobilePreferences({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     paddingTop: 16,
     borderTopWidth: 1,
@@ -95,4 +96,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-});
+}));

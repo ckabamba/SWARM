@@ -1,4 +1,5 @@
 import React from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, Text, View, TouchableOpacity, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
@@ -88,7 +89,7 @@ export default function ActiveGoalCard({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   card: {
     backgroundColor: THEME.colors.panel,
     borderRadius: THEME.rounded.card,
@@ -190,4 +191,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: THEME.colors.void,
   },
-});
+}));

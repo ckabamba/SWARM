@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -55,7 +56,7 @@ export default function AccountSettingsControl({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     alignItems: 'flex-end',
     marginTop: -12,
@@ -77,4 +78,4 @@ const styles = StyleSheet.create({
     color: THEME.colors.ash,
     letterSpacing: 0.9,
   },
-});
+}));

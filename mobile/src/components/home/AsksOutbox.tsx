@@ -1,4 +1,5 @@
 import React from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Ask } from '../../types/warmpath';
@@ -68,7 +69,7 @@ export default function AsksOutbox({ asks, onOpenReplyDemo }: AsksOutboxProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     marginBottom: 24,
     paddingTop: 16,
@@ -174,4 +175,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: THEME.colors.ash,
   },
-});
+}));

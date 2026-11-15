@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createThemedStyles } from '../theme/themedStyles';
 import { StyleSheet, ScrollView } from 'react-native';
 import StudentHeader from '../components/home/StudentHeader';
 import AccountSettingsControl from '../components/home/AccountSettingsControl';
@@ -126,7 +127,7 @@ export default function HomeScreen({ onOpenMap }: HomeScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -136,4 +137,4 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 40,
   },
-});
+}));
