@@ -1,5 +1,7 @@
 # MVP spec
 
+Community contract update: [Social Jackets](community.md#api-contract) implements public feed/detail routes, authenticated post creation, author-owned edits/deletes, keyset pagination, safe create retries and linked resources/events. It shares local accounts and explicit public-profile visibility; migration `0004` extends the shared `post` table.
+
 Course contract update: [My Courses and transcript import](courses-and-transcripts.md#migration-and-api-contract-changes) separates course persistence from general profiles. `/me` excludes the embedded course array; use `/me/courses` and `/transcripts/*`. Resume imports selecting courses require `courses_version`. Course revisions are independent, and transcript drafts exclude raw text/grade/GPA columns. These changes are implemented in connected Thermal; other clients need corresponding integration.
 
 Implemented contract update: [local profiles and resume import](profiles-and-resumes.md#api-contract) adds `/auth/*`, `/me`, `/profile-options`, `/profiles/{id}`, and `/resumes/*` alongside existing resource routes. Uses local password accounts and explicit shared migrations; production identity and the wider milestones below remain pending. Profile collection entries are self-reported and are not automatically alumni statistical evidence.
@@ -44,13 +46,13 @@ Accounts and login, real profiles, community content, geographic maps, and mobil
 | Community | Define post fields and club/event highlighting. Reactions, comments, follows, and private messaging are not yet committed. |
 | Data sources | Define user-entered profiles/posts, club-maintained information, and permitted public event sources/imports. |
 | API contracts | Preserve existing consumers; specify expanded shapes, errors, pagination, and visibility before integration. |
-| Ownership | Fill the remaining teammate names for the five assigned roles below; confirm framework-dependent mobile paths when choosing mobile delivery. |
+| Ownership | Confirm the remaining full-role owner names for roles 3 and 5; confirm framework-dependent mobile paths when choosing mobile delivery. |
 
 Implementation work is linked from the [README issue index](../README.md#implementation-issues). [#14](https://github.com/ckabamba/SWARM/issues/14) still holds the resource-source/model decisions affecting schema, fixtures, and the engine; expanding the product scope does not settle extraction methods or fallback semantics. The voice, mobile, and map issues likewise retain open technology and interaction decisions.
 
 ## Repo layout
 
-The five roles in the [README](../README.md#team) own the areas below. These are planned production folders; current prototypes are under `prototypes/` and `mobile/`. Christofort Kabamba owns role 2; Alfred Tang has claimed role 3 discovery UI work in #19. Remaining full-role assignments still need confirmation. This replaces the previous path-only allocation: event ingestion moves to role 1, the people/Ask flow moves to role 3, and role 5 owns geographic-map interfaces as well as demo coordination. No code is moved by this documentation update.
+The five roles in the [README](../README.md#team) own the areas below. These are planned production folders; current prototypes are under `prototypes/` and `mobile/`. Ezekiel Currie owns role 1, Christofort Kabamba owns role 2, and Shehryar Sardar owns role 4; Alfred Tang has claimed role 3 discovery UI work in #19. Remaining full-role assignments for roles 3 and 5 still need confirmation. This replaces the previous path-only allocation: event ingestion moves to role 1, the people/Ask flow moves to role 3, and role 5 owns geographic-map interfaces as well as demo coordination. No code is moved by this documentation update.
 
 | Path | Role | Holds |
 | --- | --- | --- |
@@ -138,7 +140,7 @@ The original proposed defaults keep activities with a lift of 1.5 or more and at
 
 ### Implemented local Thermal slice
 
-The current local service implements resource discovery and public event snapshots, not the historical alumni-path contract below. Real alumni histories and accounts are not connected. All paths use `/api`; see [run/test instructions](backend-local-testing.md).
+The current local service implements resource discovery and public event snapshots, not the historical alumni-path contract below. Real alumni histories are not connected. Local accounts/profiles, courses/transcripts and community posts use the separate implemented contracts linked above. All paths use `/api`; see [run/test instructions](backend-local-testing.md).
 
 | Route | Current behavior |
 | --- | --- |
@@ -232,7 +234,7 @@ Christofort Kabamba owns the service API design, coordinating schema and UI cons
 | --- | --- |
 | Accounts/profiles | Identity, reading/updating profiles, author ownership, and visibility |
 | Resources/clubs | Search/list/detail operations and links to shared activities, people, and events |
-| Community | Post creation and retrieval, pagination, authors, linked entities, and club/event highlights |
+| Community | Local posts, pagination, ownership and resource/event links are implemented in [community.md](community.md); production moderation and club-managed event publishing remain open |
 | Events/campus map | Event retrieval, location identifiers/coordinates, date/location filtering, and details |
 | Alumni-city map | City identifiers/coordinates, relevant alumni, visibility, and any agreed counts/filters |
 | Text/voice discovery | Input representation, resource references in results, speech handling, and failure responses |

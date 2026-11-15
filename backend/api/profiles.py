@@ -67,7 +67,7 @@ class ProfileService:
     def initialize(self):
         metadata = MetaData()
         for name in ('person', 'account', 'account_session', 'person_profile', 'resume_draft',
-                     'account_rate_limit', 'alumni_city', 'api_resources', 'api_job_examples', 'person_course', 'transcript_draft'):
+                     'account_rate_limit', 'alumni_city', 'api_resources', 'api_job_examples', 'person_course', 'transcript_draft', 'post', 'api_public_events'):
             try:
                 self.tables[name] = Table(name, metadata, autoload_with=self.engine)
             except NoSuchTableError:
@@ -173,6 +173,8 @@ def install_profiles(app, engine):
     service = ProfileService(engine)
     from backend.api.courses import install_courses
     courses = install_courses(app, service, bounded_extract, now)
+    from backend.api.community import install_community
+    install_community(app, service)
 
     @app.post('/api/auth/register', status_code=201)
     def register(body: Register, request: Request, response: Response):

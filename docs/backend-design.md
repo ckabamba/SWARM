@@ -8,9 +8,9 @@ Backend and LLM owner: **Christofort Kabamba (@ckabamba)**. Role 1 owns schema, 
 
 Update after pulling `19ef2fa`: [local accounts, profiles and reviewed resume imports](profiles-and-resumes.md) extend the shared Alembic/person foundation. This supersedes descriptions below of all accounts/profiles being absent. Managed production identity remains a future decision. The incoming React port still uses fixtures; Thermal remains the connected UI. Broader milestones below are not complete.
 
-Thermal now has a local FastAPI/PostgreSQL resource backend. User steering requires real data: sourced campus resources and public events are available, while alumni histories/accounts remain absent. Thermal therefore starts with resource discovery, saved resources, and event snapshots; it does not fabricate the planned path/ask journey. The other browser prototypes and Expo still use local fixtures. The wider profile/path/ask milestones below depend on authorized alumni data and identity design.
+Thermal now has a local FastAPI/PostgreSQL resource backend. User steering requires real data: sourced campus resources and public events are available, while an authorized alumni-history dataset remains absent. Local accounts/profiles, reviewed resume and transcript imports, and persistent community posts are implemented; see [community contracts](community.md). Thermal therefore starts with resource discovery, saved resources, and event snapshots; it does not fabricate the planned path/ask journey. The React/Vite and Expo clients still use local fixtures. The wider profile/path/ask milestones below depend on authorized alumni data and identity design.
 
-**Current primary UI:** `prototypes/thermal/index.html`, selected by Christofort. Integrate and test the backend against Thermal first. Transit, Engineering Pad, and Expo remain prototypes for now; mobile remains product scope but does not block the first backend milestone. See [local testing and technology guide](backend-local-testing.md).
+**Current primary UI:** `prototypes/thermal/index.html`, selected by Christofort. Integrate and test the backend against Thermal first. Social Jackets is also connected to the same PostgreSQL-backed API; React/Vite and Expo remain prototypes for now; Transit and Engineering Pad were removed upstream; mobile remains product scope but does not block the first backend milestone. See [local testing and technology guide](backend-local-testing.md).
 
 The service must support paths/resource discovery, community posts with club/event highlights, campus activities on a geographic map, and alumni shared cities, across web and mobile. All surfaces resolve the same event, resource, club, and profile IDs. Alumni cities are voluntarily shared locations, not live positions.
 
@@ -127,7 +127,7 @@ Send providers only the fields needed for the requested task. Decide audio reten
 
 ## Client migration
 
-Thermal now uses a separate asynchronous HTTP adapter for real-resource discovery and saved items, with loading/error/retry states and timeouts. It no longer loads `window.WarmPathFake`. The other prototypes retain their fixture API. Further feature integration must preserve that boundary and the visual presentation.
+Thermal now uses a separate asynchronous HTTP adapter for real-resource discovery and saved items, with loading/error/retry states and timeouts. It no longer loads `window.WarmPathFake`. Social Jackets also uses this adapter and real API records. The React/Vite and Expo prototypes remain separate. Further feature integration must preserve that boundary and the visual presentation.
 
 The fixed denominator `14`, demo alumni totals, and synthesized missing asks have been removed from connected Thermal. Alumni evidence and asks remain unavailable until authorized data and accounts exist. When implementing that future slice, refresh ask status with bounded visible-view polling, use the agreed ID representation, and enforce recipient identity. Do not reintroduce the prototype's “No account needed” behavior.
 

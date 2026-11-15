@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Social Jackets - WarmPath</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #06040b;
+    --ash: #8f8798;          /* quiet text on the void */
+    --bone: #f4eee6;         /* body text */
+    --ember: #ff6a1f;
+    --gold: #eaaa00;         /* Georgia Tech Buzz Gold */
+    --glow: #ffe9a8;         /* hottest: actions, the lit state */
+    --line: rgba(244, 238, 230, 0.16);
+    --panel: rgba(9, 6, 15, 0.84);
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--void);
+    color: var(--bone);
+    font-family: 'Mona Sans', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection { background: var(--ember); color: var(--void); }
+  button, input, textarea, select { font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 1px solid var(--glow); outline-offset: 4px; }
+
+  /* ---------- layers ---------- */
+  .field, .swarm, .veil, .hive { position: fixed; inset: 0; }
+  .hive { pointer-events: none; transition: opacity 500ms ease; }
+  [data-view='map'] .hive { opacity: 0; }
+  .field { opacity: 0.72; transition: opacity 1400ms var(--ease-out); }
+  [data-view='map'] .field { opacity: 0.5; }
+  [data-view='reply'] .field { opacity: 0.55; }
+  [data-accepted='true'] .field { opacity: 1; }
+  .swarm { mix-blend-mode: screen; pointer-events: none; }
+  .veil {
+    pointer-events: none;
+    background: radial-gradient(78% 74% at 50% 50%, rgba(6, 4, 11, 0.94) 0%, rgba(6, 4, 11, 0.8) 48%, rgba(6, 4, 11, 0.1) 100%);
+  }
+  .ui { position: fixed; inset: 0; }
+
+  /* small tracked caps: the one label voice */
+  .cap {
+    font-size: 10.5px;
+    font-stretch: 118%;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .quiet { color: var(--ash); }
+
+  /* ---------- top bar ---------- */
+  .bar {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 30px 40px;
+    z-index: 5;
+  }
+  .mark { display: flex; align-items: center; gap: 10px; font-stretch: 112%; font-weight: 600; letter-spacing: 0.02em; background: none; border: 0; padding: 0; }
+  .mark i {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--glow);
+  }
+  .switch {
+    position: relative;
+    display: grid; grid-template-columns: 1fr 1fr;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(9, 6, 15, 0.6);
+  }
+  .switch button {
+    position: relative; z-index: 1;
+    padding: 9px 18px;
+    border: 0; background: none; border-radius: 999px;
+    color: var(--ash);
+    transition: color 200ms ease;
+    white-space: nowrap;
+  }
+  .switch button[aria-pressed='true'] { color: var(--void); }
+  .switch .thumb {
+    position: absolute; top: 4px; bottom: 4px; left: 4px;
+    width: calc(50% - 4px);
+    border-radius: 999px;
+    background: var(--glow);
+    transition: transform 320ms var(--ease-in-out);
+  }
+  .switch[data-index='1'] .thumb { transform: translateX(100%); }
+  .section-tabs {
+    display: inline-flex; align-items: center; gap: 3px; padding: 4px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: rgba(9, 6, 15, 0.82);
+  }
+  .section-tabs a {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 40px; padding: 8px 16px; border-radius: 999px;
+    color: var(--ash); text-decoration: none; white-space: nowrap;
+    transition: color 200ms ease, background-color 200ms ease, transform 160ms var(--ease-out);
+  }
+  .section-tabs a[aria-current='page'] { background: var(--glow); color: var(--void); }
+  .section-tabs a:active { transform: scale(0.97); }
+  @media (hover: hover) and (pointer: fine) {
+    .section-tabs a:not([aria-current='page']):hover { color: var(--bone); }
+  }
+
+  /* ---------- goal view ---------- */
+  .goal {
+    position: absolute; inset: 0;
+    transition: opacity 420ms ease, filter 420ms ease, transform 420ms var(--ease-out);
+  }
+  [data-view='map'] .goal { opacity: 0; filter: blur(10px); transform: scale(0.985); pointer-events: none; }
+
+  /* The landing is three screens tall. Scrolling it turns the honeycomb. */
+  .landing {
+    position: absolute; inset: 0; overflow-y: auto; scroll-snap-type: y proximity; overscroll-behavior: contain; scrollbar-width: none;
+    mask-image: linear-gradient(to bottom, transparent 40px, #000 150px, #000 calc(100% - 130px), transparent calc(100% - 60px));
+  }
+  .landing::-webkit-scrollbar { display: none; }
+  .beat { position: relative; min-height: 100%; display: grid; align-content: center; justify-items: start; padding: 0 8vw; scroll-snap-align: start; }
+  .beat h1, .beat .say {
+    margin: 0; max-width: 10.5em;
+    font-size: clamp(32px, 4.3vw, 64px); font-weight: 300; font-stretch: 108%;
+    letter-spacing: -0.03em; line-height: 1.08; text-wrap: balance;
+  }
+  /* Words arrive one at a time, out of a blur. After React Bits' BlurText, done in CSS. */
+  .word { display: inline-block; }
+  .beat:not([data-seen]) .word { opacity: 0; }
+  .beat[data-seen] .word { animation: word-in 700ms var(--ease-out) both; animation-delay: calc(var(--i) * 45ms); }
+  @keyframes word-in { from { opacity: 0; filter: blur(10px); transform: translateY(0.25em); } }
+  .beat.right { justify-items: end; }
+  .beat.right .say { text-align: right; }
+  .beat .jump { margin-top: 34px; padding: 4px 0; border: 0; background: none; color: var(--ash); transition: color 160ms ease; }
+  .beat .jump::before { content: '->'; margin-right: 10px; color: var(--ember); }
+  @media (hover: hover) and (pointer: fine) { .beat .jump:hover { color: var(--bone); } }
+  .cue { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); margin: 0; color: var(--ash); transition: opacity 300ms ease; pointer-events: none; }
+  .goal[data-scrolled] .cue { opacity: 0; }
+  .beat.ask { justify-items: center; }
+  .goal form { width: min(1040px, 84vw); }
+  .goal label { display: block; margin-bottom: 26px; color: var(--ash); font-size: 17px; }
+  .goal .row { display: flex; align-items: flex-end; gap: 22px; border-bottom: 1px solid var(--line); padding-bottom: 16px; transition: border-color 200ms ease; }
+  .goal .row:focus-within { border-color: rgba(255, 233, 168, 0.7); }
+  .goal input {
+    flex: 1; min-width: 0;
+    background: none; border: 0; outline: 0; padding: 0;
+    font-size: clamp(34px, 5.2vw, 76px);
+    font-weight: 300;
+    font-stretch: 108%;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    caret-color: var(--ember);
+  }
+  .goal input::placeholder { color: rgba(244, 238, 230, 0.5); }
+  .go {
+    flex: none;
+    width: 58px; height: 58px; margin-bottom: 6px;
+    display: grid; place-items: center;
+    border-radius: 50%; border: 1px solid var(--line);
+    background: none;
+    transition: transform 160ms var(--ease-out), background-color 200ms ease, border-color 200ms ease;
+  }
+  .go:active { transform: scale(0.95); }
+  .go svg { width: 20px; height: 20px; transition: transform 240ms var(--ease-out); }
+  @media (hover: hover) and (pointer: fine) {
+    .go:hover { background: var(--glow); border-color: var(--glow); color: var(--void); }
+    .go:hover svg { transform: translateX(3px); }
+  }
+  .seeds { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 26px 0 0; padding: 0; list-style: none; }
+  .seeds button { background: none; border: 0; padding: 4px 0; color: var(--ash); transition: color 160ms ease; }
+  .seeds button::before { content: '->'; margin-right: 10px; color: var(--ember); }
+  @media (hover: hover) and (pointer: fine) { .seeds button:hover { color: var(--bone); } }
+
+  .foot { position: absolute; left: 40px; right: 40px; bottom: 30px; margin: 0; display: flex; justify-content: space-between; gap: 24px; pointer-events: none; }
+  .foot a { color: inherit; pointer-events: auto; text-underline-offset: 4px; }
+
+  /* ---------- map view ---------- */
+  .map { position: absolute; inset: 0; pointer-events: none; }
+  .map > * { pointer-events: auto; }
+  .node {
+    position: absolute; left: 0; top: 0;
+    width: var(--d); height: var(--d);
+    margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
+    background: none; border: 0; padding: 0;
+    text-align: left;
+    opacity: 0;
+    transition: opacity 700ms var(--ease-out);
+  }
+  [data-view='map'] .node { opacity: 1; transition-delay: var(--at, 0ms); }
+  /* Each checkpoint is one cell of the honeycomb: same flat-topped shape, sized by its count. */
+  .node .hex { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; transition: transform 200ms var(--ease-out); }
+  .hex path { vector-effect: non-scaling-stroke; }
+  .hex .base { fill: rgba(6, 4, 11, 0.5); }
+  .hex .hot { fill: url(#hot); opacity: 0; transition: opacity 500ms ease; }
+  .hex .edge { fill: none; stroke: rgba(244, 238, 230, 0.55); stroke-width: 1; stroke-linejoin: round; transition: stroke 500ms ease; }
+  .hex .pulse { fill: none; stroke: var(--glow); stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
+  .node[data-have='true'] .hot { opacity: 1; }
+  .node[data-have='true'] .edge { stroke: var(--glow); }
+  .node[data-next='true'] .edge { stroke: var(--glow); stroke-dasharray: 5 4; }
+  .node[data-next='true'] .pulse { animation: ping 2200ms var(--ease-out) infinite; }
+  @keyframes ping { from { transform: scale(1); opacity: 0.75; } to { transform: scale(2); opacity: 0; } }
+  @media (hover: hover) and (pointer: fine) { .node:hover .hex { transform: scale(1.08); } }
+  .node:active .hex { transform: scale(0.96); }
+  .node:focus-visible { outline: 0; }
+  .node:focus-visible .edge { stroke: var(--glow); stroke-width: 2.5; stroke-dasharray: none; }
+
+  .node .tag {
+    position: absolute;
+    left: calc(100% + 16px); top: 50%;
+    width: 230px;
+    transform: translateY(-50%);
+  }
+  .node[data-side='left'] .tag { left: auto; right: calc(100% + 16px); text-align: right; }
+  .node[data-side='below'] .tag { left: 50%; margin-left: -115px; top: calc(100% + 14px); transform: none; text-align: center; }
+  .node[data-side='above'] .tag { left: 50%; margin-left: -115px; top: auto; bottom: calc(100% + 14px); transform: none; text-align: center; }
+  .node .state, .node .when { animation: settle 400ms ease both; }
+  @keyframes settle { from { opacity: 0; } }
+  .node .name { display: block; font-size: 17px; font-weight: 500; font-stretch: 105%; letter-spacing: -0.005em; line-height: 1.2; }
+  .node .count { display: block; margin-top: 5px; color: var(--ash); font-size: 13.5px; }
+  .node .count b { color: var(--bone); font-weight: 600; }
+  .node .state { display: block; margin-top: 7px; color: var(--glow); }
+  .node .when { display: block; margin-top: 4px; font-size: 13px; color: var(--bone); }
+
+  .end .name { font-size: 21px; }
+
+  .strip {
+    position: absolute; left: 40px; bottom: 30px;
+    width: min(500px, 38vw);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+  }
+  [data-view='map'] .strip { opacity: 1; transform: none; transition-delay: 3700ms; }
+  .strip h2, .closest h2 { margin: 0 0 12px; font-weight: 500; color: var(--ash); }
+  .strip ol { margin: 0; padding: 0; list-style: none; }
+  .strip li { display: grid; grid-template-columns: 62px 1fr; gap: 14px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+  .strip li div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .strip li b { font-weight: 600; }
+  .strip li span { color: var(--ash); }
+
+  .closest {
+    position: absolute; right: 40px; bottom: 30px;
+    width: min(300px, 26vw);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+  }
+  [data-view='map'] .closest { opacity: 1; transform: none; transition-delay: 3900ms; }
+  .closest button {
+    width: 100%;
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 8px 0; border: 0; border-top: 1px solid var(--line);
+    background: none; text-align: left; font-size: 13.5px;
+  }
+  .closest button b { font-weight: 600; transition: color 160ms ease; }
+  .closest button span { color: var(--ash); }
+  @media (hover: hover) and (pointer: fine) { .closest button:hover b { color: var(--glow); } }
+
+  /* ---------- people panel ---------- */
+  .panel {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: min(460px, 92vw);
+    padding: 96px 34px 34px;
+    background: var(--panel);
+    backdrop-filter: blur(22px);
+    border-left: 1px solid var(--line);
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 240ms var(--ease-out);
+    z-index: 4;
+  }
+  .panel[data-open='true'] { transform: none; transition: transform 460ms var(--ease-drawer); }
+  .panel h2 { margin: 0 70px 0 0; font-size: 26px; font-weight: 400; font-stretch: 106%; letter-spacing: -0.02em; line-height: 1.15; }
+  .panel .lede { margin: 12px 0 26px; color: var(--ash); font-size: 14px; max-width: 34ch; }
+  .panel .close { position: absolute; top: 102px; right: 34px; background: none; border: 0; padding: 6px 0; color: var(--ash); }
+  .person { padding: 18px 0; border-top: 1px solid var(--line); }
+  .person header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .person h3 { margin: 0; font-size: 17px; font-weight: 600; }
+  .person .who { color: var(--ash); font-size: 13px; }
+  .person .tie { margin: 8px 0 12px; font-size: 14px; color: #f6cfa6; max-width: 38ch; }
+  .person .more { margin: 14px 0 0; color: var(--ash); font-size: 13px; }
+  .pill {
+    padding: 9px 18px;
+    border-radius: 999px; border: 1px solid var(--line);
+    background: none;
+    transition: transform 160ms var(--ease-out), background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+  }
+  .pill:active { transform: scale(0.97); }
+  .pill.hot { background: var(--glow); border-color: var(--glow); color: var(--void); }
+  @media (hover: hover) and (pointer: fine) {
+    .pill:hover { border-color: var(--glow); }
+    .pill.hot:hover { background: #fff5d3; }
+  }
+  .draft { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 260ms var(--ease-out); }
+  .draft[data-open='true'] { grid-template-rows: 1fr; }
+  .draft > div { overflow: hidden; }
+  .draft textarea {
+    width: 100%; min-height: 168px; margin-top: 14px; padding: 14px 16px;
+    border: 1px solid var(--line); border-radius: 12px;
+    background: rgba(244, 238, 230, 0.04);
+    font-size: 14px; line-height: 1.55; resize: vertical;
+    caret-color: var(--ember);
+  }
+  .draft textarea:focus { outline: 0; border-color: rgba(255, 233, 168, 0.6); }
+  .draft .acts { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  .status { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
+  .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--ash); }
+  .status[data-status='accepted'] { color: var(--glow); }
+  .status[data-status='accepted'] i { background: var(--glow); }
+  .status a { color: inherit; text-underline-offset: 4px; }
+
+  /* ---------- alum reply page ---------- */
+  .reply { position: absolute; inset: 0; overflow-y: auto; display: grid; place-items: center; padding: 40px 22px; }
+  .reply article { width: min(400px, 100%); }
+  .reply h1 { margin: 34px 0 10px; font-size: 34px; font-weight: 300; font-stretch: 106%; letter-spacing: -0.03em; line-height: 1.1; text-wrap: balance; }
+  .reply .who { margin: 0 0 28px; color: var(--ash); }
+  .reply dl { margin: 0; }
+  .reply dt { margin: 22px 0 8px; color: var(--ash); }
+  .reply dd { margin: 0; }
+  .reply .tie { color: #f6cfa6; font-size: 16px; }
+  .reply .msg { padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: rgba(9, 6, 15, 0.55); font-size: 14.5px; line-height: 1.6; }
+  .accept {
+    position: relative; overflow: hidden;
+    width: 100%; margin-top: 30px; padding: 20px;
+    border-radius: 999px; border: 0;
+    background: var(--glow); color: var(--void);
+    font-size: 16px; font-weight: 600;
+    transition: transform 160ms var(--ease-out), background-color 300ms ease, color 300ms ease;
+  }
+  .accept:active { transform: scale(0.97); }
+  .accept[disabled] { background: rgba(255, 233, 168, 0.14); color: var(--glow); cursor: default; }
+  .reply .after { margin: 16px 0 0; text-align: center; color: var(--ash); font-size: 13.5px; }
+
+  /* ---------- Social Jackets ---------- */
+  .community-page {
+    position: fixed; inset: 0; z-index: 3; overflow-y: auto;
+    overscroll-behavior: contain; scrollbar-color: rgba(244, 238, 230, 0.24) transparent;
+    background: rgba(6, 4, 11, 0.5);
+  }
+  .community-bar {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    padding: 18px 40px; border-bottom: 1px solid var(--line);
+    background: rgba(6, 4, 11, 0.96);
+  }
+  .community-bar .mark { text-decoration: none; color: var(--bone); }
+  .community-content { width: min(1260px, calc(100% - 80px)); margin: 0 auto; padding: 38px 0 72px; }
+  .community-heading { max-width: 760px; }
+  .community-heading .cap { color: var(--ash); }
+  .community-heading h1 {
+    margin: 10px 0 12px; font-size: clamp(38px, 5.2vw, 64px); font-weight: 300;
+    font-stretch: 108%; letter-spacing: -0.03em; line-height: 1.08;
+  }
+  .community-heading p { margin: 0; max-width: 64ch; color: var(--ash); }
+  .community-demo-note {
+    margin: 18px 0 0; padding: 12px 14px; border: 1px solid var(--line);
+    border-radius: 12px; color: var(--ash); font-size: 13.5px;
+    background: rgba(244, 238, 230, 0.025);
+  }
+  .community-section-title { margin: 0; font-size: 22px; font-weight: 400; letter-spacing: -0.015em; }
+  .community-section-lede { margin: 7px 0 0; color: var(--ash); font-size: 13.5px; }
+  .community-events {
+    margin-top: 30px; padding: 24px; border: 1px solid var(--line); border-radius: 16px;
+    background: rgba(9, 6, 15, 0.9);
+  }
+  .community-events-head { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-bottom: 20px; }
+  .community-events-head .cap { color: var(--ash); }
+  .community-events-head p { margin: 0; color: var(--ash); font-size: 13px; text-align: right; }
+  .community-event-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .community-event-card {
+    min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 14px;
+    background: rgba(244, 238, 230, 0.025); display: flex; flex-direction: column; align-items: flex-start;
+  }
+  .community-event-card .cap { color: var(--ash); }
+  .community-event-card h3 { margin: 7px 0 4px; font-size: 18px; font-weight: 500; line-height: 1.25; }
+  .community-event-card .organizer { margin: 0 0 14px; color: var(--ash); font-size: 13.5px; }
+  .community-event-meta { display: grid; gap: 7px; margin: 0 0 14px; font-size: 13.5px; }
+  .community-event-meta span { color: var(--ash); }
+  .community-source { margin: auto 0 14px; color: var(--ash); font-size: 12.5px; }
+  .community-small-button {
+    min-height: 42px; padding: 8px 15px; border: 1px solid var(--line); border-radius: 999px;
+    background: transparent; color: var(--bone); text-align: center;
+    transition: transform 160ms var(--ease-out), border-color 200ms ease, color 200ms ease;
+  }
+  .community-small-button:active { transform: scale(0.97); }
+  @media (hover: hover) and (pointer: fine) { .community-small-button:hover { border-color: var(--glow); } }
+  .community-feed { width: min(820px, 100%); margin: 38px auto 0; }
+  .community-composer, .community-post {
+    border: 1px solid var(--line); border-radius: 14px; background: rgba(9, 6, 15, 0.9);
+  }
+  .community-composer { padding: 20px; }
+  .community-composer h2 { margin: 0 0 5px; font-size: 18px; font-weight: 500; }
+  .community-composer .as-demo { margin: 0 0 16px; color: var(--ash); font-size: 13px; }
+  .community-composer textarea {
+    display: block; width: 100%; min-height: 116px; padding: 13px 15px; resize: vertical;
+    border: 1px solid var(--line); border-radius: 12px; background: rgba(244, 238, 230, 0.035);
+    line-height: 1.55; caret-color: var(--ember);
+  }
+  .community-composer textarea:focus, .community-composer select:focus { outline: 0; border-color: rgba(255, 233, 168, 0.65); }
+  .community-composer textarea::placeholder { color: var(--ash); }
+  .community-composer-row { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-top: 14px; }
+  .community-record-select { display: grid; gap: 6px; min-width: min(100%, 310px); }
+  .community-record-select label { color: var(--ash); }
+  .community-record-select select {
+    width: 100%; min-height: 42px; padding: 8px 12px; border: 1px solid var(--line);
+    border-radius: 10px; background: #100d15; color: var(--bone);
+  }
+  .community-record-select option, .community-record-select optgroup { background: #100d15; color: var(--bone); }
+  .community-publish { min-width: 118px; background: var(--glow); border-color: var(--glow); color: var(--void); }
+  .community-publish:disabled { opacity: 0.45; cursor: not-allowed; }
+  .community-local-note { margin: 12px 0 0; color: var(--ash); font-size: 12.5px; }
+  .community-feed-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin: 30px 0 14px; }
+  .community-feed-toolbar h2 { margin: 0; font-size: 22px; font-weight: 400; }
+  .community-filter-tabs { display: flex; flex-wrap: wrap; gap: 7px; }
+  .community-filter-tabs button {
+    min-height: 40px; padding: 7px 13px; border: 1px solid var(--line); border-radius: 999px;
+    background: rgba(9, 6, 15, 0.8); color: var(--ash);
+    transition: transform 160ms var(--ease-out), color 200ms ease, background-color 200ms ease, border-color 200ms ease;
+  }
+  .community-filter-tabs button[aria-pressed='true'] { color: var(--void); background: var(--glow); border-color: var(--glow); }
+  .community-filter-tabs button:active { transform: scale(0.97); }
+  .community-post-list { display: grid; gap: 12px; }
+  .community-post { padding: 20px; }
+  .community-post-head { display: flex; align-items: flex-start; gap: 12px; }
+  .community-avatar {
+    flex: none; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--line);
+    border-radius: 50%; background: rgba(244, 238, 230, 0.04); font-size: 13px; font-weight: 600;
+  }
+  .community-author-block { min-width: 0; flex: 1; }
+  .community-author {
+    display: inline; padding: 0; border: 0; background: none; color: var(--bone); text-align: left;
+    font-size: 16px; font-weight: 600; text-decoration: underline; text-decoration-color: transparent;
+    text-underline-offset: 3px; transition: text-decoration-color 180ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) { .community-author:hover { text-decoration-color: var(--glow); } }
+  .community-author-context, .community-timestamp { display: block; color: var(--ash); font-size: 12.5px; }
+  .community-timestamp { margin-top: 2px; }
+  .community-post-text { margin: 18px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .community-linked-record {
+    width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    padding: 12px 14px; border: 1px solid var(--line); border-radius: 11px;
+    background: rgba(244, 238, 230, 0.025); text-align: left;
+  }
+  .community-linked-record .linked-type { display: block; margin-bottom: 2px; color: var(--ash); }
+  .community-linked-record .linked-title { display: block; font-weight: 500; }
+  .community-linked-record .linked-action { flex: none; color: var(--ash); font-size: 12.5px; }
+  .community-empty { padding: 20px; border: 1px solid var(--line); border-radius: 12px; color: var(--ash); }
+  .social-dialog-scrim {
+    position: fixed; inset: 0; z-index: 12; display: grid; place-items: center; padding: 20px;
+    background: rgba(6, 4, 11, 0.86);
+  }
+  .social-dialog {
+    width: min(520px, 100%); max-height: min(82vh, 740px); overflow-y: auto;
+    padding: 26px; border: 1px solid var(--line); border-radius: 16px;
+    background: #100d15; outline: none;
+  }
+  .social-dialog-head { display: flex; align-items: start; justify-content: space-between; gap: 14px; }
+  .social-dialog h2 { margin: 5px 0 0; font-size: 25px; font-weight: 400; line-height: 1.2; }
+  .social-dialog-close { flex: none; min-height: 42px; padding: 7px 13px; border: 1px solid var(--line); border-radius: 999px; background: transparent; }
+  .social-dialog .dialog-lede { color: var(--ash); }
+  .social-profile-fields { display: grid; gap: 12px; margin: 20px 0; }
+  .social-profile-fields div { padding: 12px 0; border-top: 1px solid var(--line); }
+  .social-profile-fields dt { color: var(--ash); margin-bottom: 3px; }
+  .social-profile-fields dd { margin: 0; }
+  .social-dialog .community-record-destination { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ash); font-size: 13px; }
+  .social-dialog .related-record-button { margin-top: 12px; }
+
+  @media (max-width: 980px) {
+    .community-event-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .community-event-card:last-child:nth-child(odd) { grid-column: span 2; }
+  }
+  @media (max-width: 680px) {
+    .bar { padding: 14px 16px; gap: 12px; flex-wrap: wrap; }
+    .bar .section-tabs { margin-left: auto; }
+    .community-bar { padding: 14px 16px; gap: 12px; flex-wrap: wrap; }
+    .community-content { width: calc(100% - 32px); padding: 28px 0 54px; }
+    .community-heading h1 { font-size: clamp(38px, 11vw, 50px); }
+    .community-events { margin-top: 22px; padding: 17px; }
+    .community-events-head { align-items: start; flex-direction: column; gap: 6px; }
+    .community-events-head p { text-align: left; }
+    .community-event-grid { grid-template-columns: 1fr; }
+    .community-event-card:last-child:nth-child(odd) { grid-column: auto; }
+    .community-feed { margin-top: 28px; }
+    .community-composer, .community-post { padding: 16px; }
+    .community-composer-row { align-items: stretch; flex-direction: column; }
+    .community-record-select { min-width: 0; }
+    .community-publish { width: 100%; }
+    .community-feed-toolbar { align-items: stretch; flex-direction: column; gap: 12px; }
+    .community-filter-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .community-filter-tabs button { padding: 8px 9px; }
+    .social-dialog { padding: 20px; }
+  }
+
+  /* ---------- Social Jackets dashboard ---------- */
+  .community-page {
+    --community-text: var(--bone);
+    --community-muted: var(--ash);
+    --community-line: var(--line);
+    --community-panel: rgba(9, 6, 15, 0.94);
+    --community-surface: rgba(244, 238, 230, 0.035);
+    --community-input: rgba(244, 238, 230, 0.055);
+    --community-action: var(--glow);
+    --community-action-text: var(--void);
+    position: fixed; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; padding: 80px 28px 20px; color: var(--community-text);
+    background: rgba(6, 4, 11, 0.54);
+  }
+  .community-page[data-theme='light'] {
+    --community-text: #211910;
+    --community-muted: #5e5449;
+    --community-line: rgba(42, 30, 18, 0.2);
+    --community-panel: rgba(250, 247, 240, 0.97);
+    --community-surface: rgba(255, 255, 255, 0.48);
+    --community-input: rgba(255, 255, 255, 0.72);
+    --community-action: #eaaa00;
+    --community-action-text: #17110a;
+    background: rgba(244, 238, 230, 0.78);
+  }
+  .community-atmosphere { transition: opacity 200ms var(--ease-out); }
+  .community-atmosphere-dark { opacity: 0.28; }
+  .community-atmosphere-light { opacity: 0.16; }
+  .community-content {
+    width: min(1420px, 100%); height: min(840px, calc(100dvh - 104px)); max-height: 100%;
+    display: flex; flex-direction: column; overflow: hidden; padding: 0;
+    border: 1px solid var(--community-line); border-radius: 18px;
+    background: var(--community-panel); color: var(--community-text);
+  }
+  .community-bar {
+    position: absolute; top: 16px; left: 40px; right: 40px; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between; gap: 18px;
+    padding: 0; border: 0; background: transparent;
+  }
+  .community-bar .mark { color: var(--bone); text-decoration: none; }
+  .community-page[data-theme='light'] .community-bar .mark { color: var(--community-text); }
+  .community-page[data-theme='light'] .section-tabs { border-color: var(--community-line); background: rgba(250, 247, 240, 0.94); }
+  .community-page[data-theme='light'] .section-tabs a[aria-current='page'] { background: #eaaa00; color: #17110a; }
+  .community-heading {
+    flex: none; display: flex; align-items: center; justify-content: space-between; gap: 22px;
+    padding: 17px 23px; border-bottom: 1px solid var(--community-line); max-width: none;
+  }
+  .community-heading .cap { color: var(--community-muted); }
+  .community-heading h1 { margin: 3px 0 1px; font-size: 30px; font-weight: 300; font-stretch: 108%; letter-spacing: -0.03em; line-height: 1.15; }
+  .community-heading p { margin: 0; color: var(--community-muted); font-size: 13.5px; }
+  .community-theme-switch {
+    flex: none; min-height: 44px; display: inline-flex; align-items: center; gap: 9px;
+    padding: 5px 11px; border: 1px solid var(--community-line); border-radius: 999px;
+    background: var(--community-surface); color: var(--community-text); font-size: 13px;
+  }
+  .community-theme-track { position: relative; width: 38px; height: 21px; border: 1px solid var(--community-line); border-radius: 999px; background: var(--community-input); }
+  .community-theme-track i { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--community-action); transition: transform 200ms var(--ease-out); }
+  .community-theme-switch[aria-checked='true'] .community-theme-track i { transform: translateX(17px); }
+  .community-dashboard { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(190px, 228px) minmax(0, 1fr) minmax(270px, 330px); }
+  .community-identity, .community-feed, .community-events { min-width: 0; min-height: 0; }
+  .community-identity {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+    padding: 23px 20px; border-right: 1px solid var(--community-line);
+  }
+  .community-identity-avatar { display: grid; place-items: center; width: 54px; height: 54px; border: 1px solid var(--community-line); border-radius: 50%; background: var(--community-surface); font-weight: 600; }
+  .community-identity .cap { margin-top: 9px; color: var(--community-muted); }
+  .community-identity h2 { margin: 0; font-size: 22px; font-weight: 500; line-height: 1.2; }
+  .community-identity p { margin: 0; color: var(--community-muted); font-size: 13.5px; }
+  .community-identity .community-small-button { margin-top: 8px; }
+  .community-identity .community-local-note { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--community-line); font-size: 12.5px; }
+  .community-mobile-identity, .community-mobile-tabs { display: none; }
+  .community-feed { display: flex; flex-direction: column; width: 100%; margin: 0; padding: 17px 18px 12px; border-right: 1px solid var(--community-line); }
+  .community-feed-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--community-line); }
+  .community-feed-head .cap, .community-events-head .cap { color: var(--community-muted); }
+  .community-feed-head h2, .community-events-head h2 { margin: 2px 0 0; font-size: 19px; font-weight: 400; line-height: 1.2; }
+  .community-feed-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-color: rgba(143, 135, 152, 0.45) transparent; scrollbar-width: thin; }
+  .community-feed-content { display: grid; align-content: start; gap: 10px; padding: 13px 3px 8px 0; }
+  .community-post { padding: 14px; border: 1px solid var(--community-line); border-radius: 13px; background: var(--community-surface); }
+  .community-post-head { display: flex; align-items: flex-start; gap: 11px; }
+  .community-avatar { flex: none; display: grid; place-items: center; width: 39px; height: 39px; border: 1px solid var(--community-line); border-radius: 50%; background: var(--community-surface); color: var(--community-text); font-size: 12.5px; font-weight: 600; }
+  .community-author-block { flex: 1; min-width: 0; }
+  .community-author { padding: 0; border: 0; background: transparent; color: var(--community-text); text-align: left; font-size: 15.5px; font-weight: 600; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
+  .community-author-context, .community-timestamp { display: block; color: var(--community-muted); font-size: 12px; }
+  .community-timestamp { margin-top: 2px; }
+  .community-post-text { margin: 13px 0; color: var(--community-text); font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .community-linked-record { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 11px; border: 1px solid var(--community-line); border-radius: 10px; background: var(--community-surface); color: var(--community-text); text-align: left; }
+  .community-linked-record .linked-type { display: block; margin-bottom: 2px; color: var(--community-muted); }
+  .community-linked-record .linked-title { display: block; font-size: 13.5px; }
+  .community-linked-record .linked-action { flex: none; color: var(--community-muted); font-size: 12px; }
+  .community-feed > .community-local-note { flex: none; margin: 8px 0 0; color: var(--community-muted); font-size: 11.5px; }
+  .community-events { display: flex; flex-direction: column; margin: 0; border: 0; border-radius: 0; background: transparent; padding: 17px 17px 12px; }
+  .community-events-head { flex: none; display: flex; justify-content: space-between; align-items: end; gap: 10px; padding-bottom: 13px; border-bottom: 1px solid var(--community-line); }
+  .community-events-head p { margin: 0; color: var(--community-muted); font-size: 11.5px; text-align: right; }
+  .community-event-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-color: rgba(143, 135, 152, 0.45) transparent; scrollbar-width: thin; }
+  .community-event-card { display: flex; flex-direction: column; align-items: flex-start; padding: 14px 0; border: 0; border-radius: 0; background: transparent; border-bottom: 1px solid var(--community-line); }
+  .community-event-card .cap { color: var(--community-muted); }
+  .community-event-card h3 { margin: 5px 0 3px; font-size: 16px; font-weight: 500; line-height: 1.25; }
+  .community-event-card .organizer { margin: 0 0 9px; color: var(--community-muted); font-size: 12.5px; }
+  .community-event-meta { display: grid; gap: 4px; margin: 0 0 7px; color: var(--community-text); font-size: 12.5px; line-height: 1.4; }
+  .community-event-meta span { color: var(--community-muted); }
+  .community-source { margin: 0 0 9px; color: var(--community-muted); font-size: 11.5px; }
+  .community-small-button { min-height: 40px; padding: 8px 13px; border: 1px solid var(--community-line); border-radius: 999px; background: transparent; color: var(--community-text); text-align: center; transition: transform 160ms var(--ease-out), border-color 200ms ease, background-color 200ms ease; }
+  .community-small-button:active { transform: scale(0.97); }
+  .community-small-button:hover { border-color: var(--community-action); }
+  .community-publish { border-color: var(--community-action); background: var(--community-action); color: var(--community-action-text); }
+  .community-publish:disabled { opacity: 0.5; cursor: not-allowed; }
+  .community-mobile-identity strong, .community-mobile-identity span { display: block; }
+  .community-mobile-identity span:not(.community-avatar) { color: var(--community-muted); font-size: 11.5px; }
+  .community-theme-switch:focus-visible, .community-page :focus-visible { outline: 2px solid var(--glow); outline-offset: 3px; }
+  .community-page[data-theme='light'] :focus-visible { outline-color: #8f5c00; }
+  .community-page[data-theme='light'] .community-theme-switch { --glow: #8f5c00; }
+  .community-dialog-scrim, .social-dialog-scrim { position: fixed; inset: 0; z-index: 12; display: grid; place-items: center; padding: 18px; background: rgba(6, 4, 11, 0.78); }
+  .community-page[data-theme='light'] .social-dialog-scrim { background: rgba(36, 26, 16, 0.48); }
+  .social-dialog { width: min(500px, 100%); max-height: min(82dvh, 680px); overflow-y: auto; padding: 22px; border: 1px solid var(--community-line); border-radius: 15px; background: var(--community-panel); color: var(--community-text); }
+  .social-dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 13px; margin-bottom: 14px; }
+  .social-dialog h2 { margin: 4px 0 0; font-size: 23px; font-weight: 400; line-height: 1.2; }
+  .social-dialog .cap, .social-dialog .dialog-lede { color: var(--community-muted); }
+  .social-dialog .dialog-lede { margin: 10px 0; font-size: 13.5px; }
+  .social-dialog-close { flex: none; min-height: 40px; padding: 7px 12px; border: 1px solid var(--community-line); border-radius: 999px; background: transparent; color: var(--community-text); }
+  .social-profile-fields { display: grid; gap: 10px; margin: 15px 0 0; }
+  .social-profile-fields div { padding: 9px 0; border-top: 1px solid var(--community-line); }
+  .social-profile-fields dt { margin-bottom: 3px; color: var(--community-muted); }
+  .social-profile-fields dd { margin: 0; }
+  .community-composer-form { display: grid; gap: 9px; }
+  .community-composer-form label { margin-top: 5px; color: var(--community-muted); }
+  .community-composer-form textarea, .community-composer-form select { width: 100%; min-height: 44px; padding: 11px 12px; border: 1px solid var(--community-line); border-radius: 10px; background: var(--community-input); color: var(--community-text); font: inherit; }
+  .community-composer-form textarea { min-height: 128px; resize: vertical; line-height: 1.5; caret-color: var(--ember); }
+  .community-composer-form textarea::placeholder { color: var(--community-muted); }
+  .community-composer-form select option { background: var(--community-panel); color: var(--community-text); }
+  .community-composer-form textarea:focus, .community-composer-form select:focus { outline: 0; border-color: var(--community-action); }
+  .community-composer-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; }
+  .community-local-note { margin: 9px 0 0; color: var(--community-muted); font-size: 12px; }
+  .community-record-destination { margin: 15px 0 0; padding-top: 12px; border-top: 1px solid var(--community-line); color: var(--community-muted); font-size: 12.5px; }
+  .related-record-button { margin-top: 6px; }
+  @media (hover: hover) and (pointer: fine) {
+    .community-author:hover { text-decoration-color: var(--community-action); }
+    .community-linked-record:hover { border-color: var(--community-action); }
+  }
+  @media (max-width: 980px) {
+    .community-dashboard { grid-template-columns: minmax(165px, 195px) minmax(0, 1fr) minmax(240px, 285px); }
+    .community-identity { padding: 18px 14px; }
+    .community-feed { padding-left: 14px; padding-right: 14px; }
+    .community-events { padding-left: 13px; padding-right: 13px; }
+  }
+  @media (max-width: 760px) {
+    .community-page { padding: 70px 9px 9px; }
+    .community-bar { top: 9px; left: 12px; right: 12px; gap: 8px; }
+    .community-bar .section-tabs a { min-height: 38px; padding: 7px 11px; }
+    .community-content { width: 100%; height: 100%; max-height: 100%; border-radius: 15px; }
+    .community-heading { padding: 11px 13px; gap: 10px; }
+    .community-heading h1 { margin-top: 2px; font-size: 24px; }
+    .community-heading p { max-width: 34ch; font-size: 11.5px; line-height: 1.35; }
+    .community-heading .cap { font-size: 9px; }
+    .community-theme-switch { min-height: 40px; gap: 5px; padding: 4px 7px; font-size: 11px; }
+    .community-theme-track { width: 33px; height: 19px; }
+    .community-theme-track i { width: 13px; height: 13px; }
+    .community-theme-switch[aria-checked='true'] .community-theme-track i { transform: translateX(14px); }
+    .community-mobile-identity { flex: none; display: flex; align-items: center; gap: 9px; padding: 8px 12px; border-bottom: 1px solid var(--community-line); }
+    .community-mobile-identity > div { flex: 1; min-width: 0; }
+    .community-mobile-identity strong { color: var(--community-text); font-size: 13px; }
+    .community-mobile-identity .community-avatar { width: 34px; height: 34px; font-size: 11px; }
+    .community-mobile-identity .community-small-button { min-height: 35px; padding: 5px 10px; font-size: 12px; }
+    .community-mobile-tabs { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 7px 10px; border-bottom: 1px solid var(--community-line); }
+    .community-mobile-tabs button { min-height: 39px; border: 1px solid var(--community-line); border-radius: 999px; background: var(--community-surface); color: var(--community-muted); }
+    .community-mobile-tabs button[aria-selected='true'] { border-color: var(--community-action); background: var(--community-action); color: var(--community-action-text); }
+    .community-dashboard { grid-template-columns: minmax(0, 1fr); }
+    .community-identity { display: none; }
+    .community-dashboard[data-focus='feed'] .community-events, .community-dashboard[data-focus='campus'] .community-feed { display: none; }
+    .community-feed, .community-events { padding: 11px 12px 9px; border: 0; }
+    .community-feed-head { padding-bottom: 10px; }
+    .community-feed-head h2, .community-events-head h2 { font-size: 17px; }
+    .community-feed-head .community-small-button { min-height: 38px; padding: 7px 10px; font-size: 12px; }
+    .community-feed-content { padding-top: 10px; }
+    .community-post { padding: 12px; }
+    .community-post-text { margin: 10px 0; font-size: 13.5px; }
+    .community-events-head { padding-bottom: 9px; }
+    .community-event-card { padding: 11px 0; }
+    .community-event-card h3 { font-size: 15px; }
+    .community-event-meta { font-size: 12px; }
+    .community-source { font-size: 11px; }
+    .community-dialog-scrim, .social-dialog-scrim { padding: 12px; }
+    .social-dialog { max-height: 88dvh; padding: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .community-atmosphere { transition: none; }
+    .community-theme-track i { transition: none; }
+    .community-feed-scroll { scroll-behavior: auto; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: 150ms !important; transition-delay: 0ms !important; }
+    .panel, .strip, .closest, .goal { transform: none !important; }
+    .panel:not([data-open='true']) { visibility: hidden; }
+  }
+  .community-notice { flex:none; margin:0; padding:10px 23px; background:var(--community-surface); color:var(--community-text); font-size:13px; }
+  .community-error { color:#e85f41; line-height:1.5; }
+  .community-post-actions { display:flex; gap:8px; margin-top:12px; }
+  .community-page a { color:var(--community-text); }
+  .community-identity a.community-small-button { text-decoration:none; }
+  .community-page { background:radial-gradient(ellipse at top left,#35200c 0,transparent 45%),#09060f; }
+  .community-page[data-theme='light'] { background:#ede6d9; }
+</style>
+
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.1.1",
+    "react/jsx-runtime": "https://esm.sh/react@19.1.1/jsx-runtime",
+    "react-dom": "https://esm.sh/react-dom@19.1.1",
+    "react-dom/client": "https://esm.sh/react-dom@19.1.1/client",
+    "three": "https://esm.sh/three@0.170.0",
+    "three/addons/loaders/GLTFLoader.js": "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js?external=three",
+    "@react-three/fiber": "https://esm.sh/@react-three/fiber@9.3.0?external=react,react-dom,three",
+    "@shadergradient/react": "https://esm.sh/@shadergradient/react@2.4.20?external=react,react-dom,three,@react-three/fiber"
+  }
+}
+</script>
+<script src="./api.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-type="module" data-presets="react">
+import React, {useEffect,useRef,useState} from 'react'
+import {createRoot} from 'react-dom/client'
+const api=window.WarmPathAPI
+const timestamp=value=>new Date(value).toLocaleString('en-US',{timeZone:'America/New_York',dateStyle:'medium',timeStyle:'short'})
+const initials=name=>name.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()
+
+function Community() {
+  const [me,setMe]=useState(null), [identityReady,setIdentityReady]=useState(false), [identityError,setIdentityError]=useState('')
+  const [posts,setPosts]=useState([]), [cursor,setCursor]=useState(null), [feedReady,setFeedReady]=useState(false), [feedError,setFeedError]=useState('')
+  const [events,setEvents]=useState(null), [eventError,setEventError]=useState(''), [resources,setResources]=useState([])
+  const [busy,setBusy]=useState(false), [notice,setNotice]=useState(''), [dialog,setDialog]=useState(null), [dialogError,setDialogError]=useState('')
+  const [body,setBody]=useState(''), [link,setLink]=useState(''), [mobileFocus,setMobileFocus]=useState('feed')
+  const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('warmpath.thermal.social-jackets.theme')==='light'?'light':'dark'}catch{return 'dark'}})
+  const retry=useRef(null), closeButton=useRef(null), returnFocus=useRef(null)
+  const loadFeed=async(more=false)=>{
+    setFeedError('')
+    try {const data=await api.request('/posts'+(more&&cursor?'?before='+cursor:''));setPosts(old=>more?[...old,...data.items.filter(p=>!old.some(o=>o.id===p.id))]:data.items);setCursor(data.next_cursor);setFeedReady(true)}
+    catch(e){setFeedError(e.message);setFeedReady(true)}
+  }
+  const loadEvents=async()=>{setEventError('');try{setEvents(await api.events())}catch(e){setEventError(e.message)}}
+  const loadIdentity=async()=>{
+    setIdentityError('')
+    try{const account=await api.request('/me');setMe(account);const options=await api.request('/community/options');setResources(options.resources)}
+    catch(e){if(e.status===401){setMe(null);setResources([])}else setIdentityError(e.message)}
+    finally{setIdentityReady(true)}
+  }
+  useEffect(()=>{loadFeed();loadEvents();loadIdentity()},[])
+  useEffect(()=>{document.body.dataset.view='community';document.body.dataset.communityTheme=theme;try{localStorage.setItem('warmpath.thermal.social-jackets.theme',theme)}catch{}},[theme])
+  const close=()=>{if(busy)return;setDialog(null);setDialogError('');returnFocus.current?.focus()}
+  useEffect(()=>{
+    if(!dialog)return
+    closeButton.current?.focus()
+    const key=e=>{
+      if(e.key==='Escape'&&!busy){setDialog(null);returnFocus.current?.focus()}
+      if(e.key==='Tab'){
+        const list=[...document.querySelectorAll('.social-dialog button:not(:disabled),.social-dialog a[href],.social-dialog textarea,.social-dialog select')]
+        const first=list[0],last=list[list.length-1]
+        if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}
+        else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}
+      }
+    }
+    window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)
+  },[!!dialog,busy])
+  const open=detail=>{returnFocus.current=document.activeElement;setDialogError('');setDialog(detail)}
+  const compose=post=>{
+    setNotice('')
+    if(!me){setNotice('Sign in through My Profile to share an update.');return}
+    if(!me.profile.profile_visible){setNotice('Enable a public profile in My Profile before posting. Your contacts and courses remain private unless you choose to share them.');return}
+    setBody(post?.body||'');setLink(post?.link_kind?JSON.stringify([post.link_kind,post.link_key]):'');retry.current=null;open({kind:'composer',post})
+  }
+  const submit=async e=>{
+    e.preventDefault();if(busy)return
+    const pair=link?JSON.parse(link):[null,null]
+    const payload={body:body.trim(),link_kind:pair[0],link_key:pair[1]}
+    const signature=JSON.stringify(payload)
+    if(!retry.current||retry.current.signature!==signature)retry.current={signature,id:crypto.randomUUID()}
+    setBusy(true);setDialogError('')
+    try {
+      const post=dialog.post
+      await api.request('/posts'+(post?'/'+post.id:''),{method:post?'PUT':'POST',body:JSON.stringify({...payload,...(post?{version:post.version}:{request_id:retry.current.id})})})
+      setDialog(null);setBody('');retry.current=null;setNotice(post?'Post updated.':'Post shared.');await loadFeed()
+    }catch(e){setDialogError(e.message)}finally{setBusy(false)}
+  }
+  const openProfile=async id=>{
+    open({kind:'loading'})
+    try{const data=await api.request('/profiles/'+id);setDialog({kind:'profile',data:data.profile})}catch(e){setDialog({kind:'unavailable'});setDialogError(e.message)}
+  }
+  const remove=async post=>{
+    if(busy||!confirm('Delete this post?'))return
+    setBusy(true);setNotice('')
+    try{await api.request('/posts/'+post.id+'?version='+post.version,{method:'DELETE'});setNotice('Post deleted.');await loadFeed()}
+    catch(e){setFeedError(e.message)}finally{setBusy(false)}
+  }
+  const choices=[...resources.map(r=>({value:JSON.stringify(['resource',String(r.id)]),title:r.kind+': '+r.name})),...(events?.items||[]).map(e=>({value:JSON.stringify(['event',e.url]),title:'Event: '+e.title}))]
+  const linked=dialog?.kind==='record'?dialog.record:null
+  return <main className="community-page" data-theme={theme}>
+    <header className="community-bar"><a className="mark" href="./index.html"><i/>WarmPath</a><nav className="section-tabs cap" aria-label="WarmPath sections"><a href="./index.html">Resources</a><a href="./index.html#/profile">My Profile</a><a href="./index.html#/courses">My Courses</a><a href="./community.html" aria-current="page">Social Jackets</a></nav></header>
+    <div className="community-content">
+      <header className="community-heading"><div><span className="cap">WarmPath community</span><h1>Social Jackets</h1><p>Updates from students and alumni. Public campus events from GT sources.</p></div><button className="community-theme-switch" role="switch" aria-label="Light theme" aria-checked={theme==='light'} onClick={()=>setTheme(t=>t==='light'?'dark':'light')}><span>Light</span><span className="community-theme-track" aria-hidden="true"><i/></span><span>Dark</span></button></header>
+      {notice&&<p role="status" className="community-notice">{notice}</p>}
+      <div className="community-mobile-tabs" role="tablist" aria-label="Social Jackets sections"><button role="tab" aria-selected={mobileFocus==='feed'} onClick={()=>setMobileFocus('feed')}>Feed</button><button role="tab" aria-selected={mobileFocus==='campus'} onClick={()=>setMobileFocus('campus')}>Campus</button></div>
+      <div className="community-dashboard" data-focus={mobileFocus}>
+        <aside className="community-identity"><span className="cap">Your account</span>{!identityReady?<p>Loading account...</p>:identityError?<><p role="alert">{identityError}</p><button className="community-small-button" onClick={loadIdentity}>Retry account</button></>:me?<><div className="community-identity-avatar">{initials(me.profile.name)}</div><h2>{me.profile.name}</h2><p>{me.profile.major||'Major not shared'}</p><p>{me.profile.kind==='alum'?'Alumni':'Student'} - Self-reported</p><a className="community-small-button" href="./index.html#/profile">Edit my profile</a><p>{me.profile.profile_visible?'Public profile enabled':'Your profile is private. Enable public sharing in My Profile to post.'}</p></>:<><h2>Join the conversation</h2><p>Sign in to share updates under your own profile.</p><a className="community-small-button" href="./index.html#/profile">Sign in or create an account</a></>}
+          <p className="community-local-note">Posts are public while the author's profile is public. Account membership and personal histories are self-reported; uploads and private contact fields stay private.</p></aside>
+        <section className="community-feed"><header className="community-feed-head"><div><span className="cap">Community feed</span><h2>Latest updates</h2></div><button className="community-small-button community-publish" disabled={busy||!identityReady} onClick={()=>compose(null)}>Share an update?</button></header>
+          <div className="community-feed-scroll"><div className="community-feed-content">
+            <button className="community-small-button" disabled={busy} onClick={()=>loadFeed()}>Reload feed</button>
+            {feedError&&<p role="alert" className="community-error">{feedError}</p>}
+            {!feedReady?<p role="status">Loading posts...</p>:!posts.length&&!feedError?<p>No public posts yet. Share the first update.</p>:null}
+            {posts.map(post=><article className="community-post" key={post.id} data-post-id={post.id}><header className="community-post-head"><span className="community-avatar">{initials(post.author.name)}</span><div className="community-author-block"><button className="community-author" onClick={()=>openProfile(post.author.id)}>{post.author.name}</button><span className="community-author-context">{post.author.kind==='alum'?'Alumni':'Student'}{post.author.major?' - '+post.author.major:''}</span><time className="community-timestamp" dateTime={post.created_at}>{timestamp(post.created_at)}{post.version>1?' - Edited':''}</time></div></header><p className="community-post-text">{post.body}</p>
+              {post.linked_record?<button className="community-linked-record" onClick={()=>open({kind:'record',record:post.linked_record})}><span><span className="cap linked-type">Linked {post.linked_record.kind}</span><span className="linked-title">{post.linked_record.title}</span></span><span className="linked-action">View details</span></button>:post.link_kind?<p className="community-local-note">Linked record is no longer available.</p>:null}
+              {me?.person_id===post.author.id&&<div className="community-post-actions"><button className="community-small-button" disabled={busy} onClick={()=>compose(post)}>Edit post</button><button className="community-small-button" disabled={busy} onClick={()=>remove(post)}>Delete post</button></div>}
+            </article>)}
+            {cursor&&<button className="community-small-button" onClick={()=>loadFeed(true)}>Load older posts</button>}
+          </div></div><p className="community-local-note">Saved in WarmPath - Reload to see updates from other sessions</p></section>
+        <aside className="community-events"><header className="community-events-head"><div><span className="cap">Public campus listings</span><h2>On campus</h2></div><button className="community-small-button" onClick={loadEvents}>Reload events</button></header><div className="community-event-scroll">
+          {eventError&&<p className="community-error" role="alert">{eventError}</p>}
+          {events?.stale&&<p className="community-local-note">This event snapshot needs refreshing. Confirm schedules at the source.</p>}
+          {events&&!events.items.length&&<p>No upcoming events in the current snapshot.</p>}
+          {(events?.items||[]).map(event=><article className="community-event-card" key={event.url}><span className="cap">{event.source==='gt-engage'?'GT Engage':'Georgia Tech Calendar'}</span><h3>{event.title}</h3>{event.organizer&&<p className="organizer">{event.organizer}</p>}<p className="community-event-meta"><span>{timestamp(event.starts_at)} - {timestamp(event.ends_at)}</span>{event.location&&<span>{event.location}</span>}</p><p className="community-source">Check the source for registration and recurring schedules.</p><button className="community-small-button" onClick={()=>open({kind:'record',record:{...event,kind:'event',key:event.url}})}>Event details</button></article>)}
+        </div></aside>
+      </div>
+    </div>
+    {dialog&&<div className="social-dialog-scrim" onMouseDown={e=>{if(e.target===e.currentTarget)close()}}><section role="dialog" aria-modal="true" aria-labelledby="social-dialog-title" className="social-dialog"><div className="social-dialog-head"><h2 id="social-dialog-title">{dialog.kind==='composer'?(dialog.post?'Edit your post':'Share an update'):dialog.kind==='profile'?dialog.data.name:linked?linked.title:'Profile'}</h2><button ref={closeButton} className="social-dialog-close" disabled={busy} onClick={close}>Close</button></div>
+      {dialogError&&<p role="alert" className="community-error">{dialogError}</p>}
+      {dialog.kind==='loading'&&<p>Loading public profile...</p>}
+      {dialog.kind==='composer'&&<form className="community-composer-form" onSubmit={submit}><label htmlFor="community-post-text">Post text</label><textarea id="community-post-text" maxLength={2000} required value={body} disabled={busy} onChange={e=>setBody(e.target.value)}/><label htmlFor="community-linked-record">Link a campus resource or event (optional)</label><select id="community-linked-record" value={link} disabled={busy} onChange={e=>setLink(e.target.value)}><option value="">No linked record</option>{link&&!choices.some(c=>c.value===link)&&<option value={link}>Existing linked record</option>}{choices.map(c=><option key={c.value} value={c.value}>{c.title}</option>)}</select><p className="community-local-note">Public under your name. {body.length}/2000 characters. Your resume, transcript and private profile fields are not included.</p><div className="community-composer-actions"><button className="community-small-button" type="button" disabled={busy} onClick={close}>Cancel</button><button className="community-small-button community-publish" disabled={busy||!body.trim()} type="submit">{busy?'Saving...':dialog.post?'Save changes':'Share update'}</button></div></form>}
+      {dialog.kind==='profile'&&<><p className="dialog-lede">Public, self-reported {dialog.data.kind==='alum'?'alumni':'student'} profile</p><p>{dialog.data.introduction}</p><dl className="social-profile-fields"><div><dt>Major</dt><dd>{dialog.data.major||'Not shared'}</dd></div><div><dt>Graduation year</dt><dd>{dialog.data.grad_year||'Not shared'}</dd></div></dl>{dialog.data.contacts.map(c=><p key={c.id}>{['portfolio','github','linkedin'].includes(c.kind)?<a href={c.value} target="_blank" rel="noreferrer">{c.kind}</a>:c.kind+': '+c.value}</p>)}{dialog.data.experiences.map(e=><p key={e.id}>{e.title}{e.organization?' - '+e.organization:''}</p>)}{dialog.data.courses.map(c=><p key={c.id}>{c.code} {c.title}{c.term?' - '+c.term:''}</p>)}</>}
+      {linked&&<>{linked.description&&<p>{linked.description}</p>}{linked.starts_at&&<p>{timestamp(linked.starts_at)} - {timestamp(linked.ends_at)}</p>}{linked.location&&<p>{linked.location}</p>}<a className="community-small-button" href={linked.url} target="_blank" rel="noreferrer">Open official source</a><p className="community-record-destination">{linked.kind==='event'?'Public event listing. Check the source for current schedules, recurrence and registration.':'Sourced campus resource; availability and prerequisites may change.'}</p></>}
+    </section></div>}
+  </main>
+}
+createRoot(document.getElementById('root')).render(<Community/> )
+</script>
+</body>
+</html>

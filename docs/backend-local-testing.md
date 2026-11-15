@@ -4,9 +4,9 @@
 
 **Profile/resume update:** [My Profile setup, API and tests](profiles-and-resumes.md) now cover local accounts, editable experiences/contacts/classes and reviewed imports. Run `.\.venv\Scripts\python.exe -m backend.manage migrate` once after installing the updated requirements and before starting this version. Existing resource tables/data are preserved. API startup does not apply shared migrations.
 
-Thermal is now connected to a local FastAPI/PostgreSQL service. It searches a curated catalog of real Georgia Tech resources, opens source links, saves resources and the last search to a private browser workspace, and displays imported public events. Transit, Engineering Pad, and Expo remain separate prototypes.
+Thermal is now connected to a local FastAPI/PostgreSQL service. It searches a curated catalog of real Georgia Tech resources, opens source links, saves resources and the last search to a private browser workspace, and displays imported public events. Social Jackets shares its accounts, public profiles, resources/events and persistent PostgreSQL posts. React/Vite and Expo remain separate prototypes; Transit and Engineering Pad were removed upstream.
 
-There is no real alumni-history dataset yet. The UI therefore does not display invented alumni, lift scores, outcome counts, or sendable asks. CareerBuzz is a source-linked resource requiring GT login for job listings, not a local copy of those jobs. Production accounts, community posting, geographic maps, voice, and model-backed discovery remain future slices.
+There is no real alumni-history dataset yet. The UI therefore does not display invented alumni, lift scores, outcome counts, or sendable asks. CareerBuzz is a source-linked resource requiring GT login for job listings, not a local copy of those jobs. Production identity, geographic maps, voice, and model-backed discovery remain future slices. Local accounts, profiles/resumes, courses/transcripts and community posting are implemented. See [community setup and testing](community.md).
 
 ## Run on this computer
 
@@ -17,7 +17,7 @@ Set-Location 'C:\Users\akabamba\Documents\SWARM\SWARM'
 .\.venv\Scripts\python.exe -m backend.manage run
 ```
 
-Open **http://127.0.0.1:8000/thermal/**. API documentation is at **http://127.0.0.1:8000/docs**. This one server serves Thermal and `/api` on the same origin. Do not use the old port-4712 static-only command for connected Thermal. Other prototypes can still use a static server.
+Open **http://127.0.0.1:8000/thermal/**. API documentation is at **http://127.0.0.1:8000/docs**. This one server serves Thermal and `/api` on the same origin. Do not use the old port-4712 static-only command for connected Thermal. Social Jackets also requires this server; a static server cannot provide its API.
 
 Ctrl+C stops the API. PostgreSQL remains running locally on port 55432. To stop it when finished:
 
@@ -57,11 +57,11 @@ Saving highlights a resource; it does not claim the user participated in that ac
 ## Automated verification
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest backend/tests/test_api.py -q
+.\.venv\Scripts\python.exe -m pytest backend/tests -q
 .\.venv\Scripts\python.exe backend/tests/check_thermal.py
 ```
 
-The first command uses the separate `warmpath_test` PostgreSQL database and checks its name before exercising writes. Tests cover persistence across a fresh API instance, browser isolation, idempotent saves, input validation, missing alumni/ask data, cross-origin writes, and source parsing. The second command needs the API running and uses headless Microsoft Edge with isolated temporary browser contexts. It checks search, save/reload, isolation, events, no-match, request failure/retry, and JavaScript errors. Screenshots go into ignored `.local/`.
+Run API tests before browser tests, since their cleanup shares the test database. The first command uses the separate `warmpath_test` PostgreSQL database and checks its name before exercising writes. Tests cover persistence across a fresh API instance, browser isolation, idempotent saves, input validation, missing alumni/ask data, cross-origin writes, and source parsing. The second command needs the API running and uses headless Microsoft Edge with isolated temporary browser contexts. It checks search, save/reload, isolation, events, no-match, request failure/retry, and JavaScript errors. Screenshots go into ignored `.local/`.
 
 ## Reproduce on another Windows machine
 
@@ -92,9 +92,10 @@ The app also accepts a `DATABASE_URL` for an existing PostgreSQL database; the t
 | HTML/CSS, React, Three.js/react-three-fiber, ShaderGradient | Thermal UI and existing honeycomb/gradient visuals |
 | JavaScript fetch / HTTP / JSON | Same-origin asynchronous requests with timeout/error handling |
 | Python / FastAPI / Uvicorn | Request handlers, validation, application server, and interactive API docs |
-| Pydantic | Validates search input |
-| SQLAlchemy / Psycopg / PostgreSQL | Database queries, transactions, and persistent workspaces/resources/events |
+| Pydantic | Validates API inputs, profiles, imports and posts |
+| SQLAlchemy / Psycopg / PostgreSQL | Database queries, transactions, and persistent workspaces, resources/events, accounts/profiles, courses and posts |
+| Alembic | Explicit shared schema migrations, including profiles, courses and community post revisions |
 | Python standard XML/JSON parsers | Import bounded public event metadata; reject unsupported input |
 | pytest / HTTPX / Playwright | API/database/parser tests and actual browser verification |
 
-Docker, Alembic, identity providers, AI/speech providers, and AWS hosting are not installed or configured as part of this first slice. PostgreSQL on RDS remains the planned cloud database. Follow the [budget plan](backend-design.md#100-total-aws-budget) before any scheduled cloud test.
+Docker, external identity providers, AI/speech providers and AWS hosting are not configured. Local password accounts and Alembic migrations are implemented. PostgreSQL on RDS remains the planned cloud database. Follow the [budget plan](backend-design.md#100-total-aws-budget) before any scheduled cloud test.
