@@ -270,17 +270,6 @@ def create_app(url=None):
     def people():
         return {'items': [], 'status': 'not_available', 'message': 'No authorized alumni-history dataset is connected.'}
 
-    @app.get('/api/events/search')
-    def search_events(q: str = Query(min_length=1, max_length=300), limit: int = Query(default=5, ge=1, le=20)):
-        """Upcoming public events closest in meaning to q (backend/events/embeddings.py).
-
-        Results are similarity rankings, labelled match_basis, never alumni evidence.
-        Falls back to keyword matching, with fallback_reason, when embeddings are unavailable.
-        """
-        from backend.events.embeddings import search
-        with engine.connect() as conn:
-            return search(conn, q, limit=limit)
-
     @app.get('/api/events')
     def public_events():
         now = datetime.now(timezone.utc)
@@ -298,6 +287,17 @@ def create_app(url=None):
     @app.get('/api/asks/{ask_id}')
     def missing_ask(ask_id: int):
         raise HTTPException(404, 'This ask does not exist. Prototype asks are not real outreach.')
+
+    @app.get('/api/events/search')
+    def search_events(q: str = Query(min_length=1, max_length=300), limit: int = Query(default=5, ge=1, le=20)):
+        """Upcoming public events closest in meaning to q (backend/events/embeddings.py).
+
+        Results are similarity rankings, labelled match_basis, never alumni evidence.
+        Falls back to keyword matching, with fallback_reason, when embeddings are unavailable.
+        """
+        from backend.events.embeddings import search
+        with engine.connect() as conn:
+            return search(conn, q, limit=limit)
 
     @app.get('/')
     def root():
