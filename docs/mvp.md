@@ -22,12 +22,13 @@ Accounts and login, real profiles, community content, geographic maps, and mobil
 
 ## Decisions before implementation
 
-**Recorded hosting decision:** Google Cloud, with Firebase Hosting for the web frontend and Cloud Run for the backend in one shared project ([#3](https://github.com/ckabamba/SWARM/issues/3)). Database selection and hosting are still open; Cloud SQL is conditional on that decision. The earlier proposal to use one teammate's trial credit needs verified eligibility, current pricing, and a named billing owner before provisioning. Environment setup and release checks are tracked in [#21](https://github.com/ckabamba/SWARM/issues/21).
+**Recorded hosting decision:** AWS, with PostgreSQL as the database on Amazon RDS for PostgreSQL ([#3](https://github.com/ckabamba/SWARM/issues/3)). This replaces the earlier Google Cloud decision. The specific AWS services are a working proposal until the owning roles confirm them: AWS Amplify Hosting for the web frontend and a container on Amazon ECS Express Mode (Fargate) for the backend. A named billing owner, free-plan credit eligibility, and current pricing must be verified before provisioning. Environment setup and release checks are tracked in [#21](https://github.com/ckabamba/SWARM/issues/21).
 
 | Decision | Working proposal or open question |
 | --- | --- |
-| Backend framework | FastAPI is the existing suggestion; Django remains an alternative. Confirm for the expanded service. |
-| Database | Postgres is the existing suggestion for shared records and path calculations. Confirm hosting and schema. |
+| Backend framework | FastAPI is the working proposal; Django remains an alternative. Role 2 confirms for the expanded service. |
+| Database | PostgreSQL on Amazon RDS is decided. Define the schema; PostGIS for places and cities is proposed, and pgvector depends on [#14](https://github.com/ckabamba/SWARM/issues/14). |
+| AWS services | Amplify Hosting for the web frontend and ECS Express Mode (Fargate) for the backend are proposed. Confirm them, the region, and the shared account setup. |
 | Accounts and profiles | Define identity/login approach, student/alumni roles, author ownership, and visibility. |
 | AI and voice | Select providers; specify voice input, spoken output, conversation behavior, grounding, timeouts, and fallbacks. |
 | Geographic maps | Select provider/library; define campus locations and normalized alumni cities. |
