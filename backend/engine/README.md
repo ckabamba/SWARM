@@ -6,6 +6,8 @@ The schema here is a draft. See [What exists so far](#what-exists-so-far) for wh
 
 ## One-time setup
 
+To run the complete connected UI/API rather than only schema tooling, use [Running WarmPath after cloning](../../docs/running-warmpath.md). The API launcher reads the same root `.env` and supports this Docker database.
+
 You need Python 3.11 or newer. For a local database you also need Docker Desktop.
 
 From the repo root:

@@ -116,7 +116,7 @@ class ProfileService:
         conn.execute(insert(table).values(token_hash=digest(token), account_id=account_id,
             expires_at=now() + timedelta(days=7)))
         response.set_cookie(COOKIE, token, max_age=7*86400, httponly=True,
-                            secure=request.url.scheme == 'https', samesite='strict', path='/')
+                            secure=request.app.state.secure_cookies or request.url.scheme == 'https', samesite='strict', path='/')
 
     def profile(self, conn, actor):
         table = self.tables['person_profile']
