@@ -1,0 +1,203 @@
+/*
+ * The shared shell: theme tokens, the top bar and the account menu.
+ * Dark values are the ones in DESIGN.md. Light is the gold, navy and white theme.
+ * Loaded after app.css, so the rules here that restate a prototype rule replace its fixed colour with a token.
+ */
+
+:root {
+  color-scheme: dark;
+  --action: var(--glow);                    /* fill of the next thing to press, and of a selected segment */
+  --on-action: var(--void);
+  --action-hover: #fff5d3;
+  --focus-line: rgba(255, 233, 168, 0.7);   /* a field's underline or border while it has focus */
+  --tie: #f6cfa6;
+  --card: rgba(9, 6, 15, 0.84);             /* feed and list surfaces */
+  --menu: #0e0b14;
+  --well: rgba(9, 6, 15, 0.6);              /* the track of a switch or nav pill */
+  --well-fg: var(--ash);
+  --well-fg-strong: var(--bone);
+  --field: rgba(9, 6, 15, 0.6);
+  --tint: rgba(244, 238, 230, 0.04);
+  --avatar: rgba(244, 238, 230, 0.07);
+  --avatar-fg: var(--bone);
+  --veil-rgb: 6, 4, 11;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --void: #f5f7fb;
+  --bone: #0b1f45;                          /* navy ink */
+  --ash: #55627f;
+  --ember: #c2410c;
+  --glow: #8f5c00;                          /* deep gold: the lit state as text or a stroke on white */
+  --line: rgba(11, 31, 69, 0.16);
+  --panel: rgba(255, 255, 255, 0.9);
+  --action: var(--gold);
+  --on-action: #0b1f45;
+  --action-hover: #f7bd2a;
+  --focus-line: #8f5c00;
+  --tie: #8a4a00;
+  --card: rgba(255, 255, 255, 0.92);
+  --menu: #ffffff;
+  --well: #0b1f45;
+  --well-fg: rgba(255, 255, 255, 0.74);
+  --well-fg-strong: #ffffff;
+  --field: rgba(255, 255, 255, 0.86);
+  --tint: rgba(11, 31, 69, 0.04);
+  --avatar: #0b1f45;
+  --avatar-fg: #ffffff;
+  --veil-rgb: 245, 247, 251;
+}
+
+/* ---------- prototype rules, restated with tokens ---------- */
+.veil {
+  background: radial-gradient(78% 74% at 50% 50%, rgba(var(--veil-rgb), 0.94) 0%, rgba(var(--veil-rgb), 0.8) 48%, rgba(var(--veil-rgb), 0.1) 100%);
+}
+.mark i { background: var(--action); }
+.switch { background: var(--well); }
+.switch button, .switch button[aria-pressed='true'] { color: var(--well-fg); }
+/* The selected segment: a filled copy of the labels, clipped to one half. See Switch in controls.jsx. */
+.switch .on {
+  position: absolute; inset: 4px; z-index: 2;
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-radius: 999px; background: var(--action); color: var(--on-action);
+  pointer-events: none;
+  clip-path: inset(0 50% 0 0 round 999px);
+  transition: clip-path 320ms var(--ease-in-out);
+}
+.switch[data-index='1'] .on { clip-path: inset(0 0 0 50% round 999px); }
+.switch .on span { padding: 9px 18px; text-align: center; white-space: nowrap; }
+.goal .row:focus-within { border-color: var(--focus-line); }
+.person .tie, .reply .tie { color: var(--tie); }
+.pill.hot { background: var(--action); border-color: var(--action); color: var(--on-action); }
+.draft textarea { background: var(--tint); }
+.draft textarea:focus { border-color: var(--focus-line); }
+.accept { background: var(--action); color: var(--on-action); }
+@media (hover: hover) and (pointer: fine) {
+  .go:hover { background: var(--action); border-color: var(--action); color: var(--on-action); }
+  .pill.hot:hover { background: var(--action-hover); border-color: var(--action-hover); }
+  .switch button:not([aria-pressed='true']):hover { color: var(--well-fg-strong); }
+}
+
+/*
+ * Light theme only. :where() keeps these at the prototype's own specificity, so its
+ * state rules (a stop you have, the next stop) still win over them.
+ */
+:where([data-theme='light']) .switch { border-color: transparent; }
+:where([data-theme='light']) .goal input::placeholder { color: rgba(11, 31, 69, 0.62); }
+:where([data-theme='light']) .hex .base { fill: rgba(255, 255, 255, 0.72); }
+:where([data-theme='light']) .hex .edge { stroke: rgba(11, 31, 69, 0.5); }
+:where([data-theme='light']) .reply .msg { background: rgba(255, 255, 255, 0.74); }
+:where([data-theme='light']) .accept[disabled] { background: rgba(234, 170, 0, 0.2); }
+/* The lattice and strands are drawn as light on black. Flip them to ink on white, keeping the hues. */
+:where([data-theme='light']) .swarm { mix-blend-mode: multiply; filter: brightness(1.5) invert(1) hue-rotate(180deg); }
+
+/* ---------- top bar ---------- */
+.topbar {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 6;
+  display: flex; align-items: center; gap: 18px;
+  padding: 24px 40px;
+}
+.topbar .mark { flex: none; color: inherit; text-decoration: none; }
+.topbar-space { flex: 1; }
+
+.search {
+  flex: 0 1 340px; min-width: 0;
+  display: flex; align-items: center; gap: 10px;
+  height: 44px; padding: 0 6px 0 16px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--field); color: var(--ash);
+  cursor: text;
+  transition: border-color 200ms ease, color 200ms ease;
+}
+.search:focus-within { border-color: var(--focus-line); color: var(--bone); }
+.search svg { flex: none; width: 16px; height: 16px; }
+.search input {
+  flex: 1; min-width: 0; padding: 0;
+  border: 0; outline: 0; background: none;
+  font-size: 14px; color: var(--bone); caret-color: var(--ember);
+}
+.search input::placeholder { color: var(--ash); }
+.search input::-webkit-search-cancel-button { display: none; }
+.search-clear {
+  flex: none; display: grid; place-items: center;
+  width: 32px; height: 32px; padding: 0;
+  border: 0; border-radius: 50%; background: none; color: var(--ash);
+  transition: transform 160ms var(--ease-out), color 200ms ease;
+}
+.search-clear:active { transform: scale(0.92); }
+@media (hover: hover) and (pointer: fine) { .search-clear:hover { color: var(--bone); } }
+
+.topnav {
+  flex: none; display: flex; gap: 3px; padding: 4px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--well);
+}
+:where([data-theme='light']) .topnav { border-color: transparent; }
+.topnav a {
+  display: flex; align-items: center; gap: 8px;
+  height: 36px; padding: 0 15px; border-radius: 999px;
+  color: var(--well-fg); text-decoration: none; white-space: nowrap;
+  transition: color 200ms ease, transform 160ms var(--ease-out);
+}
+.topnav a svg { width: 16px; height: 16px; }
+.topnav a[aria-current='page'] { background: var(--action); color: var(--on-action); }
+.topnav a:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) { .topnav a:not([aria-current='page']):hover { color: var(--well-fg-strong); } }
+
+/* ---------- avatar and account ---------- */
+.avatar {
+  flex: none; display: block;
+  width: var(--s, 40px); height: var(--s, 40px);
+  border-radius: 50%;
+}
+.avatar > span {
+  display: grid; place-items: center; width: 100%; height: 100%;
+  border-radius: 50%; background: var(--avatar); color: var(--avatar-fg);
+  font-size: calc(var(--s, 40px) * 0.31); font-weight: 600; letter-spacing: 0.04em;
+}
+/* The signed-in profile wears a gold ring, with a hair of ground showing between ring and face. */
+.avatar[data-ring] { padding: 3px; border: 1.5px solid var(--gold); }
+
+.account { position: relative; flex: none; }
+.account-button {
+  --s: 44px;
+  display: block; padding: 0; border: 0; border-radius: 50%; background: none;
+  transition: transform 160ms var(--ease-out);
+}
+.account-button:active { transform: scale(0.95); }
+.account-button .avatar { transition: border-color 200ms ease; }
+.account-button[aria-expanded='true'] .avatar { border-color: var(--glow); }
+@media (hover: hover) and (pointer: fine) { .account-button:hover .avatar { border-color: var(--glow); } }
+
+/* Opens from the button it belongs to, and leaves faster than it arrives. */
+.account-menu {
+  position: absolute; top: calc(100% + 10px); right: 0;
+  width: max-content; max-width: calc(100vw - 32px);
+  padding: 18px;
+  border: 1px solid var(--line); border-radius: 16px;
+  background: var(--menu);
+  transform-origin: calc(100% - 22px) 0;
+  opacity: 0; transform: scale(0.96); visibility: hidden;
+  transition: opacity 140ms var(--ease-out), transform 140ms var(--ease-out), visibility 0s 140ms;
+}
+.account[data-open='true'] .account-menu {
+  opacity: 1; transform: none; visibility: visible;
+  transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+}
+.account-id { --s: 48px; display: flex; align-items: center; gap: 12px; }
+.account-id b { display: block; font-size: 17px; font-weight: 600; line-height: 1.2; }
+.account-id div > span { color: var(--ash); font-size: 13px; }
+.account-note { margin: 12px 0 0; max-width: 34ch; color: var(--ash); font-size: 13px; }
+.menu-row { display: grid; gap: 9px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.menu-row > .cap { color: var(--ash); }
+.account-menu .switch button, .account-menu .switch .on span { padding: 9px 14px; }
+
+@media (max-width: 760px) {
+  .topbar { flex-wrap: wrap; gap: 10px 12px; padding: 14px 16px; }
+  .topbar .search { order: 5; flex: 1 0 100%; }
+  .topnav a { padding: 0 13px; }
+  /* Icons only on a phone; the names stay available to screen readers. */
+  .topnav a span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .account-menu .switch button, .account-menu .switch .on span { padding: 9px 10px; }
+}
