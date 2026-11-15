@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import insert
 from backend.manage import database_url
-from backend.api.app import initialize_schema, events, feeds
+from backend.api.resource_tables import verify_schema, events, feeds
 from backend.events.places import link_events
 
 FEED_URL = 'https://calendar.gatech.edu/event-calendar-week.xml'
@@ -140,7 +140,7 @@ def download(url):
 def sync(url=None):
     fetched = datetime.now(timezone.utc)
     engine = create_engine(url or database_url())
-    initialize_schema(engine)
+    verify_schema(engine)
     query = urlencode({'take':60, 'orderByField':'startsOn', 'orderByDirection':'ascending',
                        'status':'Approved', 'endsAfter':fetched.isoformat()})
     failures = []

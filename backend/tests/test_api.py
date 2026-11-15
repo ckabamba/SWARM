@@ -9,6 +9,7 @@ from backend.api.app import create_app
 from backend.api.sync_events import parse_feed, parse_engage
 from backend.manage import database_url
 from backend.migrate import migrate
+from backend.api.catalog_setup import initialize_catalog, catalog_records
 
 
 @pytest.fixture
@@ -19,6 +20,7 @@ def app():
         assert conn.scalar(text('SELECT current_database()')) == 'warmpath_test', 'Use the isolated warmpath_test database.'
     engine.dispose()
     migrate(url)
+    initialize_catalog(url)
     return create_app(url)
 
 
@@ -27,7 +29,7 @@ def test_real_resources_and_goal_matching(app):
         assert client.get('/api/ready').json()['database'] == 'PostgreSQL'
         assert client.get('/api/resources').status_code == 401
         session = client.get('/api/session').json()
-        assert session['resource_count'] == 18
+        assert session['resource_count'] == len(catalog_records()[0])
         startup = client.post('/api/path', json={'goal': 'Launch a startup'}).json()
         robotics = client.post('/api/path', json={'goal': 'Explore robotics research'}).json()
         assert startup['resources'] and robotics['resources']
@@ -67,7 +69,7 @@ def test_validation_permissions_and_missing_data(app):
         assert client.put('/api/saved/987654').status_code == 404
         assert client.put('/api/saved/3', headers={'Origin':'https://unrelated.example'}).status_code == 403
         assert client.get('/api/people').json()['items'] == []
-        assert client.get('/api/asks/5').status_code == 404
+        assert client.get('/api/asks/5').status_code == 401
         assert client.get('/api/resources').headers['Cache-Control'] == 'no-store'
         assert client.get('/api/health', headers={'Host':'unrelated.example'}).status_code == 400
 

@@ -6,6 +6,8 @@ The project began with the Georgia Tech SGA hackathon prompt on connecting stude
 
 ## Current status
 
+**Database update:** run `python -m backend.manage migrate`, then `python -m backend.manage init-catalog` before starting the API. Catalog loading is now explicit. The [RDS rollout guide](docs/database-rollout.md) targets the existing `us-east-1 / warmpath-db / warmpath` instance, starting with resources/events only. On November 15, 2026, the expanded catalog was loaded: 32 resources and two job examples, with 68 existing events preserved. Upstream event migrations occupy revisions 0007/0008; the new history/ask migrations are 0009/0010 and remain unapplied on RDS.
+
 **New clone or connection error?** Follow [Running WarmPath after cloning](docs/running-warmpath.md). The connected app needs a running API and PostgreSQL; downloading HTML does not include either. Teammates can use the documented Docker database without the original Windows portable installation. Ordinary users will use a shared hosted URL once deployment is configured.
 
 **Courses now have their own page:** [My Courses](http://127.0.0.1:8000/thermal/#/courses) supports term-grouped history, search/filters, manual edits, and reviewed PDF/pasted-text transcript import. Grades and GPA are excluded. Existing courses are migrated without losing edits. Run the new migration before startup; see [course/transcript setup and API changes](docs/courses-and-transcripts.md).
@@ -16,7 +18,7 @@ Thermal now runs against a local FastAPI/PostgreSQL backend: search real campus 
 
 **Thermal is the main UI:** [prototypes/thermal/index.html](prototypes/thermal/index.html). From the repository root run `.\.venv\Scripts\python.exe -m backend.manage run`, then open **http://127.0.0.1:8000/thermal/**. The [local testing guide](docs/backend-local-testing.md) covers setup, public data refresh, and verified test commands.
 
-No authorized alumni-history dataset exists yet, so connected Thermal does not invent alumni, path counts, lift, or sendable asks. CareerBuzz links to the real service; its authenticated job listings have not been imported. Production identity, geographic maps, voice, and mobile API integration remain pending. [DESIGN.md](DESIGN.md) defines the visual direction derived from Thermal.
+Reviewed account histories now power live alumni paths and persistent asks; counts remain empty until alumni explicitly share eligible histories through public profiles. Thermal links to the connected React history/path screens after the frontend is built. See [history, paths and asks](docs/history-and-paths.md) for setup and the current API. CareerBuzz links to the real service; its authenticated job listings have not been imported. Production identity, geographic maps, voice, and mobile API integration remain pending. [DESIGN.md](DESIGN.md) defines the visual direction derived from Thermal.
 
 Course and VIP discovery works independently of alumni histories: the catalog includes eight CS courses and three specific VIP projects, with description-topic matches to two source-checked employer listings. Open a job example in the goal form to compare topics. [The evidence/source policy](docs/data-evidence-and-linkedin.md) explains these matches and why unauthorized LinkedIn scraping is not enabled.
 

@@ -84,6 +84,7 @@ class CourseService:
             entry.update(id=str(uuid4()), source=source, source_id=source_id, visible=False)
             conn.execute(insert(table).values(person_id=actor['person_id'], id=entry['id'], data=entry))
             rows.append(entry)
+        self.profiles.history.sync(conn, actor['person_id'])
         return skipped
 
 
@@ -111,6 +112,7 @@ def install_courses(app, service, bounded_extract, now):
             entry = body.course.model_dump()
             entry.update(id=str(uuid4()), source='manual', source_id=None)
             conn.execute(insert(service.tables['person_course']).values(person_id=actor['person_id'], id=entry['id'], data=entry))
+            service.history.sync(conn, actor['person_id'])
             return courses.collection(conn, actor)
 
     @app.put('/api/me/courses/{course_id}')
@@ -129,6 +131,7 @@ def install_courses(app, service, bounded_extract, now):
                 raise HTTPException(409, 'Another entry already has this course, institution and term.')
             entry.update(id=course_id, source=old.get('source','manual'), source_id=old.get('source_id'))
             conn.execute(update(table).where(table.c.person_id == actor['person_id'], table.c.id == course_id).values(data=entry))
+            service.history.sync(conn, actor['person_id'])
             return courses.collection(conn, actor)
 
     @app.delete('/api/me/courses/{course_id}')
@@ -139,6 +142,7 @@ def install_courses(app, service, bounded_extract, now):
             table = service.tables['person_course']
             if not conn.execute(delete(table).where(table.c.person_id == actor['person_id'], table.c.id == course_id)).rowcount:
                 raise HTTPException(404, 'Course not found.')
+            service.history.sync(conn, actor['person_id'])
             return courses.collection(conn, actor)
 
     def store(actor, parsed):
