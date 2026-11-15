@@ -276,6 +276,7 @@ LLM capabilities may include goal understanding, campus resource discovery, grou
 - Voice is a way to access the same discovery capabilities. Define input/output behavior and providers separately; speech transcription and synthesis need not be performed by the language model.
 - Keep text access available when microphone access, speech services, or AI are unavailable. Describe degraded behavior accurately rather than promising all speech works offline.
 - Event embeddings exist for semantic search: `backend/events/embeddings.py` embeds each event's title, organizer, location and description locally with fastembed (`BAAI/bge-small-en-v1.5`, an optional dependency in `backend/requirements-embeddings.txt`) into `event_embedding`, and `search(conn, query)` returns upcoming events by similarity, labelled `match_basis: description_similarity`, or by keyword with a `fallback_reason` when embeddings are unavailable. `GET /api/events/search?q=...&limit=5` (limit 1 to 20) serves it with the same response. Similarity is never alumni evidence.
+- Typed goals resolve to path-engine activities in `backend/engine/goals.py`: `match_goal(conn, text)` returns `status` `matched` (with `goal: { id, label, type, score }` for `path_for_goal`), `ambiguous` (candidates for the student to choose, no goal chosen) or `no_match`. It uses the same local embeddings, with thresholds tuned on the seeded activities, and falls back to word overlap with a `fallback_reason`. It never substitutes an unrelated goal. No API route serves it yet (#8).
 
 ## Development and demo data
 
