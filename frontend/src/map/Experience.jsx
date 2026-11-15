@@ -3,16 +3,15 @@ import { Canvas } from '@react-three/fiber'
 import api from '../shared/fake-api.js'
 import { REDUCED } from '../shared/motion.js'
 import { Backdrop } from '../shared/Backdrop.jsx'
-import { Hex, Words, Arrow, StudentSwitch } from '../shared/controls.jsx'
+import { Hex, Words, Arrow } from '../shared/controls.jsx'
+import { TopBar } from '../shared/TopBar.jsx'
 import { PeoplePanel } from '../people/PeoplePanel.jsx'
 import { SPOTS, place, useViewport } from './layout.js'
 import { Swarm } from './Swarm.jsx'
 import { Hive } from './Hive.jsx'
 import { Node } from './Node.jsx'
 
-export function Experience() {
-  const students = useMemo(() => api.getStudents(), [])
-  const [studentId, setStudentId] = useState(students[0].id)
+export function Experience({ active = true, students, studentId, onStudent }) {
   const [view, setView] = useState('goal')
   const [goalText, setGoalText] = useState('')
   const [panel, setPanel] = useState(null)           // activity id, 'goal', or null
@@ -20,7 +19,11 @@ export function Experience() {
   const path = useMemo(() => api.postPath({ goal: goalText || api.SEEDED_GOALS[0], student_id: studentId }), [studentId, view])
   const closest = api.getPeople({ goal_id: path.goal.id, student_id: studentId }).slice(0, 3)
 
-  useEffect(() => { document.body.dataset.view = view }, [view])
+  useEffect(() => {
+    if (!active) return
+    document.body.dataset.view = view
+    document.title = 'WarmPath'
+  }, [view, active])
   useEffect(() => {
     const key = (e) => { if (e.key === 'Escape') setPanel(null) }
     window.addEventListener('keydown', key)
@@ -36,15 +39,18 @@ export function Experience() {
     if (scroll.current > 0.95 && document.activeElement !== goalInput.current) goalInput.current.focus({ preventScroll: true })
   }
   useEffect(() => {
+    if (!active || !landing.current) return undefined
     const seen = new IntersectionObserver((entries) => {
       entries.forEach((entry) => { if (entry.isIntersecting) entry.target.dataset.seen = 'true' })
     }, { root: landing.current, threshold: 0.55 })
     landing.current.querySelectorAll('.beat').forEach((beat) => seen.observe(beat))
     return () => seen.disconnect()
-  }, [])
+  }, [active])
   const toGoal = () => landing.current.scrollTo({ top: landing.current.scrollHeight, behavior: REDUCED ? 'auto' : 'smooth' })
   const you = place('you', viewport), goal = place('goal', viewport)
   const arrive = (x) => (REDUCED ? 0 : Math.round(1100 + x * 2300))
+
+  if (!active) return null
 
   return (
     <>
@@ -74,10 +80,7 @@ export function Experience() {
       </div>
 
       <div className="ui">
-        <header className="bar">
-          <button className="mark" onClick={() => { setView('goal'); setPanel(null) }} aria-label="WarmPath, start a new goal"><i />WarmPath</button>
-          <StudentSwitch students={students} value={studentId} onChange={setStudentId} />
-        </header>
+        <TopBar active="path" onHome={() => { setView('goal'); setPanel(null) }} students={students} studentId={studentId} onStudent={onStudent} />
 
         <section className="goal" aria-hidden={view !== 'goal'} inert={view !== 'goal'}>
           <div className="landing" ref={landing} onScroll={onScroll}>
@@ -111,7 +114,7 @@ export function Experience() {
         </section>
 
         <section className="map" aria-hidden={view !== 'map'} inert={view !== 'map'}>
-          <button className="node end" data-have="true" data-side={you.side} style={{ transform: `translate(${you.x}px, ${you.y}px)`, '--d': '36px', '--at': '500ms' }} onClick={() => setStudentId(students.find((s) => s.id !== studentId).id)}>
+          <button className="node end" data-have="true" data-side={you.side} style={{ transform: `translate(${you.x}px, ${you.y}px)`, '--d': '36px', '--at': '500ms' }} onClick={() => onStudent(students.find((s) => s.id !== studentId).id)} aria-label={`Switch demo student. Currently ${path.student.name}`}>
             <Hex />
             <span className="tag">
               <span className="name">You</span>

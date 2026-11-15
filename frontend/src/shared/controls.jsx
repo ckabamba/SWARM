@@ -1,5 +1,4 @@
 import React from 'react'
-import api from './fake-api.js'
 
 /* Flat-topped hexagon with eased corners, in a 100-unit box. Matches the lattice's orientation. */
 const HEX_PATH = (() => {
@@ -38,16 +37,27 @@ export function Arrow() {
   )
 }
 
-export function StudentSwitch({ students, value, onChange }) {
-  const index = students.findIndex((s) => s.id === value)
+/*
+ * The two-segment pill from DESIGN.md. Used for the demo student, the theme and the community view.
+ * The selected look is a second copy of the labels, clipped to one segment. Sliding the clip
+ * moves the fill and recolours the text in one motion, so a label is never dark on dark mid-slide.
+ */
+export function Switch({ label, options, value, onChange }) {
+  const index = options.findIndex((o) => o.value === value)
   return (
-    <div className="switch cap" data-index={index} role="group" aria-label="Student profile">
-      <span className="thumb" />
-      {students.map((s) => (
-        <button key={s.id} aria-pressed={s.id === value} onClick={() => onChange(s.id)}>
-          {s.major} · {api.ordinal(s.school_year)} year
+    <div className="switch cap" data-index={index} role="group" aria-label={label}>
+      {options.map((o) => (
+        <button key={o.value} type="button" aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
+          {o.label}
         </button>
       ))}
+      <span className="on" aria-hidden="true">{options.map((o) => <span key={o.value}>{o.label}</span>)}</span>
     </div>
   )
+}
+
+/* Initials in a circle. `ring` adds the gold outline that marks the signed-in profile. */
+export function Avatar({ name, ring }) {
+  const initials = name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
+  return <span className="avatar" data-ring={ring || undefined} aria-hidden="true"><span>{initials}</span></span>
 }
