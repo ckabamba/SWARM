@@ -21,10 +21,11 @@ export async function request(path, options = {}) {
       error.status = response.status
       throw error
     }
-    if (!data) throw new Error('Unexpected response. Start WarmPath with the backend command.')
+    if (!data) throw new Error('WarmPath is temporarily unavailable. Please try again shortly.')
     return data
   } catch (error) {
     if (error.name === 'AbortError') throw new Error('The request timed out. Please retry.')
+    if (error instanceof TypeError) throw new Error('Unable to connect to WarmPath. Check your connection and try again.')
     throw error
   } finally { clearTimeout(timer) }
 }

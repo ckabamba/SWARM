@@ -1,17 +1,29 @@
 """Project-local PostgreSQL and API runner. No AWS or system service required."""
 import argparse
+import ipaddress
 import json
 import os
 from pathlib import Path
+import re
 import secrets
 import subprocess
 import sys
+
+from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCAL = ROOT / '.local'
 BIN = LOCAL / 'postgresql' / 'pgsql' / 'bin'
 DATA = LOCAL / 'pgdata'
 CONFIG = LOCAL / 'database.json'
+
+
+def load_environment():
+    # Deployment environment variables take precedence over developer defaults.
+    load_dotenv(ROOT / '.env', override=False)
+
+
+load_environment()
 
 
 def settings():
@@ -23,10 +35,34 @@ def settings():
 def database_url(test=False):
     override = os.environ.get('TEST_DATABASE_URL' if test else 'DATABASE_URL')
     if override:
+        # Use the installed psycopg 3 driver, matching the Alembic CLI.
+        # Prefix replacement preserves percent-encoded credentials/query options.
+        for prefix in ('postgresql://', 'postgres://'):
+            if override.startswith(prefix):
+                return 'postgresql+psycopg://' + override[len(prefix):]
         return override
     cfg = settings()
     name = 'warmpath_test' if test else 'warmpath'
     return f"postgresql+psycopg://warmpath:{cfg['password']}@127.0.0.1:55432/{name}"
+
+
+def server_address():
+    host = os.environ.get('WARMPATH_HOST', '127.0.0.1')
+    try:
+        ipaddress.ip_address(host)
+    except ValueError:
+        if len(host) > 253 or not host or not all(
+            re.fullmatch(r'[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?', label)
+            for label in host.split('.')
+        ):
+            raise SystemExit('WARMPATH_HOST must be an IP address or hostname, without a scheme or port.')
+    try:
+        port = int(os.environ.get('PORT', '8000'))
+    except ValueError:
+        raise SystemExit('PORT must be an integer from 1 to 65535.')
+    if not 1 <= port <= 65535:
+        raise SystemExit('PORT must be an integer from 1 to 65535.')
+    return host, port
 
 
 def pg(name, *args, check=True):
@@ -90,10 +126,14 @@ def main():
         migrate()
         print('Shared schema migrations applied. Existing resource data is preserved.')
     else:
-        start()
+        host, port = server_address()
+        # An explicit database URL points at a separately managed database
+        # (Docker, RDS, etc.); it must not depend on Windows portable binaries.
+        if not os.environ.get('DATABASE_URL'):
+            start()
         import uvicorn
-        print('Open http://127.0.0.1:8000/thermal/ — Ctrl+C stops the API. PostgreSQL stays running.')
-        uvicorn.run('backend.api.app:app', host='127.0.0.1', port=8000)
+        print(f'WarmPath listening on {host}:{port}. Ctrl+C stops the API; PostgreSQL stays running.')
+        uvicorn.run('backend.api.app:app', host=host, port=port)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,7 @@
 # Thermal: local PostgreSQL setup and testing
 
+**New teammates:** start with the [cross-platform clone setup](running-warmpath.md). The portable Windows instructions below describe the original machine; its `.local/` database and `.venv/` are not included in Git. Root `.env` is now read by the launcher, and an explicit `DATABASE_URL` selects Docker or an existing PostgreSQL server instead of starting the portable cluster.
+
 **Courses/transcripts:** run the migration again for `0003`, then open **My Courses**. See [course APIs, migration details and browser tests](courses-and-transcripts.md). Existing course entries are preserved, and grade/GPA columns are excluded from transcript review drafts.
 
 **Profile/resume update:** [My Profile setup, API and tests](profiles-and-resumes.md) now cover local accounts, editable experiences/contacts/classes and reviewed imports. Run `.\.venv\Scripts\python.exe -m backend.manage migrate` once after installing the updated requirements and before starting this version. Existing resource tables/data are preserved. API startup does not apply shared migrations.
