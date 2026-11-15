@@ -19,6 +19,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r backend/requirements-dev.txt
 docker compose -f backend/engine/docker-compose.yml up -d --wait
 .\.venv\Scripts\python.exe -m backend.manage migrate
+.\.venv\Scripts\python.exe -m backend.manage init-catalog
 .\.venv\Scripts\python.exe -m backend.manage run
 ```
 
@@ -29,6 +30,7 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r backend/requirements-dev.txt
 docker compose -f backend/engine/docker-compose.yml up -d --wait
 .venv/bin/python -m backend.manage migrate
+.venv/bin/python -m backend.manage init-catalog
 .venv/bin/python -m backend.manage run
 ```
 
@@ -48,6 +50,7 @@ Update packages if requirements changed, start the database, apply migrations, t
 pip install -r backend/requirements-dev.txt
 docker compose -f backend/engine/docker-compose.yml up -d --wait
 python -m backend.manage migrate
+python -m backend.manage init-catalog
 python -m backend.manage run
 ```
 

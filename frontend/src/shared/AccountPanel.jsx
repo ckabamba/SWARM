@@ -40,7 +40,7 @@ function SignIn() {
   return (
     <>
       <h2>{mode === 'new' ? 'Create your account' : 'Sign in'}</h2>
-      <p className="lede">An account lets you post on Social Jackets. It lives on this WarmPath server, and your profile starts private.</p>
+      <p className="lede">An account lets you build your path history, contact alumni and post on Social Jackets. It lives on this WarmPath server, and your profile starts private.</p>
       <Switch label="Sign in or create an account" value={mode} onChange={(next) => { setMode(next); setError('') }} options={MODES} />
       <form className="form" onSubmit={submit}>
         {mode === 'new' && (
@@ -86,7 +86,7 @@ function Resume({ onImported }) {
     const skipped = await importResume(draft.id, selections)
     const added = selections.length - skipped
     setDraft(null)
-    setMessage({ text: `Added ${added} of ${selections.length}${skipped ? `; ${skipped} already on your profile` : ''}. New entries start private.` })
+    setMessage({ text: `Added ${added} of ${selections.length}${skipped ? `; ${skipped} already on your profile` : ''}. New entries start private. Open My history to confirm timing and sharing.` })
     onImported()
   })
   const discard = () => run(async () => { await api.discardResume(draft.id); setDraft(null) })
@@ -145,8 +145,8 @@ function Profile({ me }) {
     e.preventDefault()
     setBusy(true)
     try {
-      await saveProfile({ ...form, grad_year: /^\d{4}$/.test(form.grad_year) ? Number(form.grad_year) : null })
-      setNote({ text: 'Saved.' })
+      await saveProfile({ ...form, grad_year: /^\d{4}$/.test(form.grad_year) ? Number(form.grad_year) : null, enrollment_year: /^\d{4}$/.test(form.enrollment_year) ? Number(form.enrollment_year) : null })
+      setNote({ text: 'Saved. Review your history to choose which entries contribute to paths.' })
     } catch (failure) {
       setNote({ text: failure.message, error: true })
     } finally {
@@ -176,13 +176,14 @@ function Profile({ me }) {
             value={form.grad_year ?? ''} onChange={(e) => change('grad_year', e.target.value)}
           />
         </label>
+        <label><span className="cap">First academic year began in</span><input className="input" type="number" min="1900" max="2100" value={form.enrollment_year ?? ''} onChange={e => change('enrollment_year', e.target.value)} /><span className="form-hint">Optional. Use your actual enrollment year; an individual history entry can specify its school year instead.</span></label>
         <label><span className="cap">Introduction</span><textarea className="input" maxLength={2000} {...text('introduction')} /></label>
         <div className="form-row">
           <span className="cap">Who can see this</span>
           <Switch label="Profile visibility" value={form.profile_visible} onChange={(visible) => change('profile_visible', visible)} options={VISIBILITY} />
           <span className="form-hint">
             {form.profile_visible
-              ? 'Public shares your name, major, year and introduction, and lets you post. Contacts and experiences stay private.'
+              ? 'Public shares your basic profile and allows posting. Only entries you explicitly share can contribute to public alumni paths; histories are self-reported.'
               : 'Only you can see a private profile. You need a public one to post.'}
           </span>
         </div>
@@ -190,11 +191,12 @@ function Profile({ me }) {
         <button className="pill hot" disabled={busy}>Save profile</button>
       </form>
 
+      <div className="acts"><a className="pill" href="#/history" onClick={closeAccount}>Review history and experiences</a><a className="pill" href="#/courses" onClick={closeAccount}>My Courses</a></div>
       <Resume onImported={() => setNote(null)} />
 
       {entries.length > 0 && (
         <section className="panel-section">
-          <h3 className="cap">Also on your profile, private</h3>
+          <h3 className="cap">Saved profile entries</h3>
           <ul className="entries">
             {form.experiences.map((entry) => <li key={entry.id}><b>{entry.title}</b>{entry.organization && <span>{entry.organization}</span>}</li>)}
             {form.contacts.map((entry) => <li key={entry.id}><b>{entry.value}</b><span>{entry.kind}</span></li>)}

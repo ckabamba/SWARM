@@ -5,16 +5,16 @@ because pgvector is not available in every local setup; similarity is computed
 in Python, which is fast enough at the size of the event snapshot. text_hash
 records what was embedded, so only new or changed events are embedded again.
 
-Revision ID: 0009
-Revises: 0008
+Revision ID: 0011
+Revises: 0010
 """
 
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = "0009"
-down_revision = "0008"
+revision = "0011"
+down_revision = "0010"
 branch_labels = None
 depends_on = None
 

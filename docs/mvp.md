@@ -120,7 +120,7 @@ Of these, `person`, `activity`, and `person_activity` exist as migrations under 
 
 These are requirements to design, not finalized table definitions or migrations. Map coordinates represent campus places or cities, not live alumni positions. Decide how profile visibility affects both city counts and people lists.
 
-The event location reference exists. `campus_place` holds 22 campus buildings with coordinates from OpenStreetMap, and `event_place` links each imported public event to one of them with a `kind` of `campus`, `online`, or `unknown`, plus the room when the listing gave one. `backend/events/places.py` writes the links by matching the listing's location text against known building names, and `events_with_places(conn)` returns each event with `location_kind`, `room`, and a `place` of `{ id, name, latitude, longitude }` or `null`. No API route serves this yet. Links from events to clubs, activities, and resources are still to be built.
+The event location reference exists. `campus_place` holds 22 campus buildings with coordinates from OpenStreetMap, and `event_place` links each imported public event to one of them with a `kind` of `campus`, `online`, or `unknown`, plus the room when the listing gave one. `backend/events/places.py` writes the links by matching the listing's location text against known building names, and `events_with_places(conn)` returns each event with `location_kind`, `room`, and a `place` of `{ id, name, latitude, longitude }` or `null`. `GET /api/events` serves these fields on each item; an event without a link reads as `unknown` with no place. Links from events to clubs, activities, and resources are still to be built.
 
 Two earlier contract gaps are settled in the path engine. A student's `school_year` is not stored: it is derived from `grad_year`, assuming a four-year degree and an academic year that starts in August. `stops[].typical_year` is now returned, as described under the path contract below. One gap remains: Ask responses below contain placeholders. Do not silently adopt extra fields or infer missing schemas.
 
@@ -149,6 +149,9 @@ The original proposed defaults keep activities with a lift of 1.5 or more and at
 
 ## API contract
 
+**Implemented update:** [Reviewed history, live paths and asks](history-and-paths.md) is the current contract for `/path` alumni mode, `/people`, `/goals`, `/me/history`, `/activities` and `/asks`. It supersedes the legacy prototype examples below: identity comes from the account cookie, never a client-supplied student ID. Resource mode remains compatible.
+
+
 ### Implemented local Thermal slice
 
 The current local service implements resource discovery and public event snapshots, not the historical alumni-path contract below. Real alumni histories are not connected. Local accounts/profiles, courses/transcripts and community posts use the separate implemented contracts linked above. All paths use `/api`; see [run/test instructions](backend-local-testing.md).
@@ -161,7 +164,7 @@ The current local service implements resource discovery and public event snapsho
 | `GET /jobs` | Two curated public employer examples with source links, topic labels, location/context, and check dates; not a live vacancy feed |
 | `GET /resources?saved_only=false` | `{ "items": [...] }` for the catalog or the current workspace's saved list |
 | `PUT/DELETE /saved/{resource_id}` | Idempotent save/remove in the current workspace; returns `{ "id": 9, "saved": true }` or false |
-| `GET /events` | Up to 12 unexpired public listings from the latest successful source snapshots, with source/retrieval timestamps and stale status |
+| `GET /events` | Up to 12 unexpired public listings from the latest successful source snapshots, with source/retrieval timestamps and stale status. Each item also has `location_kind` (`campus`, `online` or `unknown`), `room`, and `place` (`{ id, name, latitude, longitude }` or `null`) |
 | `GET /people` | Explicit empty/unavailable result; no sample alumni |
 | `GET /asks/{id}` | 404; prototype asks are not real outreach |
 
