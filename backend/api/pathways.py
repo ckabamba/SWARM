@@ -56,7 +56,9 @@ class PathwayService:
         goals = self.profiles.tables['activity']
         goal = conn.scalar(select(goals.c.name).where(goals.c.id == goal_id))
         accounts = self.profiles.tables['account']
-        reachable = set(conn.scalars(select(accounts.c.person_id).where(accounts.c.person_id.in_([p['id'] for p in people]))))
+        persons = self.profiles.tables['person']
+        reachable = set(conn.scalars(select(accounts.c.person_id).join(persons, persons.c.id == accounts.c.person_id).where(
+            accounts.c.person_id.in_([p['id'] for p in people]), persons.c.is_fixture.is_(False))))
         course_rows=conn.execute(text(f"""WITH history AS ({_PUBLIC_HISTORY})
             SELECT h.person_id,r.id,r.name,r.url,h.school_year
             FROM history h JOIN activity a ON a.id=h.activity_id
@@ -75,6 +77,8 @@ class PathwayService:
 
 
 def install_pathways(app, service, *, demo_histories=False):
+    from backend.api.connections import install_connections
+    install_connections(app, service, demo_histories=demo_histories)
     engine = service.engine
     pathways = PathwayService(service, demo_histories)
 

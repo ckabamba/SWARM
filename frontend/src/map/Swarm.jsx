@@ -14,8 +14,8 @@ const HEAT = `
   }
 `
 
-export function Swarm({ mode, viewport, stops, spots = SPOTS, aggregate = false }) {
-  const STRANDS = aggregate ? Math.max(1, stops.length) : DEMO_STRANDS
+export function Swarm({ mode, viewport, stops, spots = SPOTS, aggregate = false, routes = null }) {
+  const STRANDS = routes ? routes.length : aggregate ? Math.max(1, stops.length) : DEMO_STRANDS
   // Ambient decoration, independent of the number of alumni or associations.
   const DUST = DEMO_DUST
   const { gl } = useThree()
@@ -38,6 +38,15 @@ export function Swarm({ mode, viewport, stops, spots = SPOTS, aggregate = false 
     const rand = mulberry(29)
     const { w, h } = viewport
     const world = (p) => new THREE.Vector3(p.x - w / 2, h / 2 - p.y, 0)
+    if (routes) return routes.map(keys => {
+      const points = keys.map(key=>world(place(key,viewport,spots)))
+      const curve = new THREE.CurvePath()
+      for(let i=0;i<points.length-1;i++) {
+        const a=points[i],b=points[i+1],reach=(b.x-a.x)*.5
+        curve.add(new THREE.CubicBezierCurve3(a,new THREE.Vector3(a.x+reach,a.y,0),new THREE.Vector3(b.x-reach,b.y,0),b))
+      }
+      return curve.getSpacedPoints(SAMPLES-1)
+    })
     const you = place('you', viewport, spots), goal = place('goal', viewport, spots)
     const order = [...stops].sort((a, b) => spots[a.activity_id].x - spots[b.activity_id].x)
     return strands.map((ids) => {
@@ -55,7 +64,7 @@ export function Swarm({ mode, viewport, stops, spots = SPOTS, aggregate = false 
       }
       return route.getSpacedPoints(SAMPLES - 1)
     })
-  }, [strands, stops, viewport, spots])
+  }, [strands, stops, viewport, spots, routes])
 
   // The hive: every cell on screen, and for the cells on a route, how many strands cross it.
   const hexGeo = useMemo(() => {

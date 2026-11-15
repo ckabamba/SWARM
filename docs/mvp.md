@@ -149,6 +149,39 @@ The original proposed defaults keep activities with a lift of 1.5 or more and at
 
 ## API contract
 
+### Alumni peer map
+
+`GET /api/alumni-connections?q=Google` requires an authenticated alumni account
+(401 signed out, 403 student). Optional `q` is at most 300 characters; all
+space-separated words must appear in the public name, major or shared activity
+labels. Empty `q` browses peers. No model or semantic match is required.
+
+Returns `{viewer: {id,name,kind,major,grad_year}, items: [...], fixture_evidence}`.
+Each item has `id,name,major,grad_year`, `goal: {id,label}` (latest shared job,
+otherwise latest shared activity), `shared_count`, `shared_tie`, up to three
+`shared` records `{id,name,type,resource_id,resource_name,url,school_year,shared}`,
+`can_ask`, `draft`, and `evidence: self_reported|synthetic_demo`.
+Up to three peers rank by shared non-career activities, same major, graduation
+year proximity, name and ID. Shared catalog resource IDs join equivalent course
+records. Own private history can personalize the viewer's results; other people's
+private history and hidden profiles are excluded. Self is excluded. Synthetic
+records require the existing local-only demo flag and cannot receive real asks.
+Eligible account holders reuse `/asks` with their returned `goal.id`.
+
+Alumni use the existing React landing composition and a peer map: You through a
+shared course/activity to another alum. A direct line when no activity overlaps
+means discovery only, not a claimed shared history. Student paths are unchanged.
+This relationship map does not represent alumni cities or live positions.
+The Expo peer screen remains pending.
+
+For the existing local synthetic1000 dataset, run
+`python -m backend.seed.demo_alumni_account` once. It attaches a regular password
+login to one fixture alumnus; credentials are written only to the ignored
+`.local/alumni-demo-login.json`. It refuses remote databases and existing logins.
+With `WARMPATH_DEMO_HISTORIES=1`, sign in at `/app/` to see the alumni landing
+and try `Google`, `CS 1332`, or an empty search. Demo peers remain visibly
+synthetic and cannot receive real asks. No generated person is made real.
+
 **Implemented update:** [Reviewed history, live paths and asks](history-and-paths.md) is the current contract for `/path` alumni mode, `/people`, `/goals`, `/me/history`, `/activities` and `/asks`. It supersedes the legacy prototype examples below: identity comes from the account cookie, never a client-supplied student ID. Resource mode remains compatible.
 
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import api from '../shared/api.js'
 
-function Person({ person, goalId }) {
+export function Person({ person, goalId }) {
   const [editing,setEditing] = useState(false), [message,setMessage] = useState(person.draft || '')
   const [sent,setSent] = useState(null), [error,setError] = useState(''), [busy,setBusy] = useState(false)
   const attempt = useRef(null)

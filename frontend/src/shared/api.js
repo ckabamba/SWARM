@@ -35,6 +35,7 @@ const send = (method, path, body) => request(path, { method, body: body === unde
 
 const api = {
   request,
+  alumniConnections: (q = '') => request('/alumni-connections?q=' + encodeURIComponent(q)),
   goals: (q = '') => request('/goals?q=' + encodeURIComponent(q)),
   matchPath: (goal) => send('POST', '/path', { mode: 'alumni', goal }),
   path: (goal_id) => send('POST', '/path', { mode: 'alumni', goal_id }),

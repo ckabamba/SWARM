@@ -21,12 +21,18 @@ def test_local_demo_opt_in_and_privacy(app, monkeypatch):
     try:
         with TestClient(app) as normal:
             register(normal)
+            save_profile(normal,kind='alum')
             assert not normal.get('/api/health').json()['synthetic_histories']
             assert not any(g['label']=='Software engineer at NVIDIA' for g in normal.get('/api/goals').json()['items'])
+            assert normal.get('/api/alumni-connections?q=NVIDIA').json()['items']==[]
         demo=create_app(database_url(test=True),demo_histories=True)
         with TestClient(demo) as client:
             register(client)
             save_profile(client,kind='alum',profile_visible=True,experiences=[dict(kind='job',title='Private secretxyz',organization='Secretxyz org',school_year=5,history_confirmed=True,visible=False)])
+            peers=client.get('/api/alumni-connections?q=NVIDIA').json()
+            assert peers['fixture_evidence'] and len(peers['items'])==3
+            assert all(p['evidence']=='synthetic_demo' and not p['can_ask'] for p in peers['items'])
+            assert client.get('/api/alumni-connections?q=secretxyz').json()['items']==[]
             result=client.post('/api/path',json={'mode':'alumni','goal':'Software engineer at NVIDIA'}).json()
             assert result['path']['goal']['achievers']==40
             assert result['path']['fixture_evidence'] and result['path']['evidence']=='synthetic_demo'
