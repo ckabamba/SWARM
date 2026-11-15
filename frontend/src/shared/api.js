@@ -29,7 +29,9 @@ export async function request(path, options = {}) {
   } finally { clearTimeout(timer) }
 }
 
-/* Only the read endpoints the React screens can use today. Shapes are the backend's own, unchanged. */
+/* The endpoints the React screens use. Shapes are the backend's own, unchanged. */
+const send = (method, path, body) => request(path, { method, body: body === undefined ? undefined : JSON.stringify(body) })
+
 const api = {
   request,
   /** GET /api/session: this browser's private workspace. Sets the workspace cookie on first call. */
@@ -49,8 +51,32 @@ const api = {
   },
   /** GET /api/posts/{id}: one post. */
   post: (id) => request('/posts/' + encodeURIComponent(id)),
-  /** GET /api/me: the signed-in account's profile. Rejects with status 401 when nobody is signed in. */
+  /** POST /api/posts: share a post as the signed-in account, whose profile must be public. `request_id` is a UUID that makes a retry safe. */
+  createPost: ({ body, link_kind = null, link_key = null, request_id }) => send('POST', '/posts', { body, link_kind, link_key, request_id }),
+  /** GET /api/community/options: resources a post can link to. Needs a signed-in account. */
+  communityOptions: () => request('/community/options'),
+
+  /** GET /api/me: { person_id, email, version, courses_version, profile }. Rejects with status 401 when nobody is signed in. */
   me: () => request('/me'),
+  /** POST /api/auth/register: creates a private profile and signs in. Passwords are 12 to 128 characters. */
+  register: ({ email, password, name }) => send('POST', '/auth/register', { email, password, name }),
+  /** POST /api/auth/login: same response as me(). */
+  login: ({ email, password }) => send('POST', '/auth/login', { email, password }),
+  /** POST /api/auth/logout: ends this browser's session. */
+  logout: () => send('POST', '/auth/logout'),
+  /** PUT /api/me: replaces the profile. `version` must be the one last read; a stale one is rejected with 409. */
+  saveProfile: ({ version, profile }) => send('PUT', '/me', { version, profile }),
+  /** GET /api/profiles/{person_id}: the public part of someone's profile. 404 when it is private. */
+  profile: (personId) => request('/profiles/' + encodeURIComponent(personId)),
+
+  /** POST /api/resumes: a PDF or DOCX (5 MB at most) in, a private draft of suggestions out. The file is not stored. */
+  uploadResume: (file) => request('/resumes?filename=' + encodeURIComponent(file.name), {
+    method: 'POST', body: file, headers: { 'Content-Type': 'application/octet-stream' }, timeout: 40000,
+  }),
+  /** POST /api/resumes/{id}/import: adds the selected suggestions to the profile and deletes the draft. */
+  importResume: (draftId, { version, courses_version, selections }) => send('POST', `/resumes/${encodeURIComponent(draftId)}/import`, { version, courses_version, selections }),
+  /** DELETE /api/resumes/{id}: discards a draft. */
+  discardResume: (draftId) => send('DELETE', '/resumes/' + encodeURIComponent(draftId)),
 }
 
 export default api
