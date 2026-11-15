@@ -104,8 +104,11 @@ def test_courses_and_vip_match_job_topics_without_alumni_claims(app):
     with TestClient(app) as client:
         client.get('/api/session')
         catalog = client.get('/api/resources').json()['items']
-        assert len([row for row in catalog if row['kind'] == 'Course']) == 8
-        assert len([row for row in catalog if row['kind'] == 'VIP project']) == 3
+        # The eight curated courses and three curated VIP projects, plus the imported GT catalog.
+        checked_in = catalog_records()[0]
+        for kind in ('Course', 'VIP project'):
+            assert len([row for row in catalog if row['kind'] == kind]) == len([row for row in checked_in if row['kind'] == kind])
+        assert {101, 102, 103, 104, 105, 106, 107, 108, 201, 202, 203} <= {row['id'] for row in catalog}
         course = next(row for row in catalog if row['id'] == 104)
         assert course['evidence_basis'] == 'course_catalog'
         assert 'operating systems' in course['topics']
