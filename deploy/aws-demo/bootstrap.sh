@@ -11,7 +11,8 @@
 set -euo pipefail
 
 APP=/opt/warmpath
-PYTHON=${WARMPATH_PYTHON:-python3.12}
+# The interpreter the test suite was last run on. Any Python 3.11+ package name works.
+PYTHON=${WARMPATH_PYTHON:-python3.14}
 
 dnf install -y -q nginx "$PYTHON" tar gzip
 
