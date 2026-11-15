@@ -530,7 +530,7 @@
   .community-atmosphere-dark { opacity: 0.28; }
   .community-atmosphere-light { opacity: 0.16; }
   .community-content {
-    width: min(1420px, 100%); height: min(840px, calc(100dvh - 104px)); max-height: 100%;
+    position: relative; z-index: 1; width: min(1420px, 100%); height: min(840px, calc(100dvh - 104px)); max-height: 100%;
     display: flex; flex-direction: column; overflow: hidden; padding: 0;
     border: 1px solid var(--community-line); border-radius: 18px;
     background: var(--community-panel); color: var(--community-text);
@@ -540,6 +540,8 @@
     display: flex; align-items: center; justify-content: space-between; gap: 18px;
     padding: 0; border: 0; background: transparent;
   }
+  .community-thermal-pattern { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; opacity: .12; }
+  .community-page[data-theme='light'] .community-thermal-pattern { opacity: .09; }
   .community-bar .mark { color: var(--bone); text-decoration: none; }
   .community-page[data-theme='light'] .community-bar .mark { color: var(--community-text); }
   .community-page[data-theme='light'] .section-tabs { border-color: var(--community-line); background: rgba(250, 247, 240, 0.94); }
@@ -648,9 +650,14 @@
   @media (max-width: 760px) {
     .community-page { padding: 70px 9px 9px; }
     .community-bar { top: 9px; left: 12px; right: 12px; gap: 8px; }
+    .community-bar .section-tabs { flex: 1; min-width: 0; max-width: none; overflow-x: auto; justify-content: flex-start; flex-wrap: nowrap; scrollbar-width: none; }
+    .community-bar .section-tabs::-webkit-scrollbar { display: none; }
+    .community-bar .mark { flex: none; }
     .community-bar .section-tabs a { min-height: 38px; padding: 7px 11px; }
     .community-content { width: 100%; height: 100%; max-height: 100%; border-radius: 15px; }
-    .community-heading { padding: 11px 13px; gap: 10px; }
+    .community-heading { padding: 11px 13px; gap: 8px; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; }
+    .community-heading > div { min-width: 0; }
+    .community-theme-switch { justify-self: end; margin: 0; }
     .community-heading h1 { margin-top: 2px; font-size: 24px; }
     .community-heading p { max-width: 34ch; font-size: 11.5px; line-height: 1.35; }
     .community-heading .cap { font-size: 9px; }
@@ -670,9 +677,10 @@
     .community-identity { display: none; }
     .community-dashboard[data-focus='feed'] .community-events, .community-dashboard[data-focus='campus'] .community-feed { display: none; }
     .community-feed, .community-events { padding: 11px 12px 9px; border: 0; }
-    .community-feed-head { padding-bottom: 10px; }
+    .community-feed-head { padding-bottom: 10px; align-items: flex-start; flex-wrap: wrap; }
+    .community-feed-head > div { flex: 1 1 100%; min-width: 0; }
     .community-feed-head h2, .community-events-head h2 { font-size: 17px; }
-    .community-feed-head .community-small-button { min-height: 38px; padding: 7px 10px; font-size: 12px; }
+    .community-feed-head .community-small-button { flex: 1 1 100%; width: 100%; min-height: 38px; padding: 7px 10px; font-size: 12px; white-space: nowrap; }
     .community-feed-content { padding-top: 10px; }
     .community-post { padding: 12px; }
     .community-post-text { margin: 10px 0; font-size: 13.5px; }
@@ -701,7 +709,13 @@
   .community-page a { color:var(--community-text); }
   .community-identity a.community-small-button { text-decoration:none; }
   .community-page { background:radial-gradient(ellipse at top left,#35200c 0,transparent 45%),#09060f; }
+  .community-page[data-theme='dark'] .community-content { --community-panel: rgba(9, 6, 15, 0.91); }
   .community-page[data-theme='light'] { background:#ede6d9; }
+  @media (max-width: 760px) {
+    .community-bar .section-tabs { max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none; }
+    .community-bar .section-tabs::-webkit-scrollbar { display: none; }
+    .community-bar .section-tabs a { flex: none; padding-left: 9px; padding-right: 9px; font-size: 9.5px; }
+  }
 </style>
 
 <script type="importmap">
@@ -801,7 +815,11 @@ function Community() {
   const choices=[...resources.map(r=>({value:JSON.stringify(['resource',String(r.id)]),title:r.kind+': '+r.name})),...(events?.items||[]).map(e=>({value:JSON.stringify(['event',e.url]),title:'Event: '+e.title}))]
   const linked=dialog?.kind==='record'?dialog.record:null
   return <main className="community-page" data-theme={theme}>
-    <header className="community-bar"><a className="mark" href="./index.html"><i/>WarmPath</a><nav className="section-tabs cap" aria-label="WarmPath sections"><a href="./index.html">Resources</a><a href="./index.html#/profile">My Profile</a><a href="./index.html#/courses">My Courses</a><a href="./community.html" aria-current="page">Social Jackets</a></nav></header>
+    <svg className="community-thermal-pattern" viewBox="0 0 240 208" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs><pattern id="community-hex-pattern" width="12" height="10.4" patternUnits="userSpaceOnUse"><path d="M3 0.2h6l2.8 5-2.8 5H3L0.2 5.2z" fill="none" stroke="#eaaa00" stroke-width=".14" stroke-opacity=".5"/><circle cx="3" cy="0.2" r=".22" fill="#ff6a1f" fill-opacity=".7"/><circle cx="9" cy="10.2" r=".22" fill="#ffe9a8" fill-opacity=".6"/></pattern><radialGradient id="community-thermal-warmth"><stop offset="0" stop-color="#ee9b00" stop-opacity=".16"/><stop offset=".58" stop-color="#ff6a1f" stop-opacity=".05"/><stop offset="1" stop-color="#06040b" stop-opacity="0"/></radialGradient></defs>
+      <rect width="100%" height="100%" fill="url(#community-hex-pattern)"/><rect width="100%" height="100%" fill="url(#community-thermal-warmth)"/>
+    </svg>
+    <header className="community-bar"><a className="mark" href="./index.html"><i/>WarmPath</a><nav className="section-tabs cap" aria-label="WarmPath sections"><a href="./index.html">Paths</a><a href="./index.html#/discovery">Discovery</a><a href="./index.html#/map">Maps</a><a href="./index.html#/profile">My Profile</a><a href="./index.html#/courses">My Courses</a><a href="./community.html" aria-current="page">Social Jackets</a></nav></header>
     <div className="community-content">
       <header className="community-heading"><div><span className="cap">WarmPath community</span><h1>Social Jackets</h1><p>Updates from students and alumni. Public campus events from GT sources.</p></div><button className="community-theme-switch" role="switch" aria-label="Light theme" aria-checked={theme==='light'} onClick={()=>setTheme(t=>t==='light'?'dark':'light')}><span>Light</span><span className="community-theme-track" aria-hidden="true"><i/></span><span>Dark</span></button></header>
       {notice&&<p role="status" className="community-notice">{notice}</p>}

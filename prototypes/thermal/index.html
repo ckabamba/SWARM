@@ -621,7 +621,7 @@ function EventList({ data }) {
   </div>
 }
 
-function Experience({ session, onProfile, onCourses }) {
+function Experience({ session, onProfile, onCourses, initialRoute = 'home' }) {
   const [view, setView] = useState('goal')
   const [goalText, setGoalText] = useState(session.goal || '')
   const [result, setResult] = useState(null)
@@ -696,6 +696,7 @@ function Experience({ session, onProfile, onCourses }) {
     } catch (e) { if (id === sequence.current) setError(e.message) }
     finally { if (id === sequence.current) setBusy(false) }
   }
+  useEffect(() => { if (initialRoute === 'discovery') browse(false) }, [initialRoute])
   const toggleSaved = async resource => {
     if (saving) return
     setSaving(true); setError('')
@@ -739,6 +740,8 @@ function Experience({ session, onProfile, onCourses }) {
           <button className="pill" disabled={busy} onClick={() => browse(false)}>Browse</button>
           <button className="pill" disabled={busy} onClick={() => browse(true)}>Saved</button>
           <button className="pill" onClick={() => { setPanel('events'); loadEvents() }}>Events</button>
+          <a className="pill" href="./index.html#/discovery">Discovery</a>
+          <a className="pill" href="./index.html#/map">Maps</a>
           <button className="pill" onClick={onProfile}>My Profile</button>
           <button className="pill" onClick={onCourses}>My Courses</button>
           <a className="pill" href="./community.html">Social Jackets</a>
@@ -900,7 +903,7 @@ function ProfileScreen({onBack,onCourses}) {
   })
   const leave = () => {if(!dirty || confirm('Leave without saving your profile edits?')) onBack()}
   return <main className="profile-page">
-    <header className="profile-header"><button className="mark" onClick={leave}><i/>WarmPath</button><nav><button className="pill" disabled={busy} onClick={() => {if(!dirty || confirm('Leave without saving profile edits?')) onCourses()}}>My Courses</button><button className="pill" onClick={leave} disabled={busy}>Back to resources</button></nav></header>
+    <header className="profile-header"><button className="mark" onClick={leave}><i/>WarmPath</button><nav aria-label="WarmPath sections"><a className="pill" href="./index.html#/discovery">Discovery</a><a className="pill" href="./index.html#/map">Maps</a><a className="pill" href="./community.html">Social Jackets</a><button className="pill" disabled={busy} onClick={() => {if(!dirty || confirm('Leave without saving profile edits?')) onCourses()}}>My Courses</button><button className="pill" onClick={leave} disabled={busy}>Back to resources</button></nav></header>
     <div className="profile-intro"><p className="cap quiet">Your campus story</p><h1>My Profile</h1><p>Add your experiences and ways to connect. Your classes and transcript imports live on My Courses.</p></div>
     {error && <p className="profile-message error" role="alert">{error}</p>}
     {notice && <p className="profile-message" role="status">{notice}</p>}
@@ -1001,7 +1004,7 @@ function CoursesScreen({onBack,onProfile}) {
     .sort((a,b)=>{const order=t=>{const y=Number(t.match(/\d{4}/)?.[0]||0);return y*10+(/fall/i.test(t)?4:/summer/i.test(t)?3:/spring/i.test(t)?2:1)};return order(b.term)-order(a.term)||a.code.localeCompare(b.code)})
   const groups=Object.groupBy(filtered.slice(0,limit),c=>c.term || 'Term not specified')
   return <main className="profile-page courses-page">
-    <header className="profile-header"><button className="mark" onClick={()=>leave(onBack)}><i/>WarmPath</button><nav><button className="pill" disabled={busy} onClick={()=>leave(onProfile)}>My Profile</button><button className="pill" disabled={busy} onClick={()=>leave(onBack)}>Back to resources</button></nav></header>
+    <header className="profile-header"><button className="mark" onClick={()=>leave(onBack)}><i/>WarmPath</button><nav aria-label="WarmPath sections"><a className="pill" href="./index.html#/discovery">Discovery</a><a className="pill" href="./index.html#/map">Maps</a><a className="pill" href="./community.html">Social Jackets</a><button className="pill" disabled={busy} onClick={()=>leave(onProfile)}>My Profile</button><button className="pill" disabled={busy} onClick={()=>leave(onBack)}>Back to resources</button></nav></header>
     <div className="profile-intro"><p className="cap quiet">Your academic journey</p><h1>My Courses</h1><p>Keep your course history in one place. Import a transcript or add courses yourself. Grades and GPA are not used.</p></div>
     {error && <p className="profile-message error" role="alert">{error}</p>}{notice && <p className="profile-message" role="status">{notice}</p>}
     {loading ? <p role="status">Loading courses…</p> : needsLogin ? <section className="profile-card"><h2>Sign in to manage courses</h2><p>Use your WarmPath account to keep courses and transcript drafts private.</p><button className="pill hot" onClick={onProfile}>Sign in or create an account</button></section> : !collection ? <button className="pill" onClick={load}>Retry loading courses</button> : <>
@@ -1042,6 +1045,16 @@ function CoursesScreen({onBack,onProfile}) {
   </main>
 }
 
+function MapRoute() {
+  return <main className="profile-page">
+    <header className="profile-header"><a className="mark" href="./index.html"><i/>WarmPath</a><nav aria-label="WarmPath sections">
+      <a className="pill" href="./index.html#/discovery">Discovery</a><a className="pill" href="./community.html">Social Jackets</a><a className="pill" href="./index.html#/profile">My Profile</a>
+    </nav></header>
+    <div className="profile-intro"><p className="cap quiet">Places, not path stops</p><h1>Maps</h1><p>Campus activities and alumni cities will use the same sourced event, location, and public profile records as the rest of WarmPath.</p></div>
+    <section className="profile-card"><h2>Geographic maps are not available yet</h2><p>This route is ready for the campus and alumni-city map work. It is not showing sample pins or invented locations.</p><p className="quiet">Public event listings remain available through Social Jackets and resource discovery.</p><a className="pill hot" href="./community.html">Open Social Jackets</a> <a className="pill" href="./index.html#/discovery">Browse resources</a></section>
+  </main>
+}
+
 function App() {
   const [page,setPage] = useState(location.hash.slice(2))
   useEffect(()=>{if(page==='community')location.replace(new URL('./community.html',location.href).href)},[page])
@@ -1051,10 +1064,11 @@ function App() {
   const load = async () => { setError(''); try { setSession(await api.session()) } catch(e) { setError(e.message) } }
   useEffect(() => { load() }, [])
   if (location.hash.startsWith('#/reply/')) return <main className="boot"><h1>This prototype reply is unavailable</h1><p>Old prototype asks are not real outreach. No alumni-history dataset or recipient accounts are connected.</p><a href="/thermal/">Explore campus resources</a></main>
+  if (page === 'map') return <MapRoute />
   if (!session) return <main className="boot"><h1>WarmPath</h1><p role={error ? 'alert' : 'status'}>{error || 'Connecting to your campus workspace…'}</p>{error && <><p>Please use the WarmPath website address provided by your team. If the service is unavailable, try again shortly.</p><button className="pill" onClick={load}>Retry connection</button></>}</main>
   if(page==='profile') return <ProfileScreen onBack={()=>navigate('')} onCourses={()=>navigate('courses')}/>
   if(page==='courses') return <CoursesScreen onBack={()=>navigate('')} onProfile={()=>navigate('profile')}/>
-  return <Experience session={session} onProfile={()=>navigate('profile')} onCourses={()=>navigate('courses')}/>
+  return <Experience key={page || 'home'} initialRoute={page} session={session} onProfile={()=>navigate('profile')} onCourses={()=>navigate('courses')}/>
 }
 
 createRoot(document.getElementById('root')).render(<App />)
