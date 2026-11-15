@@ -12,6 +12,7 @@ interface ThermalShellProps {
   currentTab: TabId;
   onHomePress?: () => void;
   isAlumDemo?: boolean;
+  demoMode?: boolean;
   onToggleDemo?: () => void;
   panX?: number;
   lowBatteryMode?: boolean;
@@ -36,6 +37,7 @@ export default function ThermalShell({
   currentTab,
   onHomePress,
   isAlumDemo = false,
+  demoMode = false,
   onToggleDemo,
   panX = 0,
   lowBatteryMode = false,
@@ -73,6 +75,7 @@ export default function ThermalShell({
       <TopBar
         onHomePress={onHomePress}
         isAlumDemo={isAlumDemo}
+        demoMode={demoMode}
         onToggleDemo={onToggleDemo}
       />
 
