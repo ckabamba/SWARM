@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -7,12 +8,14 @@ import { THEME } from '../../theme/tokens';
 interface TopBarProps {
   onHomePress?: () => void;
   isAlumDemo?: boolean;
+  demoMode?: boolean;
   onToggleDemo?: () => void;
 }
 
 export default function TopBar({
   onHomePress,
   isAlumDemo = false,
+  demoMode = false,
   onToggleDemo,
 }: TopBarProps) {
   return (
@@ -32,6 +35,11 @@ export default function TopBar({
             <Text style={styles.brandTitle}>WarmPath</Text>
           </TouchableOpacity>
 
+          {demoMode && <View style={styles.demoBadge} accessibilityLabel="Demo mode using fictional data">
+            <Ionicons name="flask-outline" size={11} color={THEME.colors.gold} />
+            <Text style={styles.demoBadgeText}>DEMO MODE</Text>
+          </View>}
+
           {onToggleDemo && (
             <TouchableOpacity
               style={styles.demoBadge}
@@ -41,11 +49,11 @@ export default function TopBar({
               }}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel={isAlumDemo ? 'Switch to student demo' : 'Switch to alumni demo'}
+              accessibilityLabel={isAlumDemo ? 'Switch to student demo view' : 'Switch to alumni demo view'}
             >
               <Ionicons name="swap-horizontal" size={11} color={THEME.colors.gold} />
               <Text style={styles.demoBadgeText}>
-                {isAlumDemo ? 'STUDENT DEMO' : 'ALUM DEMO'}
+                {isAlumDemo ? 'STUDENT VIEW' : 'ALUM VIEW'}
               </Text>
             </TouchableOpacity>
           )}
@@ -58,7 +66,7 @@ export default function TopBar({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   safeArea: {
     backgroundColor: THEME.colors.void,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
@@ -117,4 +125,4 @@ const styles = StyleSheet.create({
   rightSpacer: {
     width: 44, // preserves clear area for Expo Go top-right menu
   },
-});
+}));

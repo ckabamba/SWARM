@@ -1,15 +1,18 @@
 import React from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ThermalHexBackground from './ThermalHexBackground';
 import TopBar from './TopBar';
 import { THEME } from '../../theme/tokens';
+import { getThemeMode } from '../../theme/tokens';
 import type { TabId } from './BottomTabBar';
 
 interface ThermalShellProps {
   currentTab: TabId;
   onHomePress?: () => void;
   isAlumDemo?: boolean;
+  demoMode?: boolean;
   onToggleDemo?: () => void;
   panX?: number;
   lowBatteryMode?: boolean;
@@ -17,6 +20,9 @@ interface ThermalShellProps {
 }
 
 function getVeilStyle(tab: TabId) {
+  if (getThemeMode() === 'light') {
+    return { backgroundColor: 'rgba(245, 247, 251, 0.24)' };
+  }
   switch (tab) {
     case 'map':
       return { backgroundColor: 'rgba(6, 4, 11, 0.45)' }; // Lightest — strands glow
@@ -31,22 +37,26 @@ export default function ThermalShell({
   currentTab,
   onHomePress,
   isAlumDemo = false,
+  demoMode = false,
   onToggleDemo,
   panX = 0,
   lowBatteryMode = false,
   children,
 }: ThermalShellProps) {
+  const isLightTheme = getThemeMode() === 'light';
   return (
     <View style={styles.container}>
       {/* Layer 0 — Thermal Backdrop Gradient */}
       <View style={StyleSheet.absoluteFill}>
         <LinearGradient
-          colors={[
-            THEME.colors.fogNavy,
-            'rgba(238, 155, 0, 0.18)',
-            'rgba(255, 138, 42, 0.14)',
-            THEME.colors.void,
-          ]}
+          colors={isLightTheme
+            ? [THEME.colors.fogNavy, '#ffffff', '#f7d889', THEME.colors.void]
+            : [
+              THEME.colors.fogNavy,
+              'rgba(238, 155, 0, 0.18)',
+              'rgba(255, 138, 42, 0.14)',
+              THEME.colors.void,
+            ]}
           locations={[0, 0.25, 0.6, 1]}
           style={StyleSheet.absoluteFill}
         />
@@ -65,6 +75,7 @@ export default function ThermalShell({
       <TopBar
         onHomePress={onHomePress}
         isAlumDemo={isAlumDemo}
+        demoMode={demoMode}
         onToggleDemo={onToggleDemo}
       />
 
@@ -74,7 +85,7 @@ export default function ThermalShell({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: THEME.colors.void,
@@ -89,4 +100,4 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-});
+}));

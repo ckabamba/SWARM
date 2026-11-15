@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView } from 'react-native';
+import { createThemedStyles } from '../theme/themedStyles';
+import { StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
 import StudentHeader from '../components/home/StudentHeader';
-import AccountSettingsControl from '../components/home/AccountSettingsControl';
 import ActiveGoalCard from '../components/home/ActiveGoalCard';
 import NextPreviewCard from '../components/home/NextPreviewCard';
 import LitHexChips from '../components/home/LitHexChips';
@@ -15,13 +15,13 @@ import { THEME } from '../theme/tokens';
 
 interface HomeScreenProps {
   onOpenMap: (focusActivityId?: number) => void;
+  onOpenProfile: () => void;
 }
 
-export default function HomeScreen({ onOpenMap }: HomeScreenProps) {
+export default function HomeScreen({ onOpenMap, onOpenProfile }: HomeScreenProps) {
   const {
     student,
     allStudents,
-    profileInfo,
     stops,
     nextStop,
     litStopsCount,
@@ -29,7 +29,6 @@ export default function HomeScreen({ onOpenMap }: HomeScreenProps) {
     asks,
     preferences,
     setPreferences,
-    updateProfileInfo,
     setStudentId,
     toggleStopHave,
     setGoal,
@@ -41,14 +40,6 @@ export default function HomeScreen({ onOpenMap }: HomeScreenProps) {
   const [replyModalAskId, setReplyModalAskId] = useState<number | null>(null);
 
   const selectedReplyAsk = asks.find((a) => a.id === replyModalAskId) || null;
-  const profileKey = `student:${student.id}`;
-  const currentProfileInfo = profileInfo[profileKey] || {
-    name: student.name,
-    headline: student.major,
-    location: student.school,
-    about: '',
-  };
-
   return (
     <ScrollView
       style={styles.container}
@@ -60,14 +51,9 @@ export default function HomeScreen({ onOpenMap }: HomeScreenProps) {
         student={student}
         onEditPress={() => setStudentModalVisible(true)}
       />
-      <AccountSettingsControl
-        accountName={student.name}
-        accountType="Student"
-        profileInfo={currentProfileInfo}
-        preferences={preferences}
-        onUpdatePreferences={setPreferences}
-        onSaveProfileInfo={(nextProfileInfo) => updateProfileInfo(profileKey, nextProfileInfo)}
-      />
+      <TouchableOpacity style={styles.accountButton} onPress={onOpenProfile} accessibilityRole="button">
+        <Text style={styles.accountButtonText}>WARMPath ACCOUNT & PROFILE</Text>
+      </TouchableOpacity>
 
       {/* Active Goal Hero Card */}
       <ActiveGoalCard
@@ -126,7 +112,7 @@ export default function HomeScreen({ onOpenMap }: HomeScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -136,4 +122,20 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 40,
   },
-});
+  accountButton: {
+    alignSelf: 'flex-end',
+    borderWidth: 1,
+    borderColor: THEME.colors.line,
+    borderRadius: THEME.rounded.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginTop: -12,
+    marginBottom: 16,
+  },
+  accountButtonText: {
+    ...THEME.typography.cap,
+    fontSize: 8,
+    color: THEME.colors.ash,
+    letterSpacing: 0.9,
+  },
+}));

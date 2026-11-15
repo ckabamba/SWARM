@@ -1,6 +1,6 @@
 # Database rollout: resources first, reviewed histories afterward
 
-The intended existing target, supplied by Christofort, is **AWS region `us-east-1`, RDS instance `warmpath-db`, database `warmpath`**. Ezekiel Currie administers the database in the user's AWS account. These identifiers are not proof of current connectivity, schema version or access. No infrastructure was provisioned. On November 15, 2026, authenticated read-only inspection found PostgreSQL 18.3 and revision 0008, but no activity_contribution or ask tables. The revision label therefore does not match the local migration chain; reconcile it before running migrations or deploying the new history/ask API. Separately, the authorized init-catalog load populated 32 public resources and two job examples; the 68 existing events and empty person/account tables were verified unchanged.
+The intended existing target, supplied by Christofort, is **AWS region `us-east-1`, RDS instance `warmpath-db`, database `warmpath`**. Ezekiel Currie administers the database in the user's AWS account. These identifiers are not proof of current connectivity, schema version or access. No infrastructure was provisioned. On November 15, 2026, authenticated read-only inspection found PostgreSQL 18.3 and revision 0008, but no activity_contribution or ask tables. This is consistent with upstream event-place/description migrations 0007/0008. After integrating main, the new history and ask migrations are numbered 0009/0010. They remain unapplied on RDS. Separately, the authorized init-catalog load populated 32 public resources and two job examples; the 68 existing events and empty person/account tables were verified unchanged.
 
 The first shared environment starts with public campus resources, course/VIP descriptions, curated job examples and fresh public events. Do not transfer local accounts, password hashes, personal profiles, courses, posts, import drafts, browser workspaces or sessions. Do not run the path fixture loader against RDS. New users create their accounts and contribute reviewed histories through the application.
 
@@ -42,7 +42,7 @@ The commands have distinct responsibilities:
 
 | Command | Responsibility |
 | --- | --- |
-| `migrate` | Apply the reviewed migration chain. `0006` adopts existing `api_*` tables without dropping their rows; `0007` adds reviewed history provenance and projections; `0008` adds participant-owned Asks. |
+| `migrate` | Apply the reviewed migration chain. `0006` adopts existing `api_*` tables without dropping their rows; `0007`/`0008` add event places/descriptions; `0009` adds reviewed history provenance and projections; `0010` adds participant-owned Asks. |
 | `init-catalog` | Idempotently upsert the checked-in 32 campus/course/VIP resources and two public job examples. It does not create tables, people, participation or outcomes, and does not delete unrelated catalog rows. |
 | `sync_events` | Import public GT source metadata, preserving the previous successful snapshot when a source fails. No personal data is imported. |
 | `run` | Start the API after read-only schema/catalog checks. It never creates schema or refreshes catalog values. |

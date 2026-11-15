@@ -6,7 +6,7 @@ The project began with the Georgia Tech SGA hackathon prompt on connecting stude
 
 ## Current status
 
-**Database update:** run `python -m backend.manage migrate`, then `python -m backend.manage init-catalog` before starting the API. Catalog loading is now explicit. The [RDS rollout guide](docs/database-rollout.md) targets the existing `us-east-1 / warmpath-db / warmpath` instance, starting with resources/events only. On November 15, 2026, the expanded catalog was loaded: 32 resources and two job examples, with 68 existing events preserved. The separate history/ask migration mismatch remains unresolved.
+**Database update:** run `python -m backend.manage migrate`, then `python -m backend.manage init-catalog` before starting the API. Catalog loading is now explicit. The [RDS rollout guide](docs/database-rollout.md) targets the existing `us-east-1 / warmpath-db / warmpath` instance, starting with resources/events only. On November 15, 2026, the expanded catalog was loaded: 32 resources and two job examples, with 68 existing events preserved. Upstream event migrations occupy revisions 0007/0008; the new history/ask migrations are 0009/0010 and remain unapplied on RDS.
 
 **New clone or connection error?** Follow [Running WarmPath after cloning](docs/running-warmpath.md). The connected app needs a running API and PostgreSQL; downloading HTML does not include either. Teammates can use the documented Docker database without the original Windows portable installation. Ordinary users will use a shared hosted URL once deployment is configured.
 

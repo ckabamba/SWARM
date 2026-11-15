@@ -23,4 +23,4 @@ Some source sites could be read through indexed official-page results while live
 
 The catalog IDs 301-314 are new, preserving all existing resource and curriculum IDs. The loader rejects duplicate IDs before importing, and its existing upsert behavior makes repeat loads idempotent. Catalog/API tests passed (9 tests).
 
-RDS load verified: 32 resources, two job examples, 68 events, zero people and zero accounts. Existing event rows were compared by a content digest and remained unchanged. No migration, account or participation writes occurred. The local backend still uses its existing database configuration; importing a catalog does not deploy the API or resolve the separate migration mismatch.
+RDS load verified: 32 resources, two job examples, 68 events, zero people and zero accounts. Existing event rows were compared by a content digest and remained unchanged. No migration, account or participation writes occurred. The local backend still uses its existing database configuration; importing a catalog does not deploy the API or apply the pending history/ask migrations 0009/0010.

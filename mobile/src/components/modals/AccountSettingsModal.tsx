@@ -1,9 +1,11 @@
 import React from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import {
   Modal,
   Platform,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -102,6 +104,24 @@ export default function AccountSettingsModal({
               </View>
             </View>
 
+            <View style={styles.appearanceRow}>
+              <View style={styles.appearanceDetails}>
+                <Text style={styles.appearanceTitle}>Appearance</Text>
+                <Text style={styles.appearanceSubtitle}>
+                  {preferences.themeMode === 'dark' ? 'Dark' : 'Light'} theme
+                </Text>
+              </View>
+              <Switch
+                value={preferences.themeMode === 'light'}
+                onValueChange={(enabled) => onUpdatePreferences({
+                  themeMode: enabled ? 'light' : 'dark',
+                })}
+                trackColor={{ false: 'rgba(143, 135, 152, 0.3)', true: THEME.colors.gold }}
+                thumbColor={preferences.themeMode === 'light' ? THEME.colors.glow : THEME.colors.bone}
+                accessibilityLabel="Use light appearance"
+              />
+            </View>
+
             <TouchableOpacity
               style={styles.editButton}
               onPress={() => {
@@ -186,7 +206,7 @@ export default function AccountSettingsModal({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'center',
@@ -251,6 +271,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   accountType: {
+    ...THEME.typography.bodyAsh,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  appearanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: THEME.colors.line,
+  },
+  appearanceDetails: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  appearanceTitle: {
+    ...THEME.typography.title,
+    fontSize: 14,
+  },
+  appearanceSubtitle: {
     ...THEME.typography.bodyAsh,
     fontSize: 11,
     marginTop: 2,
@@ -322,4 +363,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1.2,
   },
-});
+}));

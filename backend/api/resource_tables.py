@@ -28,7 +28,8 @@ events = Table('api_public_events', metadata,
     Column('ends_at', DateTime(timezone=True), nullable=False),
     Column('fetched_at', DateTime(timezone=True), nullable=False),
     Column('source', Text, nullable=False, server_default='gt-calendar'),
-    Column('location', Text, nullable=True), Column('organizer', Text, nullable=True))
+    Column('location', Text, nullable=True), Column('organizer', Text, nullable=True),
+    Column('description', Text, nullable=True))
 feeds = Table('api_feeds', metadata, Column('name', Text, primary_key=True),
     Column('fetched_at', DateTime(timezone=True), nullable=False))
 

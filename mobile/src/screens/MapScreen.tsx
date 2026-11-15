@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createThemedStyles } from '../theme/themedStyles';
 import { StyleSheet, View } from 'react-native';
 import ConstellationStage from '../components/map/ConstellationStage';
 import ConstellationSheet from '../components/map/ConstellationSheet';
@@ -40,9 +41,9 @@ export default function MapScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
   },
-});
+}));
