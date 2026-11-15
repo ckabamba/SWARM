@@ -1,39 +1,35 @@
-# Design direction prototypes
+# WarmPath prototypes
 
-Three throwaway prototypes of the four WarmPath screens (goal box, path map, people panel, alum reply page). They exist so the team can pick a look and a motion budget. None of this is production code, and nothing here is wired to the backend.
+The current browser prototype is [Thermal](thermal/index.html). It demonstrates the existing path, people/Ask, and alum reply flow, plus [Social Jackets](thermal/index.html#/community), the student-focused WarmPath community page.
 
-| Direction | Look | Motion | Built with |
-| --- | --- | --- | --- |
-| [Thermal](thermal/index.html) | Near-black and Georgia Tech gold: one strand per alum who reached the goal, over a honeycomb whose cells fill by how many strands cross them | High: WebGL particles, routes that draw themselves | React, react-three-fiber, ShaderGradient, loaded from a CDN |
-| [Transit](transit/index.html) | Yellow ground, black transit lines, one line per activity type | Medium: lines draw on, riders move, the next-stop flag slides | Plain SVG and the Web Animations API |
-| [Engineering pad](pad/index.html) | Green grid paper, a worked Given / Find / Solution problem | Low: press feedback and 200ms reveals | HTML and CSS, a little script |
+## Features
 
-![Thermal](shots/thermal.jpg)
-![Transit](shots/transit.jpg)
-![Engineering pad](shots/pad.jpg)
+- **Thermal paths:** enter a goal, inspect the path map, switch demo students from the “You” node, open people, draft an Ask, and use the `#/reply/{id}` page.
+- **Social Jackets:** browse fictional club activities and event fixtures, read a newest-first feed from fictional student demo profiles, open concise demo profile summaries, and compose a text post with an optional linked club or event.
+- **Shared visual system:** the Thermal prototype follows the colors, typography, controls, and motion direction in [DESIGN.md](../DESIGN.md).
 
-## Running them
+## Running it
 
-Open [index.html](index.html) in a browser, or serve the folder:
+Open [index.html](index.html) in a browser, or serve the repository:
 
-```
+```sh
 cd prototypes
 python -m http.server 4712
 ```
 
-Then visit `http://localhost:4712`. Thermal needs an internet connection for its libraries, and it has to be served like this for its 3D honeycomb model to load; opened straight from disk it shows a simpler stand-in. The prototypes are laid out for a laptop screen; the alum reply page (`#/reply/5` on any of them) is the one screen sized for a phone.
+Then visit `http://localhost:4712`. Thermal loads libraries from CDNs, so it needs an internet connection. Serve the files over HTTP so the 3D honeycomb model loads; opening Thermal directly from disk uses the simpler stand-in.
 
-To try the two-device beat, send an ask from the people panel, follow its "open the reply page" link into a second tab, and accept there. The first tab updates on its own.
+Open `thermal/index.html#/community` to start at Social Jackets. On the path page, the top tabs move between Paths and Social Jackets. The “You” node in the path map still switches between the two demo students. Ask acceptance uses local storage to synchronize browser tabs; it is not multi-device persistence.
 
-## Data
+## Demo data and limits
 
-[shared/fake-api.js](shared/fake-api.js) holds invented data and one function per endpoint in [docs/mvp.md](../docs/mvp.md#api-contract), returning the same JSON shapes. Every person is made up and the events are placeholders.
+[shared/fake-api.js](shared/fake-api.js) contains invented path profiles and event placeholders shaped like the existing path API draft in [docs/mvp.md](../docs/mvp.md#api-contract). Social Jackets reuses stable fixture IDs for linked clubs and events. Community profiles, posts, and event details are fictional student demo data; posts created in the composer remain in the current page session and are not shared or synced.
 
-One field is not in the contract: each stop carries `typical_year`. All three maps need some way to place a stop left to right, and lift alone does not give one. If the team wants any of these layouts, the path engine would need to return something like it (the median `school_year` from PersonActivity would do), and the contract in `docs/mvp.md` would change with it.
+Events are invented placeholders, not real listings, and profile summaries are not real accounts or visibility settings. Event and linked-record actions open local fixture details. Geographic map and discovery destinations are not wired in this prototype. Social Jackets does not include alumni in this phase.
 
-Whatever goal is typed, the prototypes draw the one seeded path, the NVIDIA internship.
+The typed goal still resolves to the one seeded NVIDIA example. Production persistence, community APIs, geographic maps, voice interaction, alumni integration, and mobile delivery are not implemented by this browser prototype.
 
 ## Credits
 
-- Honeycomb model in Thermal: "Honeycomb" by Poly by Google, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), via [Poly Pizza](https://poly.pizza/m/6Mqdrv1n3Oo). Stored at [thermal/models/honeycomb.glb](thermal/models/honeycomb.glb).
+- Honeycomb model in Thermal: “Honeycomb” by Poly by Google, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), via [Poly Pizza](https://poly.pizza/m/6Mqdrv1n3Oo). Stored at [thermal/models/honeycomb.glb](thermal/models/honeycomb.glb).
 - Hexagonal lattice in Thermal: adapted from [prisoner849's fiddle](https://jsfiddle.net/prisoner849/jzLdcemb/).

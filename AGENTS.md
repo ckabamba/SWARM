@@ -28,7 +28,7 @@ The five roles and their folder ownership are defined in [README.md](README.md#t
 
 Roles 3–5 each own their feature's web and mobile implementation. Role 4 coordinates the shared client shell and mobile delivery; role 1 supplies event/location data and role 2 serves it. Concrete mobile paths depend on the chosen delivery approach. Follow the spec's handoffs rather than assigning all mobile work to one person or returning event ingestion to the old role 5 boundary.
 
-Edit within the assigned role or the user's explicitly authorized task scope; coordinate changes across other owners' folders, including shared frontend routes/components owned by role 4. Coordinate schema changes with role 1. The four remaining teammate names are TBA, but feature ownership by role is assigned. Documentation is shared and may be updated together to keep product guidance consistent.
+Edit within the assigned role or the user's explicitly authorized task scope; coordinate changes across other owners' folders, including shared frontend routes/components owned by role 4. Coordinate schema changes with role 1. Three teammate names remain TBA for roles 1, 3, and 5; role 4 is owned by Shehryar Sardar. Documentation is shared and may be updated together to keep product guidance consistent.
 
 ## The API contract
 
