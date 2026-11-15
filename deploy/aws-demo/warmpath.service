@@ -1,0 +1,29 @@
+[Unit]
+Description=WarmPath API and web UI (FastAPI)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=warmpath
+Group=warmpath
+WorkingDirectory=/opt/warmpath/app
+# DATABASE_URL, WARMPATH_PUBLIC_ORIGIN, WARMPATH_HOST, PORT and FORWARDED_ALLOW_IPS.
+# Root-owned, readable by the warmpath group only; see warmpath.env.example.
+EnvironmentFile=/etc/warmpath/warmpath.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+# Startup only validates the schema and catalog. Run migrations and init-catalog explicitly.
+ExecStart=/opt/warmpath/venv/bin/python -m backend.manage run
+Restart=always
+RestartSec=5
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target
