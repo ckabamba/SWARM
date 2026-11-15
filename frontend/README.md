@@ -37,10 +37,13 @@ First-time backend setup (Python environment, local PostgreSQL, migrations, even
 How it fits together:
 
 - The dev server proxies `/api` to `http://127.0.0.1:8000` (see `vite.config.js`). Open the app at `localhost` or `127.0.0.1`; the backend rejects any other host name.
-- [src/shared/api.js](src/shared/api.js) is the HTTP client: session, resources, events, jobs, posts and the signed-in profile. It has a 12-second timeout and throws on any failure.
+- [src/shared/api.js](src/shared/api.js) is the HTTP client. It covers session, resources, events, jobs, posts, accounts, profiles and resume import, has a 12-second timeout, and throws on any failure.
 - [src/shared/data-source.js](src/shared/data-source.js) reads `VITE_DATA_SOURCE`. In `api` mode a call that fails falls back to the fixture and logs a `[WarmPath]` warning in the console, so the app still renders with the backend down.
-- Only Social Jackets is wired. Its feed reads `GET /api/posts` and its events read `GET /api/events`; [src/community/data.js](src/community/data.js) adapts both to the shapes the components already use. In `api` mode the line under the stream says which parts are real.
-- Still on fixtures in every mode: the path map, the people panel, asks and the reply page, plus Social Jackets clubs, the composer and the signed-in profile. The backend's `POST /api/path` returns resources, not alumni stops, and `/api/people` and asks are not available yet.
+- Social Jackets reads its feed from `GET /api/posts` and its events from `GET /api/events`; [src/community/data.js](src/community/data.js) adapts both to the shapes the components already use. In `api` mode the line under the stream says which parts are real.
+- Accounts work in `api` mode. The account button opens a drawer ([src/shared/AccountPanel.jsx](src/shared/AccountPanel.jsx)) to sign in or create an account, edit the profile, and optionally import a resume. The state lives in [src/shared/account.js](src/shared/account.js). Passwords need 12 characters or more, and a profile starts private.
+- The composer posts through `POST /api/posts` once you are signed in and your profile is public. A post can link to a listed event or a campus resource.
+- Still on fixtures in every mode: the path map, the people panel, asks and the reply page, plus Social Jackets clubs. The backend's `POST /api/path` returns resources, not alumni stops, and `/api/people` and asks are not available yet. The account menu keeps a "Path map demo student" switch for that reason.
+- Not built yet: editing or deleting a post, editing contacts and experiences by hand (a resume import can add them), courses and transcripts, deleting an account, and posting an event (the backend has no endpoint for it).
 - `npm run build` output has no proxy. Serving it needs the API on the same origin.
 
 ## The fixtures
