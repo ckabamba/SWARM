@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Student, Stop, Alum, Ask, Goal } from '../types/warmpath';
+import { Student, Stop, Alum, Ask, AskMessage, Goal, ProfileInfo } from '../types/warmpath';
 
 const STORAGE_KEYS = {
   ACTIVE_STUDENT_ID: 'warmpath.active_student_id',
-  HAVE_MAP: 'warmpath.have_map',
+  HAVE_MAP: 'warmpath.have_map.v3',
   ACTIVE_GOAL: 'warmpath.active_goal',
   ASKS: 'warmpath.asks',
   PREFS: 'warmpath.prefs',
+  PROFILE_INFO: 'warmpath.profile_info',
 };
 
 // Seeded students
@@ -194,6 +195,16 @@ let currentPrefs: MobilePreferences = {
   lowBatteryMode: false,
   weeklyReminders: true,
 };
+let currentProfileInfo: Record<string, ProfileInfo> = {};
+
+function initialsForName(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('');
+}
 
 const listeners = new Set<() => void>();
 
@@ -229,19 +240,33 @@ function computeStops(studentId: number, haveMap: Record<number, number[]>): Sto
 // Load persisted state on startup
 (async () => {
   try {
-    const [savedStudentId, savedHaveMap, savedGoal, savedAsks, savedPrefs] = await Promise.all([
+    const [
+      savedStudentId,
+      savedHaveMap,
+      savedGoal,
+      savedAsks,
+      savedPrefs,
+      savedProfileInfo,
+    ] = await Promise.all([
       AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_STUDENT_ID),
       AsyncStorage.getItem(STORAGE_KEYS.HAVE_MAP),
       AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_GOAL),
       AsyncStorage.getItem(STORAGE_KEYS.ASKS),
       AsyncStorage.getItem(STORAGE_KEYS.PREFS),
+      AsyncStorage.getItem(STORAGE_KEYS.PROFILE_INFO),
     ]);
 
     if (savedStudentId) currentStudentId = JSON.parse(savedStudentId);
-    if (savedHaveMap) currentHaveMap = JSON.parse(savedHaveMap);
+    if (savedHaveMap) {
+      currentHaveMap = {
+        ...DEFAULT_HAVE_MAP,
+        ...JSON.parse(savedHaveMap),
+      };
+    }
     if (savedGoal) currentGoal = JSON.parse(savedGoal);
     if (savedAsks) currentAsks = JSON.parse(savedAsks);
     if (savedPrefs) currentPrefs = JSON.parse(savedPrefs);
+    if (savedProfileInfo) currentProfileInfo = JSON.parse(savedProfileInfo);
 
     notify();
   } catch (err) {
@@ -260,7 +285,29 @@ export function useWarmPathStore() {
     };
   }, []);
 
-  const activeStudent = SEEDED_STUDENTS.find((s) => s.id === currentStudentId) || SEEDED_STUDENTS[0];
+  const activeStudentSeed = SEEDED_STUDENTS.find((s) => s.id === currentStudentId) || SEEDED_STUDENTS[0];
+  const activeStudentInfo = currentProfileInfo[`student:${activeStudentSeed.id}`];
+  const activeStudent: Student = {
+    ...activeStudentSeed,
+    ...(activeStudentInfo && {
+      name: activeStudentInfo.name,
+      initials: initialsForName(activeStudentInfo.name),
+      major: activeStudentInfo.headline,
+      school: activeStudentInfo.location,
+    }),
+  };
+  const alumni = SEEDED_ALUMNI.map((alum) => {
+    const profileInfo = currentProfileInfo[`alum:${alum.id}`];
+    if (!profileInfo) return alum;
+    return {
+      ...alum,
+      name: profileInfo.name,
+      firstName: profileInfo.name.trim().split(/\s+/)[0] || profileInfo.name,
+      headline: profileInfo.headline,
+      city: profileInfo.location,
+      about: profileInfo.about,
+    };
+  });
   const stops = computeStops(currentStudentId, currentHaveMap);
   const nextStop = stops.find((s) => s.next) || null;
   const litStopsCount = stops.filter((s) => s.have).length;
@@ -296,6 +343,7 @@ export function useWarmPathStore() {
 
   const createAsk = useCallback((alumId: number, message: string) => {
     const alum = SEEDED_ALUMNI.find((a) => a.id === alumId) || SEEDED_ALUMNI[0];
+    const createdAt = 'Just now';
     const newAsk: Ask = {
       id: Date.now(),
       student_id: activeStudent.id,
@@ -305,8 +353,15 @@ export function useWarmPathStore() {
       goal_id: currentGoal.id,
       shared_tie: alum.shared_tie,
       message,
+      messages: [{
+        id: Date.now(),
+        sender: 'student',
+        sender_name: activeStudent.name,
+        text: message,
+        created_at: createdAt,
+      }],
       status: 'sent',
-      created_at: 'Just now',
+      created_at: createdAt,
     };
     currentAsks = [newAsk, ...currentAsks];
     AsyncStorage.setItem(STORAGE_KEYS.ASKS, JSON.stringify(currentAsks));
@@ -320,9 +375,58 @@ export function useWarmPathStore() {
     notify();
   }, []);
 
+  const sendAskMessage = useCallback((
+    askId: number,
+    sender: AskMessage['sender'],
+    text: string,
+  ) => {
+    const ask = currentAsks.find((item) => item.id === askId);
+    if (!ask) {
+      console.warn(`Cannot send a message for unknown ask ${askId}`);
+      return;
+    }
+
+    const senderName = sender === 'student'
+      ? SEEDED_STUDENTS.find((student) => student.id === ask.student_id)?.name
+      : SEEDED_ALUMNI.find((alum) => alum.id === ask.alum_id)?.name;
+    if (!senderName) {
+      console.warn(`Cannot send a message for ask ${askId}: sender profile was not found`);
+      return;
+    }
+
+    const existingMessages = ask.messages || [{
+      id: ask.id,
+      sender: 'student' as const,
+      sender_name: ask.student_name,
+      text: ask.message,
+      created_at: ask.created_at,
+    }];
+    const newMessage: AskMessage = {
+      id: Date.now(),
+      sender,
+      sender_name: senderName,
+      text: text.trim(),
+      created_at: 'Just now',
+    };
+
+    currentAsks = currentAsks.map((item) => (
+      item.id === askId
+        ? { ...item, messages: [...existingMessages, newMessage] }
+        : item
+    ));
+    AsyncStorage.setItem(STORAGE_KEYS.ASKS, JSON.stringify(currentAsks));
+    notify();
+  }, []);
+
   const setPreferences = useCallback((patch: Partial<MobilePreferences>) => {
     currentPrefs = { ...currentPrefs, ...patch };
     AsyncStorage.setItem(STORAGE_KEYS.PREFS, JSON.stringify(currentPrefs));
+    notify();
+  }, []);
+
+  const updateProfileInfo = useCallback((key: string, profileInfo: ProfileInfo) => {
+    currentProfileInfo = { ...currentProfileInfo, [key]: profileInfo };
+    AsyncStorage.setItem(STORAGE_KEYS.PROFILE_INFO, JSON.stringify(currentProfileInfo));
     notify();
   }, []);
 
@@ -334,13 +438,16 @@ export function useWarmPathStore() {
     litStopsCount,
     goal: currentGoal,
     asks: currentAsks,
-    alumni: SEEDED_ALUMNI,
+    alumni,
     preferences: currentPrefs,
+    profileInfo: currentProfileInfo,
     setStudentId,
     toggleStopHave,
     setGoal,
     createAsk,
     acceptAsk,
+    sendAskMessage,
     setPreferences,
+    updateProfileInfo,
   };
 }

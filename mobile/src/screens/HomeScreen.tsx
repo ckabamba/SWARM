@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, ScrollView } from 'react-native';
 import StudentHeader from '../components/home/StudentHeader';
+import AccountSettingsControl from '../components/home/AccountSettingsControl';
 import ActiveGoalCard from '../components/home/ActiveGoalCard';
 import NextPreviewCard from '../components/home/NextPreviewCard';
 import LitHexChips from '../components/home/LitHexChips';
@@ -8,7 +9,7 @@ import AsksOutbox from '../components/home/AsksOutbox';
 import MobilePreferences from '../components/home/MobilePreferences';
 import EditStudentModal from '../components/modals/EditStudentModal';
 import NewGoalModal from '../components/modals/NewGoalModal';
-import ReplyScreenModal from '../components/modals/ReplyScreenModal';
+import AskConversationModal from '../components/modals/AskConversationModal';
 import { useWarmPathStore } from '../store/warmPathStore';
 import { THEME } from '../theme/tokens';
 
@@ -20,17 +21,19 @@ export default function HomeScreen({ onOpenMap }: HomeScreenProps) {
   const {
     student,
     allStudents,
+    profileInfo,
     stops,
     nextStop,
     litStopsCount,
     goal,
     asks,
     preferences,
+    setPreferences,
+    updateProfileInfo,
     setStudentId,
     toggleStopHave,
     setGoal,
-    acceptAsk,
-    setPreferences,
+    sendAskMessage,
   } = useWarmPathStore();
 
   const [studentModalVisible, setStudentModalVisible] = useState(false);
@@ -38,6 +41,13 @@ export default function HomeScreen({ onOpenMap }: HomeScreenProps) {
   const [replyModalAskId, setReplyModalAskId] = useState<number | null>(null);
 
   const selectedReplyAsk = asks.find((a) => a.id === replyModalAskId) || null;
+  const profileKey = `student:${student.id}`;
+  const currentProfileInfo = profileInfo[profileKey] || {
+    name: student.name,
+    headline: student.major,
+    location: student.school,
+    about: '',
+  };
 
   return (
     <ScrollView
@@ -49,6 +59,14 @@ export default function HomeScreen({ onOpenMap }: HomeScreenProps) {
       <StudentHeader
         student={student}
         onEditPress={() => setStudentModalVisible(true)}
+      />
+      <AccountSettingsControl
+        accountName={student.name}
+        accountType="Student"
+        profileInfo={currentProfileInfo}
+        preferences={preferences}
+        onUpdatePreferences={setPreferences}
+        onSaveProfileInfo={(nextProfileInfo) => updateProfileInfo(profileKey, nextProfileInfo)}
       />
 
       {/* Active Goal Hero Card */}
@@ -97,10 +115,11 @@ export default function HomeScreen({ onOpenMap }: HomeScreenProps) {
         onClose={() => setGoalModalVisible(false)}
       />
 
-      <ReplyScreenModal
+      <AskConversationModal
         visible={replyModalAskId !== null}
         ask={selectedReplyAsk}
-        onAccept={acceptAsk}
+        sender="student"
+        onSend={sendAskMessage}
         onClose={() => setReplyModalAskId(null)}
       />
     </ScrollView>

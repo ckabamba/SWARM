@@ -10,7 +10,7 @@ export const SPOTS: Record<string, Spot> = {
   '4': { x: 0.54, y: 0.28, side: 'above' }, // VIP: GPU Systems (typical year 3)
   '7': { x: 0.68, y: 0.72, side: 'below' }, // CS 3210 (typical year 3)
   '9': { x: 0.8, y: 0.42, side: 'above' }, // Comp Arch Lab (typical year 3)
-  goal: { x: 0.94, y: 0.5, side: 'right' }, // NVIDIA SWE Internship
+  goal: { x: 0.9, y: 0.5, side: 'below' }, // NVIDIA SWE Internship
 };
 
 /**
