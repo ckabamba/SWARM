@@ -5,6 +5,8 @@ import { REDUCED } from '../shared/motion.js'
 import { Backdrop } from '../shared/Backdrop.jsx'
 import { Hex, Words, Arrow } from '../shared/controls.jsx'
 import { TopBar } from '../shared/TopBar.jsx'
+import { MicIcon } from '../shared/icons.jsx'
+import { useVoiceInput } from '../shared/voice.js'
 import { LivePeoplePanel } from '../people/LivePeoplePanel.jsx'
 import { Access } from '../history/Shared.jsx'
 import './live-experience.css'
@@ -40,6 +42,8 @@ export function Experience({ active = true, students, studentId, onStudent, live
   }, [])
 
   const submit = (e) => { e.preventDefault(); if (live) live.submit(); else if (fixturePath.reason !== 'no_match') setView('map') }
+  // Speaking fills the same field as typing. Nothing is sent until the person submits it.
+  const voice = useVoiceInput({ onText: (text) => (live ? live.setQuery(text) : setGoalText(text)) })
   const landing = useRef(null), goalInput = useRef(null), scroll = useRef(0)
   const onScroll = () => {
     const el = landing.current
@@ -106,8 +110,18 @@ export function Experience({ active = true, students, studentId, onStudent, live
                 <label htmlFor="goal">{live?.alumni ? 'WarmPath puts your alumni network on one map. Who would you like to meet?' : 'WarmPath puts their paths on one map. Where do you want to end up?'}</label>
                 <div className="row">
                   <input id="goal" ref={goalInput} autoComplete="off" spellCheck="false" required={!!live && !live.alumni} maxLength={300} value={live ? live.query : goalText} onChange={(e) => live ? live.setQuery(e.target.value) : setGoalText(e.target.value)} placeholder={live?.alumni ? 'Company, name or course' : live ? 'Your goal' : api.SEEDED_GOALS[0]} />
+                  {voice.supported && (
+                    <button type="button" className="mic" aria-pressed={voice.listening} onClick={voice.toggle} aria-label={voice.listening ? 'Stop listening' : live?.alumni ? 'Speak your search' : 'Speak your goal'} title={voice.listening ? 'Stop listening' : 'Speak instead of typing'}>
+                      <MicIcon />
+                    </button>
+                  )}
                   <button className="go" aria-label={live?.alumni ? 'Find alumni' : 'Trace the path'} disabled={live && (live.busy || (!live.alumni && !live.query.trim()))}><Arrow /></button>
                 </div>
+                {(voice.listening || voice.message) && (
+                  <p role="status" className="voice-note">
+                    {voice.listening ? 'Listening. Your browser’s speech service turns what you say into text, and WarmPath receives only the text. Press the microphone again to stop.' : voice.message}
+                  </p>
+                )}
                 <ul className="seeds cap">
                   {!live && api.SEEDED_GOALS.slice(1).map((g) => (
                     <li key={g}><button type="button" onClick={() => setGoalText(g)}>{g}</button></li>
