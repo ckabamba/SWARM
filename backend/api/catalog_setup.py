@@ -19,6 +19,9 @@ def catalog_records():
                 access='Catalog coverage only. Check prerequisites, restrictions, and term availability in the official catalog and registration system.')
         row['verified_on'] = '2026-11-14'
         catalog.append(row)
+    # Courses and VIP teams parsed from official pages by gt_catalog_import.py. The rows are
+    # complete (source URL, access note, import date) and never repeat a curated course code.
+    catalog.extend(json.loads((directory / 'gt_catalog.json').read_text(encoding='utf-8')))
     examples = json.loads((directory / 'job_examples.json').read_text(encoding='utf-8'))
     for label, records in (('resources', catalog), ('job examples', examples)):
         if len({row['id'] for row in records}) != len(records):
