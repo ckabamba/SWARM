@@ -66,7 +66,8 @@ export function Community({ students, studentId, onStudent }) {
   const [composing, setComposing] = useState(false)
   const [draft, setDraft] = useState('')
   const [linked, setLinked] = useState('')
-  const [flights, setFlights] = useState([])      // bees in the air: { id, dir, width }
+  const [push, setPush] = useState(null)          // a bee push in progress: { id, from, dir, y }, or null
+  const [arrival, setArrival] = useState('slide') // how the list on screen came in: 'slide' or 'push'
   const draftInput = useRef(null), opener = useRef(null), stage = useRef(null)
   const viewport = useViewport()
 
@@ -88,16 +89,24 @@ export function Community({ students, studentId, onStudent }) {
     return () => clearTimeout(swap)
   }, [view, shown])
 
-  // Switch the view. A pointer press also sends a bee across, the way the switch moved;
-  // keyboard presses and reduced motion get the plain swap.
+  // Switch the view. A pointer press makes a bee push the old list out with the new one behind it.
+  // Keyboard presses, reduced motion and a press during a push get the plain swap above.
   const go = (target, e) => {
-    if (target !== view && !REDUCED && e && e.detail > 0) {
-      const flight = { id: Date.now(), dir: target === 'campus' ? 1 : -1, width: stage.current.offsetWidth }
-      setFlights((now) => [...now.slice(-1), flight])
+    if (target === view) return
+    if (!REDUCED && !push && view === shown && e && e.detail > 0) {
+      // Fly through the middle of whatever part of the stream is on screen.
+      const box = stage.current.getBoundingClientRect()
+      const middle = (Math.max(box.top, 120) + Math.min(box.bottom, window.innerHeight)) / 2 - box.top
+      // The lists sit side by side like pages, posts on the left, so going to events moves everything left.
+      setPush({ id: Date.now(), from: shown, dir: target === 'campus' ? -1 : 1, y: Math.max(80, middle) })
+      setArrival('push')
+      setShown(target)
+    } else {
+      setPush(null)
+      setArrival('slide')
     }
     setView(target)
   }
-  const landed = (id) => setFlights((now) => now.filter((flight) => flight.id !== id))
 
   const openDetail = (target) => {
     if (!detail) opener.current = document.activeElement
@@ -140,7 +149,7 @@ export function Community({ students, studentId, onStudent }) {
     setPosts(all)
     cancelPost()
     setQuery('')
-    setView('posts')
+    go('posts')
   }
 
   const empty = (what, otherCount, otherView, otherLabel) => (
@@ -149,6 +158,62 @@ export function Community({ students, studentId, onStudent }) {
       {otherCount > 0 && <button className="arrow-link cap" onClick={(e) => go(otherView, e)}>{otherCount} in {otherLabel}</button>}
       <button className="arrow-link cap" onClick={() => setQuery('')}>Clear search</button>
     </div>
+  )
+
+  const list = (which) => (
+    <>
+      {which === 'posts' ? (
+        <>
+          {visiblePosts.map((post, i) => (
+            <Post key={post.id} post={post} index={i} onProfile={(id) => openDetail({ kind: 'profile', id })} onRecord={(id) => openDetail({ kind: 'record', id })} />
+          ))}
+          {!visiblePosts.length && empty('posts', campusCount, 'campus', 'events and clubs')}
+        </>
+      ) : (
+        <>
+          {visibleEvents.length > 0 && (
+            <section className="card list" style={{ '--i': 0 }}>
+              <h2 className="cap">This week</h2>
+              <ul>
+                {visibleEvents.map((event) => {
+                  const day = api.eventDay(event.starts_at)
+                  return (
+                    <li key={event.id}>
+                      <button className="row" onClick={() => openDetail({ kind: 'record', id: event.id })}>
+                        <span className="row-date"><span className="cap">{day.weekday}</span><b>{day.day}</b></span>
+                        <span className="row-body"><b>{event.title}</b><span>{event.organizer} · {day.time} · {event.location}</span></span>
+                        <Arrow />
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          )}
+          {visibleClubs.length > 0 && (
+            <section className="card list" style={{ '--i': 1 }}>
+              <h2 className="cap">Clubs</h2>
+              <ul>
+                {visibleClubs.map((club) => {
+                  const upcoming = EVENTS.filter((event) => event.clubId === club.id).length
+                  return (
+                    <li key={club.id}>
+                      <button className="row" onClick={() => openDetail({ kind: 'record', id: club.id })}>
+                        <span className="row-date"><HexIcon /></span>
+                        <span className="row-body"><b>{club.title}</b><span>Student club · {plural(upcoming, 'event')} this week</span></span>
+                        <Arrow />
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          )}
+          {!campusCount && empty('events or clubs', visiblePosts.length, 'posts', 'posts')}
+        </>
+      )}
+      <p className="stream-note" style={{ '--i': 7 }}>Demo data. The profiles, posts and events here are invented, and the events are not real listings.</p>
+    </>
   )
 
   return (
@@ -223,61 +288,15 @@ export function Community({ students, studentId, onStudent }) {
                 <p className="stream-count" aria-live="polite">{q ? `${count} for “${query.trim()}”` : count}</p>
               </div>
 
-              <div className="stream-stage" ref={stage}>
-              {flights.map((flight) => <Bee key={flight.id} flight={flight} onDone={landed} />)}
-              <div className="stream-panel" key={shown} data-view={shown} data-leaving={view !== shown} data-still={q ? 'true' : undefined}>
-                {shown === 'posts' ? (
-                  <>
-                    {visiblePosts.map((post, i) => (
-                      <Post key={post.id} post={post} index={i} onProfile={(id) => openDetail({ kind: 'profile', id })} onRecord={(id) => openDetail({ kind: 'record', id })} />
-                    ))}
-                    {!visiblePosts.length && empty('posts', campusCount, 'campus', 'events and clubs')}
-                  </>
-                ) : (
-                  <>
-                    {visibleEvents.length > 0 && (
-                      <section className="card list" style={{ '--i': 0 }}>
-                        <h2 className="cap">This week</h2>
-                        <ul>
-                          {visibleEvents.map((event) => {
-                            const day = api.eventDay(event.starts_at)
-                            return (
-                              <li key={event.id}>
-                                <button className="row" onClick={() => openDetail({ kind: 'record', id: event.id })}>
-                                  <span className="row-date"><span className="cap">{day.weekday}</span><b>{day.day}</b></span>
-                                  <span className="row-body"><b>{event.title}</b><span>{event.organizer} · {day.time} · {event.location}</span></span>
-                                  <Arrow />
-                                </button>
-                              </li>
-                            )
-                          })}
-                        </ul>
-                      </section>
-                    )}
-                    {visibleClubs.length > 0 && (
-                      <section className="card list" style={{ '--i': 1 }}>
-                        <h2 className="cap">Clubs</h2>
-                        <ul>
-                          {visibleClubs.map((club) => {
-                            const upcoming = EVENTS.filter((event) => event.clubId === club.id).length
-                            return (
-                              <li key={club.id}>
-                                <button className="row" onClick={() => openDetail({ kind: 'record', id: club.id })}>
-                                  <span className="row-date"><HexIcon /></span>
-                                  <span className="row-body"><b>{club.title}</b><span>Student club · {plural(upcoming, 'event')} this week</span></span>
-                                  <Arrow />
-                                </button>
-                              </li>
-                            )
-                          })}
-                        </ul>
-                      </section>
-                    )}
-                    {!campusCount && empty('events or clubs', visiblePosts.length, 'posts', 'posts')}
-                  </>
-                )}
-                <p className="stream-note" style={{ '--i': 7 }}>Demo data. The profiles, posts and events here are invented, and the events are not real listings.</p>
-              </div>
+              <div className="stream-stage" ref={stage} data-push={push ? push.dir : undefined} style={push ? { '--push': push.dir, '--bee-y': `${push.y}px` } : undefined}>
+                {push && <div className="stream-panel stream-leaving" key={`out-${push.id}`} aria-hidden="true" inert>{list(push.from)}</div>}
+                {push && <Bee key={push.id} />}
+                <div
+                  className="stream-panel" key={shown} data-view={shown} data-arrive={arrival} data-leaving={view !== shown} data-still={q ? 'true' : undefined}
+                  onAnimationEnd={(e) => { if (e.target === e.currentTarget && e.animationName === 'push-in') setPush(null) }}
+                >
+                  {list(shown)}
+                </div>
               </div>
             </section>
 
