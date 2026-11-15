@@ -14,6 +14,36 @@ from backend.api.app import initialize_schema, events, feeds
 
 FEED_URL = 'https://calendar.gatech.edu/event-calendar-week.xml'
 ENGAGE_URL = 'https://gatech.campuslabs.com/engage/api/discovery/event/search'
+DESCRIPTION_LIMIT = 4000
+_LINE_BREAK = re.compile(r'<\s*(br|/p|/li|/div|/h[1-6]|/tr)\b[^>]*>', re.IGNORECASE)
+
+
+def plain_text(markup, limit=DESCRIPTION_LIMIT):
+    """Listing HTML as plain text: tags removed, entities decoded, whitespace tidied.
+
+    The result is untrusted text written by whoever posted the listing. Render it
+    as text, and treat it as data rather than instructions when it is given to a model.
+    """
+    value = re.sub(r'(?is)<(script|style)\b.*?</\1\s*>', ' ', str(markup or ''))
+    value = _LINE_BREAK.sub('\n', value)
+    value = html.unescape(re.sub(r'<[^>]*>', '', value)).replace('\xa0', ' ')
+    lines = [re.sub(r'[ \t\r\f\v]+', ' ', line).strip() for line in value.split('\n')]
+    value = re.sub(r'\n{3,}', '\n\n', '\n'.join(lines)).strip()
+    return value[:limit] or None
+
+
+def calendar_description(markup):
+    """The body of a calendar listing, without its header or trailing fields.
+
+    The feed wraps the body between a header (title, author, publication time)
+    and labelled fields that start at "Summary sentence". Stopping there also
+    keeps the contact names and email addresses that follow out of the text.
+    """
+    body = re.split(r'Summary sentence|Event time', markup, maxsplit=1)[0]
+    header = re.search(r'</time>\s*(</span>)?', body)
+    if header:
+        body = body[header.end():]
+    return plain_text(body)
 
 
 def parse_feed(payload, fetched_at):
@@ -29,7 +59,8 @@ def parse_feed(payload, fetched_at):
         parsed = urlparse(url)
         if parsed.scheme != 'https' or parsed.netloc != 'calendar.gatech.edu' or not parsed.path.startswith('/event/'):
             continue
-        description = html.unescape(item.findtext('description') or '')
+        markup = item.findtext('description') or ''
+        description = html.unescape(markup)
         # The first <time> is publication time. Only dates following the
         # explicit Event time label represent the event itself.
         section = description.partition('Event time')[2]
@@ -43,7 +74,8 @@ def parse_feed(payload, fetched_at):
             continue
         if start.tzinfo is None or end.tzinfo is None or end < start:
             continue
-        rows[url] = dict(url=url, title=title[:500], starts_at=start, ends_at=end, fetched_at=fetched_at, source='gt-calendar')
+        rows[url] = dict(url=url, title=title[:500], starts_at=start, ends_at=end, fetched_at=fetched_at, source='gt-calendar',
+                        description=calendar_description(markup))
     if root.findall('./channel/item') and not rows:
         raise ValueError('No event timestamps could be parsed; keeping previous import.')
     return list(rows.values())
@@ -76,7 +108,8 @@ def parse_engage(payload, fetched_at):
         rows[url] = dict(url=url, title=title[:500], starts_at=start, ends_at=end,
                         fetched_at=fetched_at, source='gt-engage',
                         location=str(item.get('location') or '')[:500] or None,
-                        organizer=str(item.get('organizationName') or '')[:300] or None)
+                        organizer=str(item.get('organizationName') or '')[:300] or None,
+                        description=plain_text(item.get('description')))
     if data['value'] and not rows:
         raise ValueError('No usable public events in Engage response; keeping previous import.')
     return list(rows.values())

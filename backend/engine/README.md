@@ -86,6 +86,8 @@ Migration `0006` creates the six `api_` tables that `backend/api/app.py` defines
 
 Migration `0007` adds `event_place`, one row per imported event. `kind` is `campus`, `online`, or `unknown`; a campus event has a `place_id` pointing at `campus_place` and, when the listing gave one, a `room`. The rows are written by [backend/events/places.py](../events/places.py), which matches each listing's free-text location against the buildings in `backend/events/campus_places.json`. A location that names no known building is recorded as unknown, never guessed. After importing events, run `python -m backend.events.places` from the repo root to load the places and refresh the links.
 
+Migration `0008` adds a `description` column to `api_public_events`. The event import fills it with the listing's text as plain text.
+
 Not modeled yet:
 
 - **Event and Ask** from the path feature, plus clubs and resources. Issue #14 may also add activity types or source fields.
