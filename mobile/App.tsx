@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createThemedStyles } from './src/theme/themedStyles';
 import { StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -12,7 +13,7 @@ import GeoMapsScreen from './src/screens/GeoMapsScreen';
 import BuzzScreen from './src/screens/BuzzScreen';
 import FeedScreen from './src/screens/FeedScreen';
 import { useWarmPathStore } from './src/store/warmPathStore';
-import { THEME } from './src/theme/tokens';
+import { getThemeMode, THEME } from './src/theme/tokens';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<TabId>('home');
@@ -21,6 +22,7 @@ export default function App() {
   const [panX, setPanX] = useState(0);
 
   const { preferences } = useWarmPathStore();
+  const isLightTheme = getThemeMode() === 'light';
 
   const handleOpenMap = (focusActivityId?: number) => {
     if (focusActivityId !== undefined) {
@@ -68,7 +70,7 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style={isLightTheme ? 'dark' : 'light'} />
       <ThermalShell
         currentTab={currentTab}
         onHomePress={() => {
@@ -92,7 +94,7 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: THEME.colors.void,
@@ -100,4 +102,4 @@ const styles = StyleSheet.create({
   screenWrapper: {
     flex: 1,
   },
-});
+}));

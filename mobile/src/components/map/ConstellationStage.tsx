@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, View, ScrollView, Dimensions } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Stop, Goal } from '../../types/warmpath';
@@ -152,9 +153,9 @@ export default function ConstellationStage({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     height: STAGE_H,
     backgroundColor: 'transparent',
   },
-});
+}));

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createThemedStyles } from '../theme/themedStyles';
 import {
   ScrollView,
   StyleSheet,
@@ -165,7 +166,7 @@ export default function AlumniProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -351,4 +352,4 @@ const styles = StyleSheet.create({
     ...THEME.typography.bodyAsh,
     marginTop: 2,
   },
-});
+}));

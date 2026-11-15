@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createThemedStyles } from '../theme/themedStyles';
 import {
   StyleSheet,
   ScrollView,
@@ -211,7 +212,7 @@ export default function BuzzScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -391,4 +392,4 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     flex: 1,
   },
-});
+}));
