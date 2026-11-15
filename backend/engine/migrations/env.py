@@ -38,6 +38,12 @@ def database_url() -> URL:
 
 
 def run_migrations() -> None:
+    supplied = config.attributes.get("connection")
+    if supplied is not None:
+        context.configure(connection=supplied, target_metadata=None)
+        with context.begin_transaction():
+            context.run_migrations()
+        return
     url = database_url()
     # Say which database is about to change, without printing the password.
     print(f"Target database: '{url.database}' on host '{url.host}'")

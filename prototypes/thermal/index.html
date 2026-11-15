@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WarmPath · Thermal prototype</title>
+<title>WarmPath · Campus resources</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&display=swap" rel="stylesheet">
@@ -34,7 +34,7 @@
     font-variant-numeric: tabular-nums;
   }
   ::selection { background: var(--ember); color: var(--void); }
-  button, input, textarea, select { font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; }
+  button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; }
   button { cursor: pointer; }
   :focus-visible { outline: 1px solid var(--glow); outline-offset: 4px; }
 
@@ -100,22 +100,6 @@
     transition: transform 320ms var(--ease-in-out);
   }
   .switch[data-index='1'] .thumb { transform: translateX(100%); }
-  .section-tabs {
-    display: inline-flex; align-items: center; gap: 3px; padding: 4px;
-    border: 1px solid var(--line); border-radius: 999px;
-    background: rgba(9, 6, 15, 0.82);
-  }
-  .section-tabs a {
-    display: inline-flex; align-items: center; justify-content: center;
-    min-height: 40px; padding: 8px 16px; border-radius: 999px;
-    color: var(--ash); text-decoration: none; white-space: nowrap;
-    transition: color 200ms ease, background-color 200ms ease, transform 160ms var(--ease-out);
-  }
-  .section-tabs a[aria-current='page'] { background: var(--glow); color: var(--void); }
-  .section-tabs a:active { transform: scale(0.97); }
-  @media (hover: hover) and (pointer: fine) {
-    .section-tabs a:not([aria-current='page']):hover { color: var(--bone); }
-  }
 
   /* ---------- goal view ---------- */
   .goal {
@@ -341,360 +325,52 @@
   .accept[disabled] { background: rgba(255, 233, 168, 0.14); color: var(--glow); cursor: default; }
   .reply .after { margin: 16px 0 0; text-align: center; color: var(--ash); font-size: 13.5px; }
 
-  /* ---------- Social Jackets ---------- */
-  .community-page {
-    position: fixed; inset: 0; z-index: 3; overflow-y: auto;
-    overscroll-behavior: contain; scrollbar-color: rgba(244, 238, 230, 0.24) transparent;
-    background: rgba(6, 4, 11, 0.5);
-  }
-  .community-bar {
-    position: sticky; top: 0; z-index: 5;
-    display: flex; align-items: center; justify-content: space-between; gap: 24px;
-    padding: 18px 40px; border-bottom: 1px solid var(--line);
-    background: rgba(6, 4, 11, 0.96);
-  }
-  .community-bar .mark { text-decoration: none; color: var(--bone); }
-  .community-content { width: min(1260px, calc(100% - 80px)); margin: 0 auto; padding: 38px 0 72px; }
-  .community-heading { max-width: 760px; }
-  .community-heading .cap { color: var(--ash); }
-  .community-heading h1 {
-    margin: 10px 0 12px; font-size: clamp(38px, 5.2vw, 64px); font-weight: 300;
-    font-stretch: 108%; letter-spacing: -0.03em; line-height: 1.08;
-  }
-  .community-heading p { margin: 0; max-width: 64ch; color: var(--ash); }
-  .community-demo-note {
-    margin: 18px 0 0; padding: 12px 14px; border: 1px solid var(--line);
-    border-radius: 12px; color: var(--ash); font-size: 13.5px;
-    background: rgba(244, 238, 230, 0.025);
-  }
-  .community-section-title { margin: 0; font-size: 22px; font-weight: 400; letter-spacing: -0.015em; }
-  .community-section-lede { margin: 7px 0 0; color: var(--ash); font-size: 13.5px; }
-  .community-events {
-    margin-top: 30px; padding: 24px; border: 1px solid var(--line); border-radius: 16px;
-    background: rgba(9, 6, 15, 0.9);
-  }
-  .community-events-head { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-bottom: 20px; }
-  .community-events-head .cap { color: var(--ash); }
-  .community-events-head p { margin: 0; color: var(--ash); font-size: 13px; text-align: right; }
-  .community-event-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-  .community-event-card {
-    min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 14px;
-    background: rgba(244, 238, 230, 0.025); display: flex; flex-direction: column; align-items: flex-start;
-  }
-  .community-event-card .cap { color: var(--ash); }
-  .community-event-card h3 { margin: 7px 0 4px; font-size: 18px; font-weight: 500; line-height: 1.25; }
-  .community-event-card .organizer { margin: 0 0 14px; color: var(--ash); font-size: 13.5px; }
-  .community-event-meta { display: grid; gap: 7px; margin: 0 0 14px; font-size: 13.5px; }
-  .community-event-meta span { color: var(--ash); }
-  .community-source { margin: auto 0 14px; color: var(--ash); font-size: 12.5px; }
-  .community-small-button {
-    min-height: 42px; padding: 8px 15px; border: 1px solid var(--line); border-radius: 999px;
-    background: transparent; color: var(--bone); text-align: center;
-    transition: transform 160ms var(--ease-out), border-color 200ms ease, color 200ms ease;
-  }
-  .community-small-button:active { transform: scale(0.97); }
-  @media (hover: hover) and (pointer: fine) { .community-small-button:hover { border-color: var(--glow); } }
-  .community-feed { width: min(820px, 100%); margin: 38px auto 0; }
-  .community-composer, .community-post {
-    border: 1px solid var(--line); border-radius: 14px; background: rgba(9, 6, 15, 0.9);
-  }
-  .community-composer { padding: 20px; }
-  .community-composer h2 { margin: 0 0 5px; font-size: 18px; font-weight: 500; }
-  .community-composer .as-demo { margin: 0 0 16px; color: var(--ash); font-size: 13px; }
-  .community-composer textarea {
-    display: block; width: 100%; min-height: 116px; padding: 13px 15px; resize: vertical;
-    border: 1px solid var(--line); border-radius: 12px; background: rgba(244, 238, 230, 0.035);
-    line-height: 1.55; caret-color: var(--ember);
-  }
-  .community-composer textarea:focus, .community-composer select:focus { outline: 0; border-color: rgba(255, 233, 168, 0.65); }
-  .community-composer textarea::placeholder { color: var(--ash); }
-  .community-composer-row { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-top: 14px; }
-  .community-record-select { display: grid; gap: 6px; min-width: min(100%, 310px); }
-  .community-record-select label { color: var(--ash); }
-  .community-record-select select {
-    width: 100%; min-height: 42px; padding: 8px 12px; border: 1px solid var(--line);
-    border-radius: 10px; background: #100d15; color: var(--bone);
-  }
-  .community-record-select option, .community-record-select optgroup { background: #100d15; color: var(--bone); }
-  .community-publish { min-width: 118px; background: var(--glow); border-color: var(--glow); color: var(--void); }
-  .community-publish:disabled { opacity: 0.45; cursor: not-allowed; }
-  .community-local-note { margin: 12px 0 0; color: var(--ash); font-size: 12.5px; }
-  .community-feed-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin: 30px 0 14px; }
-  .community-feed-toolbar h2 { margin: 0; font-size: 22px; font-weight: 400; }
-  .community-filter-tabs { display: flex; flex-wrap: wrap; gap: 7px; }
-  .community-filter-tabs button {
-    min-height: 40px; padding: 7px 13px; border: 1px solid var(--line); border-radius: 999px;
-    background: rgba(9, 6, 15, 0.8); color: var(--ash);
-    transition: transform 160ms var(--ease-out), color 200ms ease, background-color 200ms ease, border-color 200ms ease;
-  }
-  .community-filter-tabs button[aria-pressed='true'] { color: var(--void); background: var(--glow); border-color: var(--glow); }
-  .community-filter-tabs button:active { transform: scale(0.97); }
-  .community-post-list { display: grid; gap: 12px; }
-  .community-post { padding: 20px; }
-  .community-post-head { display: flex; align-items: flex-start; gap: 12px; }
-  .community-avatar {
-    flex: none; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--line);
-    border-radius: 50%; background: rgba(244, 238, 230, 0.04); font-size: 13px; font-weight: 600;
-  }
-  .community-author-block { min-width: 0; flex: 1; }
-  .community-author {
-    display: inline; padding: 0; border: 0; background: none; color: var(--bone); text-align: left;
-    font-size: 16px; font-weight: 600; text-decoration: underline; text-decoration-color: transparent;
-    text-underline-offset: 3px; transition: text-decoration-color 180ms ease;
-  }
-  @media (hover: hover) and (pointer: fine) { .community-author:hover { text-decoration-color: var(--glow); } }
-  .community-author-context, .community-timestamp { display: block; color: var(--ash); font-size: 12.5px; }
-  .community-timestamp { margin-top: 2px; }
-  .community-post-text { margin: 18px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .community-linked-record {
-    width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px;
-    padding: 12px 14px; border: 1px solid var(--line); border-radius: 11px;
-    background: rgba(244, 238, 230, 0.025); text-align: left;
-  }
-  .community-linked-record .linked-type { display: block; margin-bottom: 2px; color: var(--ash); }
-  .community-linked-record .linked-title { display: block; font-weight: 500; }
-  .community-linked-record .linked-action { flex: none; color: var(--ash); font-size: 12.5px; }
-  .community-empty { padding: 20px; border: 1px solid var(--line); border-radius: 12px; color: var(--ash); }
-  .social-dialog-scrim {
-    position: fixed; inset: 0; z-index: 12; display: grid; place-items: center; padding: 20px;
-    background: rgba(6, 4, 11, 0.86);
-  }
-  .social-dialog {
-    width: min(520px, 100%); max-height: min(82vh, 740px); overflow-y: auto;
-    padding: 26px; border: 1px solid var(--line); border-radius: 16px;
-    background: #100d15; outline: none;
-  }
-  .social-dialog-head { display: flex; align-items: start; justify-content: space-between; gap: 14px; }
-  .social-dialog h2 { margin: 5px 0 0; font-size: 25px; font-weight: 400; line-height: 1.2; }
-  .social-dialog-close { flex: none; min-height: 42px; padding: 7px 13px; border: 1px solid var(--line); border-radius: 999px; background: transparent; }
-  .social-dialog .dialog-lede { color: var(--ash); }
-  .social-profile-fields { display: grid; gap: 12px; margin: 20px 0; }
-  .social-profile-fields div { padding: 12px 0; border-top: 1px solid var(--line); }
-  .social-profile-fields dt { color: var(--ash); margin-bottom: 3px; }
-  .social-profile-fields dd { margin: 0; }
-  .social-dialog .community-record-destination { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ash); font-size: 13px; }
-  .social-dialog .related-record-button { margin-top: 12px; }
-
-  @media (max-width: 980px) {
-    .community-event-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .community-event-card:last-child:nth-child(odd) { grid-column: span 2; }
-  }
-  @media (max-width: 680px) {
-    .bar { padding: 14px 16px; gap: 12px; flex-wrap: wrap; }
-    .bar .section-tabs { margin-left: auto; }
-    .community-bar { padding: 14px 16px; gap: 12px; flex-wrap: wrap; }
-    .community-content { width: calc(100% - 32px); padding: 28px 0 54px; }
-    .community-heading h1 { font-size: clamp(38px, 11vw, 50px); }
-    .community-events { margin-top: 22px; padding: 17px; }
-    .community-events-head { align-items: start; flex-direction: column; gap: 6px; }
-    .community-events-head p { text-align: left; }
-    .community-event-grid { grid-template-columns: 1fr; }
-    .community-event-card:last-child:nth-child(odd) { grid-column: auto; }
-    .community-feed { margin-top: 28px; }
-    .community-composer, .community-post { padding: 16px; }
-    .community-composer-row { align-items: stretch; flex-direction: column; }
-    .community-record-select { min-width: 0; }
-    .community-publish { width: 100%; }
-    .community-feed-toolbar { align-items: stretch; flex-direction: column; gap: 12px; }
-    .community-filter-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .community-filter-tabs button { padding: 8px 9px; }
-    .social-dialog { padding: 20px; }
-  }
-
-  /* ---------- Social Jackets dashboard ---------- */
-  .community-page {
-    --community-text: var(--bone);
-    --community-muted: var(--ash);
-    --community-line: var(--line);
-    --community-panel: rgba(9, 6, 15, 0.94);
-    --community-surface: rgba(244, 238, 230, 0.035);
-    --community-input: rgba(244, 238, 230, 0.055);
-    --community-action: var(--glow);
-    --community-action-text: var(--void);
-    position: fixed; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center;
-    overflow: hidden; padding: 80px 28px 20px; color: var(--community-text);
-    background: rgba(6, 4, 11, 0.54);
-  }
-  .community-page[data-theme='light'] {
-    --community-text: #211910;
-    --community-muted: #5e5449;
-    --community-line: rgba(42, 30, 18, 0.2);
-    --community-panel: rgba(250, 247, 240, 0.97);
-    --community-surface: rgba(255, 255, 255, 0.48);
-    --community-input: rgba(255, 255, 255, 0.72);
-    --community-action: #eaaa00;
-    --community-action-text: #17110a;
-    background: rgba(244, 238, 230, 0.78);
-  }
-  .community-atmosphere { transition: opacity 200ms var(--ease-out); }
-  .community-atmosphere-dark { opacity: 0.28; }
-  .community-atmosphere-light { opacity: 0.16; }
-  .community-content {
-    width: min(1420px, 100%); height: min(840px, calc(100dvh - 104px)); max-height: 100%;
-    display: flex; flex-direction: column; overflow: hidden;
-    border: 1px solid var(--community-line); border-radius: 18px;
-    background: var(--community-panel); color: var(--community-text);
-  }
-  .community-bar {
-    position: absolute; top: 16px; left: 40px; right: 40px; z-index: 5;
-    display: flex; align-items: center; justify-content: space-between; gap: 18px;
-    padding: 0; border: 0; background: transparent;
-  }
-  .community-bar .mark { color: var(--bone); text-decoration: none; }
-  .community-page[data-theme='light'] .community-bar .mark { color: var(--community-text); }
-  .community-page[data-theme='light'] .section-tabs { border-color: var(--community-line); background: rgba(250, 247, 240, 0.94); }
-  .community-page[data-theme='light'] .section-tabs a[aria-current='page'] { background: #eaaa00; color: #17110a; }
-  .community-heading {
-    flex: none; display: flex; align-items: center; justify-content: space-between; gap: 22px;
-    padding: 17px 23px; border-bottom: 1px solid var(--community-line);
-  }
-  .community-heading .cap { color: var(--community-muted); }
-  .community-heading h1 { margin: 3px 0 1px; font-size: 30px; font-weight: 300; font-stretch: 108%; letter-spacing: -0.03em; line-height: 1.15; }
-  .community-heading p { margin: 0; color: var(--community-muted); font-size: 13.5px; }
-  .community-theme-switch {
-    flex: none; min-height: 44px; display: inline-flex; align-items: center; gap: 9px;
-    padding: 5px 11px; border: 1px solid var(--community-line); border-radius: 999px;
-    background: var(--community-surface); color: var(--community-text); font-size: 13px;
-  }
-  .community-theme-track { position: relative; width: 38px; height: 21px; border: 1px solid var(--community-line); border-radius: 999px; background: var(--community-input); }
-  .community-theme-track i { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--community-action); transition: transform 200ms var(--ease-out); }
-  .community-theme-switch[aria-checked='true'] .community-theme-track i { transform: translateX(17px); }
-  .community-dashboard { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(190px, 228px) minmax(0, 1fr) minmax(270px, 330px); }
-  .community-identity, .community-feed, .community-events { min-width: 0; min-height: 0; }
-  .community-identity {
-    display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
-    padding: 23px 20px; border-right: 1px solid var(--community-line);
-  }
-  .community-identity-avatar { display: grid; place-items: center; width: 54px; height: 54px; border: 1px solid var(--community-line); border-radius: 50%; background: var(--community-surface); font-weight: 600; }
-  .community-identity .cap { margin-top: 9px; color: var(--community-muted); }
-  .community-identity h2 { margin: 0; font-size: 22px; font-weight: 500; line-height: 1.2; }
-  .community-identity p { margin: 0; color: var(--community-muted); font-size: 13.5px; }
-  .community-identity .community-small-button { margin-top: 8px; }
-  .community-identity .community-local-note { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--community-line); font-size: 12.5px; }
-  .community-mobile-identity, .community-mobile-tabs { display: none; }
-  .community-feed { display: flex; flex-direction: column; padding: 17px 18px 12px; border-right: 1px solid var(--community-line); }
-  .community-feed-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--community-line); }
-  .community-feed-head .cap, .community-events-head .cap { color: var(--community-muted); }
-  .community-feed-head h2, .community-events-head h2 { margin: 2px 0 0; font-size: 19px; font-weight: 400; line-height: 1.2; }
-  .community-feed-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-color: rgba(143, 135, 152, 0.45) transparent; scrollbar-width: thin; }
-  .community-feed-content { display: grid; align-content: start; gap: 10px; padding: 13px 3px 8px 0; }
-  .community-post { padding: 14px; border: 1px solid var(--community-line); border-radius: 13px; background: var(--community-surface); }
-  .community-post-head { display: flex; align-items: flex-start; gap: 11px; }
-  .community-avatar { flex: none; display: grid; place-items: center; width: 39px; height: 39px; border: 1px solid var(--community-line); border-radius: 50%; background: var(--community-surface); color: var(--community-text); font-size: 12.5px; font-weight: 600; }
-  .community-author-block { flex: 1; min-width: 0; }
-  .community-author { padding: 0; border: 0; background: transparent; color: var(--community-text); text-align: left; font-size: 15.5px; font-weight: 600; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
-  .community-author-context, .community-timestamp { display: block; color: var(--community-muted); font-size: 12px; }
-  .community-timestamp { margin-top: 2px; }
-  .community-post-text { margin: 13px 0; color: var(--community-text); font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .community-linked-record { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 11px; border: 1px solid var(--community-line); border-radius: 10px; background: var(--community-surface); color: var(--community-text); text-align: left; }
-  .community-linked-record .linked-type { display: block; margin-bottom: 2px; color: var(--community-muted); }
-  .community-linked-record .linked-title { display: block; font-size: 13.5px; }
-  .community-linked-record .linked-action { flex: none; color: var(--community-muted); font-size: 12px; }
-  .community-feed > .community-local-note { flex: none; margin: 8px 0 0; color: var(--community-muted); font-size: 11.5px; }
-  .community-events { display: flex; flex-direction: column; padding: 17px 17px 12px; }
-  .community-events-head { flex: none; display: flex; justify-content: space-between; align-items: end; gap: 10px; padding-bottom: 13px; border-bottom: 1px solid var(--community-line); }
-  .community-events-head p { margin: 0; color: var(--community-muted); font-size: 11.5px; text-align: right; }
-  .community-event-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-color: rgba(143, 135, 152, 0.45) transparent; scrollbar-width: thin; }
-  .community-event-card { display: flex; flex-direction: column; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--community-line); }
-  .community-event-card .cap { color: var(--community-muted); }
-  .community-event-card h3 { margin: 5px 0 3px; font-size: 16px; font-weight: 500; line-height: 1.25; }
-  .community-event-card .organizer { margin: 0 0 9px; color: var(--community-muted); font-size: 12.5px; }
-  .community-event-meta { display: grid; gap: 4px; margin: 0 0 7px; color: var(--community-text); font-size: 12.5px; line-height: 1.4; }
-  .community-event-meta span { color: var(--community-muted); }
-  .community-source { margin: 0 0 9px; color: var(--community-muted); font-size: 11.5px; }
-  .community-small-button { min-height: 40px; padding: 8px 13px; border: 1px solid var(--community-line); border-radius: 999px; background: transparent; color: var(--community-text); text-align: center; transition: transform 160ms var(--ease-out), border-color 200ms ease, background-color 200ms ease; }
-  .community-small-button:active { transform: scale(0.97); }
-  .community-small-button:hover { border-color: var(--community-action); }
-  .community-publish { border-color: var(--community-action); background: var(--community-action); color: var(--community-action-text); }
-  .community-publish:disabled { opacity: 0.5; cursor: not-allowed; }
-  .community-mobile-identity strong, .community-mobile-identity span { display: block; }
-  .community-mobile-identity span:not(.community-avatar) { color: var(--community-muted); font-size: 11.5px; }
-  .community-theme-switch:focus-visible, .community-page :focus-visible { outline: 2px solid var(--glow); outline-offset: 3px; }
-  .community-page[data-theme='light'] :focus-visible { outline-color: #8f5c00; }
-  .community-page[data-theme='light'] .community-theme-switch { --glow: #8f5c00; }
-  .community-dialog-scrim, .social-dialog-scrim { position: fixed; inset: 0; z-index: 12; display: grid; place-items: center; padding: 18px; background: rgba(6, 4, 11, 0.78); }
-  .community-page[data-theme='light'] .social-dialog-scrim { background: rgba(36, 26, 16, 0.48); }
-  .social-dialog { width: min(500px, 100%); max-height: min(82dvh, 680px); overflow-y: auto; padding: 22px; border: 1px solid var(--community-line); border-radius: 15px; background: var(--community-panel); color: var(--community-text); }
-  .social-dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 13px; margin-bottom: 14px; }
-  .social-dialog h2 { margin: 4px 0 0; font-size: 23px; font-weight: 400; line-height: 1.2; }
-  .social-dialog .cap, .social-dialog .dialog-lede { color: var(--community-muted); }
-  .social-dialog .dialog-lede { margin: 10px 0; font-size: 13.5px; }
-  .social-dialog-close { flex: none; min-height: 40px; padding: 7px 12px; border: 1px solid var(--community-line); border-radius: 999px; background: transparent; color: var(--community-text); }
-  .social-profile-fields { display: grid; gap: 10px; margin: 15px 0 0; }
-  .social-profile-fields div { padding: 9px 0; border-top: 1px solid var(--community-line); }
-  .social-profile-fields dt { margin-bottom: 3px; color: var(--community-muted); }
-  .social-profile-fields dd { margin: 0; }
-  .community-composer-form { display: grid; gap: 9px; }
-  .community-composer-form label { margin-top: 5px; color: var(--community-muted); }
-  .community-composer-form textarea, .community-composer-form select { width: 100%; min-height: 44px; padding: 11px 12px; border: 1px solid var(--community-line); border-radius: 10px; background: var(--community-input); color: var(--community-text); font: inherit; }
-  .community-composer-form textarea { min-height: 128px; resize: vertical; line-height: 1.5; caret-color: var(--ember); }
-  .community-composer-form textarea::placeholder { color: var(--community-muted); }
-  .community-composer-form select option { background: var(--community-panel); color: var(--community-text); }
-  .community-composer-form textarea:focus, .community-composer-form select:focus { outline: 0; border-color: var(--community-action); }
-  .community-composer-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; }
-  .community-local-note { margin: 9px 0 0; color: var(--community-muted); font-size: 12px; }
-  .community-record-destination { margin: 15px 0 0; padding-top: 12px; border-top: 1px solid var(--community-line); color: var(--community-muted); font-size: 12.5px; }
-  .related-record-button { margin-top: 6px; }
-  @media (hover: hover) and (pointer: fine) {
-    .community-author:hover { text-decoration-color: var(--community-action); }
-    .community-linked-record:hover { border-color: var(--community-action); }
-  }
-  @media (max-width: 980px) {
-    .community-dashboard { grid-template-columns: minmax(165px, 195px) minmax(0, 1fr) minmax(240px, 285px); }
-    .community-identity { padding: 18px 14px; }
-    .community-feed { padding-left: 14px; padding-right: 14px; }
-    .community-events { padding-left: 13px; padding-right: 13px; }
-  }
-  @media (max-width: 760px) {
-    .community-page { padding: 70px 9px 9px; }
-    .community-bar { top: 9px; left: 12px; right: 12px; gap: 8px; }
-    .community-bar .section-tabs a { min-height: 38px; padding: 7px 11px; }
-    .community-content { width: 100%; height: 100%; max-height: 100%; border-radius: 15px; }
-    .community-heading { padding: 11px 13px; gap: 10px; }
-    .community-heading h1 { margin-top: 2px; font-size: 24px; }
-    .community-heading p { max-width: 34ch; font-size: 11.5px; line-height: 1.35; }
-    .community-heading .cap { font-size: 9px; }
-    .community-theme-switch { min-height: 40px; gap: 5px; padding: 4px 7px; font-size: 11px; }
-    .community-theme-track { width: 33px; height: 19px; }
-    .community-theme-track i { width: 13px; height: 13px; }
-    .community-theme-switch[aria-checked='true'] .community-theme-track i { transform: translateX(14px); }
-    .community-mobile-identity { flex: none; display: flex; align-items: center; gap: 9px; padding: 8px 12px; border-bottom: 1px solid var(--community-line); }
-    .community-mobile-identity > div { flex: 1; min-width: 0; }
-    .community-mobile-identity strong { color: var(--community-text); font-size: 13px; }
-    .community-mobile-identity .community-avatar { width: 34px; height: 34px; font-size: 11px; }
-    .community-mobile-identity .community-small-button { min-height: 35px; padding: 5px 10px; font-size: 12px; }
-    .community-mobile-tabs { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 7px 10px; border-bottom: 1px solid var(--community-line); }
-    .community-mobile-tabs button { min-height: 39px; border: 1px solid var(--community-line); border-radius: 999px; background: var(--community-surface); color: var(--community-muted); }
-    .community-mobile-tabs button[aria-selected='true'] { border-color: var(--community-action); background: var(--community-action); color: var(--community-action-text); }
-    .community-dashboard { grid-template-columns: minmax(0, 1fr); }
-    .community-identity { display: none; }
-    .community-dashboard[data-focus='feed'] .community-events, .community-dashboard[data-focus='campus'] .community-feed { display: none; }
-    .community-feed, .community-events { padding: 11px 12px 9px; border: 0; }
-    .community-feed-head { padding-bottom: 10px; }
-    .community-feed-head h2, .community-events-head h2 { font-size: 17px; }
-    .community-feed-head .community-small-button { min-height: 38px; padding: 7px 10px; font-size: 12px; }
-    .community-feed-content { padding-top: 10px; }
-    .community-post { padding: 12px; }
-    .community-post-text { margin: 10px 0; font-size: 13.5px; }
-    .community-events-head { padding-bottom: 9px; }
-    .community-event-card { padding: 11px 0; }
-    .community-event-card h3 { font-size: 15px; }
-    .community-event-meta { font-size: 12px; }
-    .community-source { font-size: 11px; }
-    .community-dialog-scrim, .social-dialog-scrim { padding: 12px; }
-    .social-dialog { max-height: 88dvh; padding: 18px; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .community-atmosphere { transition: none; }
-    .community-theme-track i { transition: none; }
-    .community-feed-scroll { scroll-behavior: auto; }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition-duration: 150ms !important; transition-delay: 0ms !important; }
     .panel, .strip, .closest, .goal { transform: none !important; }
     .panel:not([data-open='true']) { visibility: hidden; }
   }
+
+  .connections { position: absolute; inset: 0; pointer-events: none; opacity: .65; }
+  .connections path { fill: none; stroke: var(--ember); stroke-width: 1; }
+  .connections .saved { stroke: var(--gold); stroke-width: 2; }
+  .toolbar { display:flex; gap:10px; align-items:center; }
+  .toolbar button { white-space:nowrap; }
+  .notice { color:var(--glow); font-size:14px; max-width:62ch; }
+  .error { color:#ffb39b; }
+  .graph-caption { position:absolute; top:90px; left:40px; right:40px; color:var(--ash); max-width:75ch; font-size:13px; }
+  .catalog { position:absolute; top:145px; left:8vw; right:8vw; bottom:160px; overflow:auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:18px; align-content:start; }
+  .resource-card { padding:18px; text-align:left; border:1px solid var(--line); background:var(--panel); border-radius:14px; }
+  .resource-card h3 { font-weight:500; margin:0 0 8px; }
+  .resource-card p { margin:0; color:var(--ash); }
+  .panel .pill { margin:12px 8px 0 0; display:inline-block; text-decoration:none; }
+  .panel dl { margin:24px 0; }
+  .panel dt { color:var(--ash); font-size:12px; margin-top:18px; }
+  .panel dd { margin:4px 0; }
+  .panel a { color:var(--glow); }
+  .panel { overflow-y:auto; }
+  .boot { position:fixed; inset:0; display:grid; place-content:center; padding:30px; }
+  .boot p { max-width:65ch; }
+  button:disabled { cursor:wait; opacity:.55; }
+  .events-panel { max-height:65vh; overflow:auto; }
+  .events-panel article { padding:18px 0; border-top:1px solid var(--line); }
+  .events-panel h3 { font-size:16px; margin:0 0 6px; }
+  [data-view='map'] .strip, [data-view='map'] .closest { transition-delay:0ms; }
+  .strip a { color:var(--bone); text-decoration:none; }
+  .strip .event-note { color:var(--ash); font-size:12px; margin:6px 0; }
+  .graph-actions { position:absolute; right:40px; bottom:32px; max-width:340px; }
+  .graph-actions p { font-size:13px; color:var(--ash); }
+  .local-label { font-size:11px; color:var(--ash); }
+  .job-choice { margin-top:22px; }
+  .job-choice label { font-size:14px; margin-bottom:8px; }
+  .job-choice select { max-width:75%; background:var(--panel); color:var(--bone); padding:10px; border:1px solid var(--line); border-radius:10px; font:inherit; }
+  .job-choice .pill { margin-left:10px; }
+  .topic-list { display:flex; flex-wrap:wrap; gap:6px; margin:16px 0; }
+  .topic-list span { border:1px solid var(--line); border-radius:999px; padding:4px 9px; font-size:12px; }
+  .job-match { border-top:1px solid var(--line); padding:16px 0; }
+  .job-match h4 { font-weight:500; margin:0 0 8px; }
+  .job-match p { font-size:13px; color:var(--ash); }
+  @media(max-width:900px) { .bar { padding:20px; } .toolbar { gap:4px; } .toolbar .pill { padding:8px; font-size:12px; } .local-label { display:none; } .graph-caption { left:20px; right:20px; } .graph-actions { display:none; } .strip { width:calc(100% - 40px); left:20px; } .catalog { bottom:220px; } }
 </style>
 
 <script type="importmap">
@@ -711,66 +387,23 @@
   }
 }
 </script>
-<script src="../shared/fake-api.js"></script>
-<script src="https://unpkg.com/lenis@1.3.27/dist/lenis.min.js"></script>
+<script src="./api.js"></script>
+<link rel="stylesheet" href="./profile.css"/>
 <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
 </head>
 <body>
 <div id="root"></div>
 
 <script type="text/babel" data-type="module" data-presets="react">
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import * as THREE from 'three'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react'
 
-const api = window.WarmPathFake
+const api = window.WarmPathAPI
 const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-const COMMUNITY_THEME_KEY = 'warmpath.thermal.social-jackets.theme'
-
-// Social Jackets reuses stable records from the existing path fixtures. These
-// objects stay in the prototype until shared community contracts are defined.
-const SOCIAL_PATH_FIXTURE = api.postPath({ goal: api.SEEDED_GOALS[0], student_id: 1 })
-const SOCIAL_PROFILES = {
-  'person:1': { id: 'person:1', name: 'Maya Chen', kind: 'Student', major: 'CompE', stage: 'Second-year', summary: 'Demo student exploring robotics and campus projects.' },
-  'person:2': { id: 'person:2', name: 'Devon Brooks', kind: 'Student', major: 'CS', stage: 'First-year', summary: 'Demo student interested in systems and robotics.' },
-}
-const SOCIAL_CLUBS = SOCIAL_PATH_FIXTURE.stops.filter((stop) => stop.type === 'club').map((stop) => ({
-  id: `club:${stop.activity_id}`,
-  numericId: stop.activity_id,
-  type: 'club',
-  title: stop.name,
-  summary: `${stop.name} is a fictional student club fixture reused from the Thermal path data.`,
-  sourceStatus: 'Existing Thermal demo fixture',
-}))
-const SOCIAL_EVENTS = SOCIAL_PATH_FIXTURE.events.map((event) => {
-  const stop = SOCIAL_PATH_FIXTURE.stops.find((item) => item.activity_id === event.activity_id)
-  return {
-    ...event,
-    id: `event:${event.id}`,
-    numericId: event.id,
-    type: 'event',
-    title: event.title,
-    organizer: stop.name,
-    relatedRecordId: stop.type === 'club' ? `club:${stop.activity_id}` : null,
-    sourceStatus: 'Demo fixture · invented, not a real event listing',
-  }
-})
-const SOCIAL_RECORDS_BY_ID = new Map([...SOCIAL_CLUBS, ...SOCIAL_EVENTS].map((record) => [record.id, record]))
-const SOCIAL_SEED_POSTS = [
-  { id: 'post:fixture-maya', authorId: 'person:1', createdAt: '2026-11-14T10:25:00-05:00', text: 'I finally got my line-following bot through a full test run this afternoon. Debugging it with someone who hit the same snag made the next step feel much clearer.', linkedRecordId: 'event:42' },
-  { id: 'post:fixture-devon-1', authorId: 'person:2', createdAt: '2026-11-14T08:40:00-05:00', text: 'Looking for a small first step into systems work this semester. The embedded vision demo gave me a good list of questions to explore next.', linkedRecordId: null },
-  { id: 'post:fixture-devon-2', authorId: 'person:2', createdAt: '2026-11-13T15:20:00-05:00', text: 'I made a short checklist for my first robotics build: test one thing, write down what changed, and ask for another set of eyes when I get stuck.', linkedRecordId: 'club:5' },
-  { id: 'post:fixture-maya-2', authorId: 'person:1', createdAt: '2026-11-12T12:05:00-05:00', text: 'A good campus event for me is one where I leave with a new question to try. I’m adding this week’s demo night to my calendar.', linkedRecordId: 'event:41' },
-]
-
-function formatSocialTimestamp(value) {
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/New_York',
-  }).format(new Date(value))
-}
 
 /* Where each stop sits, as fractions of the stage. x follows the stop's typical year. */
 const SPOTS = {
@@ -782,30 +415,7 @@ const SPOTS = {
   9: { x: 0.745, y: 0.66, side: 'below' },
   goal: { x: 0.895, y: 0.42, side: 'above' },
 }
-const STRANDS = 14      // one per alum who reached the goal
-const SAMPLES = 460     // points along each strand
-const DUST = 300        // every alum in the seed
-const HEX_R = 26        // honeycomb cell radius, centre to corner, in px
-
-function mulberry(seed) {
-  return () => {
-    seed |= 0; seed = (seed + 0x6d2b79f5) | 0
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-/* The API returns counts, not routes, so strands are dealt out to match each stop's count. */
-function dealStrands(stops) {
-  const rand = mulberry(11)
-  const strands = Array.from({ length: STRANDS }, () => [])
-  stops.forEach((stop) => {
-    const order = Array.from({ length: STRANDS }, (_, i) => i).sort(() => rand() - 0.5)
-    order.slice(0, stop.achievers).forEach((i) => strands[i].push(stop.activity_id))
-  })
-  return strands
-}
+const HEX_R = 26
 
 /*
  * Honeycomb cell centres, built ring by ring around the origin.
@@ -853,7 +463,7 @@ function useViewport() {
 
 /* A stop's position, moved onto the centre of the honeycomb cell it lands in. */
 function place(key, { w, h }) {
-  const spot = SPOTS[key]
+  const spot = SPOTS[key] || SPOTS[9]
   const top = 100, bottom = 176
   const x = spot.x * w, y = top + spot.y * (h - top - bottom)
   const [q, r] = hexKey(x - w / 2, h / 2 - y).split(',').map(Number)
@@ -862,268 +472,6 @@ function place(key, { w, h }) {
 
 /* ------------------------------------------------------------------ WebGL */
 
-const HEAT = `
-  vec3 heat(float t) {
-    vec3 a = vec3(0.05, 0.15, 0.3);     // cold: navy
-    vec3 b = vec3(0.82, 0.6, 0.12);     // warm: gold
-    vec3 c = vec3(1.0, 0.62, 0.06);     // hot: amber
-    vec3 d = vec3(1.0, 0.93, 0.62);     // hottest
-    return t < 0.33 ? mix(a, b, t / 0.33) : t < 0.66 ? mix(b, c, (t - 0.33) / 0.33) : mix(c, d, (t - 0.66) / 0.34);
-  }
-`
-
-function Swarm({ mode, viewport, stops }) {
-  const { gl } = useThree()
-  const strands = useMemo(() => dealStrands(stops), [stops])
-
-  const dust = useMemo(() => {
-    const rand = mulberry(4)
-    return Array.from({ length: DUST }, () => ({
-      hx: rand() - 0.5, hy: rand() - 0.5,
-      r: 14 + rand() * 46,
-      w1: 0.08 + rand() * 0.22, w2: 0.07 + rand() * 0.2,
-      p1: rand() * 6.28, p2: rand() * 6.28,
-      size: 5 + rand() * 8,
-      x: 0, y: 0, heat: 0, alpha: 0,
-    }))
-  }, [])
-
-  // Strand curves in world pixels (origin at centre, y up).
-  const curves = useMemo(() => {
-    const rand = mulberry(29)
-    const { w, h } = viewport
-    const world = (p) => new THREE.Vector3(p.x - w / 2, h / 2 - p.y, 0)
-    const you = place('you', viewport), goal = place('goal', viewport)
-    const order = [...stops].sort((a, b) => SPOTS[a.activity_id].x - SPOTS[b.activity_id].x)
-    return strands.map((ids) => {
-      const pts = [world({ x: you.x, y: you.y + (rand() - 0.5) * 10 })]
-      order.filter((s) => ids.includes(s.activity_id)).forEach((s) => {
-        const p = place(s.activity_id, viewport)
-        const spread = 3 + s.achievers * 1.5
-        pts.push(world({ x: p.x + (rand() - 0.5) * 6, y: p.y + (rand() - 0.5) * spread }))
-      })
-      pts.push(world({ x: goal.x, y: goal.y + (rand() - 0.5) * 12 }))
-      const route = new THREE.CurvePath()
-      for (let i = 0; i < pts.length - 1; i++) {
-        const a = pts[i], b = pts[i + 1], reach = (b.x - a.x) * 0.5
-        route.add(new THREE.CubicBezierCurve3(a, new THREE.Vector3(a.x + reach, a.y, 0), new THREE.Vector3(b.x - reach, b.y, 0), b))
-      }
-      return route.getSpacedPoints(SAMPLES - 1)
-    })
-  }, [strands, stops, viewport])
-
-  // The hive: every cell on screen, and for the cells on a route, how many strands cross it.
-  const hexGeo = useMemo(() => {
-    const { w, h } = viewport
-    const rings = Math.ceil(Math.hypot(w, h) / 2 / (HEX_R * 1.5)) + 1
-    const cells = hexLattice(rings).filter((p) => Math.abs(p.x) < w / 2 + HEX_R && Math.abs(p.y) < h / 2 + HEX_R)
-    const index = new Map(cells.map((p, i) => [hexKey(p.x, p.y), i]))
-    const crossing = cells.map(() => new Set())
-    const first = new Float32Array(cells.length).fill(2)
-    const lead = new Float32Array(cells.length)
-    curves.forEach((pts, strand) => pts.forEach((p, k) => {
-      const i = index.get(hexKey(p.x, p.y))
-      if (i === undefined) return
-      crossing[i].add(strand)
-      const u = k / (SAMPLES - 1)
-      if (u < first[i]) { first[i] = u; lead[i] = strand }
-    }))
-    const g = new THREE.BufferGeometry().setFromPoints(cells)
-    g.setAttribute('aHeat', new THREE.BufferAttribute(Float32Array.from(crossing, (set) => Math.sqrt(set.size / STRANDS)), 1))
-    g.setAttribute('aU', new THREE.BufferAttribute(first, 1))
-    g.setAttribute('aStrand', new THREE.BufferAttribute(lead, 1))
-    return g
-  }, [curves, viewport])
-  useEffect(() => () => hexGeo.dispose(), [hexGeo])
-
-  const dustGeo = useMemo(() => {
-    const g = new THREE.BufferGeometry()
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(DUST * 3), 3))
-    g.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(DUST), 1))
-    g.setAttribute('aHeat', new THREE.BufferAttribute(new Float32Array(DUST), 1))
-    g.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(DUST), 1))
-    return g
-  }, [])
-
-  const trailGeo = useMemo(() => {
-    const g = new THREE.BufferGeometry()
-    const n = STRANDS * SAMPLES
-    const u = new Float32Array(n), s = new Float32Array(n)
-    for (let i = 0; i < STRANDS; i++) for (let k = 0; k < SAMPLES; k++) {
-      u[i * SAMPLES + k] = k / (SAMPLES - 1)
-      s[i * SAMPLES + k] = i
-    }
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3))
-    g.setAttribute('aU', new THREE.BufferAttribute(u, 1))
-    g.setAttribute('aStrand', new THREE.BufferAttribute(s, 1))
-    return g
-  }, [])
-
-  useEffect(() => {
-    const pos = trailGeo.attributes.position
-    curves.forEach((pts, i) => pts.forEach((p, k) => pos.setXYZ(i * SAMPLES + k, p.x, p.y, 0)))
-    pos.needsUpdate = true
-  }, [curves, trailGeo])
-
-  const hexMat = useMemo(() => new THREE.ShaderMaterial({
-    transparent: true, depthTest: false, blending: THREE.AdditiveBlending,
-    uniforms: {
-      uDpr: { value: gl.getPixelRatio() },
-      uProgress: { value: new Array(STRANDS).fill(0) },      // how far each strand has drawn, 0 to 1
-      uPointer: { value: new THREE.Vector2(9999, 9999) },
-      uHalf: { value: new THREE.Vector2(1, 1) },
-    },
-    vertexShader: `
-      attribute float aHeat; attribute float aU; attribute float aStrand;
-      uniform float uDpr; uniform float uProgress[${STRANDS}]; uniform vec2 uPointer; uniform vec2 uHalf;
-      varying float vHeat; varying float vNear; varying float vRim;
-      void main() {
-        vHeat = aHeat * smoothstep(0.0, 0.07, uProgress[int(aStrand)] - aU);
-        vNear = smoothstep(200.0, 0.0, distance(position.xy, uPointer));
-        vRim = smoothstep(0.35, 1.05, length(position.xy / uHalf));
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = ${(HEX_R * 2).toFixed(1)} * uDpr;
-      }`,
-    // Each point sprite is one flat-topped cell: a thin wall, and a fill that takes the route's heat.
-    fragmentShader: `
-      varying float vHeat; varying float vNear; varying float vRim;
-      void main() {
-        vec2 q = abs((gl_PointCoord - 0.5) * 2.0);
-        float d = max(q.y, q.x * 0.866025 + q.y * 0.5) / 0.866025;
-        if (d > 1.0) discard;
-        float wall = smoothstep(0.9, 0.97, d);
-        float fill = 1.0 - smoothstep(0.84, 0.9, d);
-        float a = wall * (0.03 + vRim * 0.055 + vNear * 0.2 + vHeat * 0.42) + fill * (vHeat * 0.17 + vNear * 0.025);
-        gl_FragColor = vec4(vec3(0.92, 0.67, 0.0) * a, 1.0);
-      }`,
-  }), [gl])
-
-  const dustMat = useMemo(() => new THREE.ShaderMaterial({
-    transparent: true, depthTest: false, blending: THREE.AdditiveBlending,
-    uniforms: { uDpr: { value: gl.getPixelRatio() } },
-    vertexShader: `
-      attribute float aSize; attribute float aHeat; attribute float aAlpha;
-      uniform float uDpr; varying float vHeat; varying float vAlpha;
-      void main() {
-        vHeat = aHeat; vAlpha = aAlpha;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = aSize * uDpr;
-      }`,
-    fragmentShader: `
-      varying float vHeat; varying float vAlpha;
-      ${HEAT}
-      void main() {
-        float d = length(gl_PointCoord - 0.5);
-        float a = smoothstep(0.5, 0.0, d);
-        gl_FragColor = vec4(heat(vHeat) * a * a * vAlpha, 1.0);
-      }`,
-  }), [gl])
-
-  const trailMat = useMemo(() => new THREE.ShaderMaterial({
-    transparent: true, depthTest: false, blending: THREE.AdditiveBlending,
-    uniforms: { uDpr: { value: gl.getPixelRatio() }, uProgress: { value: new Array(STRANDS).fill(0) } },
-    vertexShader: `
-      attribute float aU; attribute float aStrand;
-      uniform float uDpr; uniform float uProgress[${STRANDS}];
-      varying float vOn;
-      void main() {
-        vOn = smoothstep(0.0, 0.04, uProgress[int(aStrand)] - aU);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = 15.0 * uDpr;
-      }`,
-    // Additive: one strand is a dull ember, nine stacked strands burn yellow.
-    fragmentShader: `
-      varying float vOn;
-      void main() {
-        float d = length(gl_PointCoord - 0.5);
-        float a = smoothstep(0.5, 0.0, d);
-        gl_FragColor = vec4(vec3(1.0, 0.34, 0.09) * a * a * 0.085 * vOn, 1.0);
-      }`,
-  }), [gl])
-
-  const pointer = useRef({ x: 9999, y: 9999, sx: 9999, sy: 9999 })
-  useEffect(() => {
-    const move = (e) => { pointer.current.x = e.clientX - window.innerWidth / 2; pointer.current.y = window.innerHeight / 2 - e.clientY }
-    window.addEventListener('pointermove', move)
-    return () => window.removeEventListener('pointermove', move)
-  }, [])
-
-  const clock = useRef({ mapAt: null })
-  useEffect(() => {
-    clock.current.mapAt = mode === 'map' ? 'pending' : null
-    if (mode !== 'map') trailMat.uniforms.uProgress.value.fill(0)
-  }, [mode, trailMat])
-
-  useFrame(({ clock: c }, dt) => {
-    const t = c.elapsedTime
-    const { w, h } = viewport
-    const state = clock.current
-    if (state.mapAt === 'pending') state.mapAt = t
-    const onMap = state.mapAt !== null
-    const p = pointer.current
-    p.sx += (p.x - p.sx) * Math.min(1, dt * 5); p.sy += (p.y - p.sy) * Math.min(1, dt * 5)
-    const progress = trailMat.uniforms.uProgress.value
-    hexMat.uniforms.uPointer.value.set(p.sx, p.sy)
-    hexMat.uniforms.uHalf.value.set(w / 2, h / 2)
-    hexMat.uniforms.uProgress.value = progress
-    const pos = dustGeo.attributes.position, size = dustGeo.attributes.aSize
-    const heatAttr = dustGeo.attributes.aHeat, alpha = dustGeo.attributes.aAlpha
-    const ease = Math.min(1, dt * 2.2)
-
-    for (let i = 0; i < DUST; i++) {
-      const d = dust[i]
-      let x = d.hx * w * 1.04 + Math.sin(t * d.w1 + d.p1) * d.r
-      let y = d.hy * h * 1.04 + Math.cos(t * d.w2 + d.p2) * d.r
-      // The pointer warms whatever it passes over.
-      const dx = x - p.sx, dy = y - p.sy
-      const near = Math.max(0, 1 - Math.hypot(dx, dy) / 170)
-      x += dx * near * 0.35; y += dy * near * 0.35
-      let heat = 0.3 + near * 0.6, a = onMap ? 0.22 : 0.85, sz = d.size
-
-      if (i < STRANDS && onMap) {
-        const e = t - state.mapAt - 0.2 - i * 0.085
-        const pts = curves[i]
-        heat = 1; a = 1; sz = 11
-        if (REDUCED) { progress[i] = 1; x = pts[SAMPLES - 1].x; y = pts[SAMPLES - 1].y; a = 0 }
-        else if (e < 0.9) {
-          const k = Math.max(0, e / 0.9), s = k * k * (3 - 2 * k)
-          x += (pts[0].x - x) * s; y += (pts[0].y - y) * s
-          heat = 0.3 + 0.7 * s; a = 0.85 + 0.15 * s; sz = d.size + (11 - d.size) * s
-        } else {
-          const first = 2.5, loop = 7 + (i % 5) * 1.3
-          const e2 = e - 0.9
-          let u
-          if (e2 < first) { const k = e2 / first; u = 1 - Math.pow(1 - k, 2.2); progress[i] = Math.max(progress[i], u + 0.02) }
-          else { u = ((e2 - first) % loop) / loop; progress[i] = 1.1; a = Math.min(1, u / 0.06, (1 - u) / 0.06) }
-          const f = u * (SAMPLES - 1), k0 = Math.min(SAMPLES - 2, Math.floor(f)), fr = f - k0
-          x = pts[k0].x + (pts[k0 + 1].x - pts[k0].x) * fr
-          y = pts[k0].y + (pts[k0 + 1].y - pts[k0].y) * fr
-        }
-        d.x = x; d.y = y
-      } else {
-        d.x = x; d.y = y
-      }
-      d.heat += (heat - d.heat) * ease; d.alpha += (a - d.alpha) * ease
-      pos.setXYZ(i, d.x, d.y, 0)
-      size.setX(i, sz); heatAttr.setX(i, i < STRANDS && onMap ? heat : d.heat); alpha.setX(i, i < STRANDS && onMap ? a : d.alpha)
-    }
-    pos.needsUpdate = size.needsUpdate = heatAttr.needsUpdate = alpha.needsUpdate = true
-  })
-
-  return (
-    <>
-      <points geometry={hexGeo} material={hexMat} frustumCulled={false} />
-      <points geometry={trailGeo} material={trailMat} frustumCulled={false} />
-      <points geometry={dustGeo} material={dustMat} frustumCulled={false} />
-    </>
-  )
-}
-
-/*
- * The centrepiece of the landing. Scrolling carries it through three poses, and it
- * eases after the scroll position, so it keeps a little momentum.
- * Model: "Honeycomb" by Poly by Google, CC BY 3.0, https://poly.pizza/m/6Mqdrv1n3Oo
- */
 const POSES = [
   { x: 0.24, y: -0.01, size: 1.55, tilt: 0.95, turn: -0.55, roll: 0.1, alpha: 1 },     // beside the opening line
   { x: -0.26, y: 0.0, size: 1.65, tilt: 0.28, turn: 2.2, roll: -0.18, alpha: 1 },      // swung across, seen edge on
@@ -1240,609 +588,473 @@ function Arrow() {
   )
 }
 
-function SectionTabs({ active }) {
-  return (
-    <nav className="section-tabs cap" aria-label="WarmPath sections">
-      <a href="#" aria-current={active === 'path' ? 'page' : undefined}>Paths</a>
-      <a href="#/community" aria-current={active === 'community' ? 'page' : undefined}>Social Jackets</a>
-    </nav>
-  )
+
+class GraphicsBoundary extends React.Component {
+  state = { failed: false }
+  static getDerivedStateFromError() { return { failed: true } }
+  render() { return this.state.failed ? null : this.props.children }
 }
 
-function Node({ at, delay, stop, onOpen }) {
-  const d = 30 + stop.achievers * 4
-  const day = stop.event && api.eventDay(stop.event.starts_at)
-  return (
-    <button
-      className="node" data-have={stop.have} data-next={stop.next} data-side={at.side}
-      style={{ transform: `translate(${at.x}px, ${at.y}px)`, '--d': `${d}px`, '--at': `${delay}ms` }}
-      onClick={onOpen}
-    >
-      <Hex />
-      <span className="tag">
-        <span className="name">{stop.name}</span>
-        <span className="count"><b>{stop.achievers} of 14</b> did this · {api.TYPE_LABEL[stop.type]}</span>
-        {stop.have && <span className="state cap">You have this</span>}
-        {stop.next && <span className="state cap">Next for you</span>}
-        {stop.next && day && <span className="when">{stop.event.title} · {day.weekdayLong} {day.time}, {stop.event.location}</span>}
-      </span>
-    </button>
-  )
+function ResourceNode({ resource, at, onOpen }) {
+  return <button className="node" data-have={resource.saved} data-side={at.side}
+    style={{ transform: `translate(${at.x}px, ${at.y}px)`, '--d': '50px', '--at': '0ms' }}
+    onClick={onOpen} aria-label={`Explore ${resource.name}`}>
+    <Hex /><span className="tag"><span className="name">{resource.name}</span>
+    <span className="count">{resource.kind}</span>{resource.saved && <span className="state cap">Saved</span>}</span>
+  </button>
 }
 
-function PeoplePanel({ open, path, activityId, onClose }) {
-  const [, bump] = useState(0)
-  const [composing, setComposing] = useState(null)
-  const [text, setText] = useState('')
-  useEffect(() => api.subscribe(() => bump((n) => n + 1)), [])
-  useEffect(() => setComposing(null), [activityId, path.student.id])
-
-  const stop = path.stops.find((s) => s.activity_id === activityId)
-  const people = api.getPeople({ goal_id: path.goal.id, student_id: path.student.id, activity_id: stop ? activityId : undefined })
-  const asks = api.asksByAlum(path.student.id)
-  const total = stop ? stop.achievers : path.goal.achievers
-  const shown = people.slice(0, 4)
-
-  const send = (person) => {
-    api.postAsk({ student_id: path.student.id, alum_id: person.id, goal_id: path.goal.id, message: text })
-    setComposing(null)
-  }
-
-  return (
-    <aside className="panel" data-open={open} aria-hidden={!open} inert={!open}>
-      <button className="close cap" onClick={onClose}>Close</button>
-      <h2>{stop ? stop.name : path.goal.label}</h2>
-      <p className="lede">
-        {stop
-          ? `${total} of the ${path.goal.achievers} alumni who reached this goal went through here.`
-          : `${total} alumni in the seed reached this goal.`} Closest starting point to yours first.
-      </p>
-      {shown.map((person) => {
-        const ask = asks[person.id]
-        const isOpen = composing === person.id
-        return (
-          <section className="person" key={person.id}>
-            <header>
-              <h3>{person.name}</h3>
-              <span className="who">{person.major} ’{String(person.grad_year).slice(2)}</span>
-            </header>
-            <p className="tie">{person.shared_tie}</p>
-            {ask ? (
-              <p className="status" data-status={ask.status}>
-                <i />
-                {ask.status === 'accepted' ? 'Accepted a 15-minute call' : 'Sent. Waiting for a reply.'}
-                {ask.status !== 'accepted' && <a href={`#/reply/${ask.id}`} target="_blank" rel="noreferrer">Open the reply page</a>}
-              </p>
-            ) : (
-              !isOpen && <button className="pill" onClick={() => { setComposing(person.id); setText(person.draft) }}>Ask {person.name.split(' ')[0]}</button>
-            )}
-            <div className="draft" data-open={isOpen && !ask}>
-              <div>
-                <textarea value={text} onChange={(e) => setText(e.target.value)} aria-label={`Message to ${person.name}`} tabIndex={isOpen ? 0 : -1} />
-                <div className="acts">
-                  <button className="pill" onClick={() => setComposing(null)} tabIndex={isOpen ? 0 : -1}>Cancel</button>
-                  <button className="pill hot" onClick={() => send(person)} tabIndex={isOpen ? 0 : -1}>Send the ask</button>
-                </div>
-              </div>
-            </div>
-          </section>
-        )
-      })}
-      {total > shown.length && <p className="more">Showing the {shown.length} closest of {total}.</p>}
-    </aside>
-  )
+function EventList({ data }) {
+  const format = value => new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }).format(new Date(value))
+  return <div className="events-panel">
+    <p className="quiet">Public GT Engage and Campus Calendar listings. Times are Eastern. Date ranges may represent recurring sessions; confirm the schedule and registration at the source.</p>
+    {data?.stale && <p className="notice">This snapshot is more than 24 hours old or has not been imported. Check the source for updates.</p>}
+    {data?.fetched_at && <p className="quiet">Last checked: {format(data.fetched_at)}</p>}
+    {!data?.items?.length && <p>No upcoming events in the current local snapshot.</p>}
+    {(data?.items || []).map(event => <article key={event.url}>
+      <h3><a href={event.url} target="_blank" rel="noreferrer">{event.title}</a></h3>
+      <p className="quiet">{format(event.starts_at)} – {format(event.ends_at)}</p>
+      {event.location && <p>{event.location}</p>}
+      <p className="quiet">{event.source === 'gt-engage' ? 'GT Engage' : 'Campus Calendar'}{event.organizer ? ` · ${event.organizer}` : ''}</p>
+    </article>)}
+    <a href="https://gatech.campuslabs.com/engage/events" target="_blank" rel="noreferrer">Explore more on GT Engage ↗</a>
+  </div>
 }
 
-function Experience({ active = true }) {
-  const students = useMemo(() => api.getStudents(), [])
-  const [studentId, setStudentId] = useState(students[0].id)
+function Experience({ session, onProfile, onCourses }) {
   const [view, setView] = useState('goal')
-  const [goalText, setGoalText] = useState('')
-  const [panel, setPanel] = useState(null)           // activity id, 'goal', or null
+  const [goalText, setGoalText] = useState(session.goal || '')
+  const [result, setResult] = useState(null)
+  const [items, setItems] = useState([])
+  const [listMode, setListMode] = useState(false)
+  const [panel, setPanel] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [eventData, setEventData] = useState(null)
+  const [eventError, setEventError] = useState('')
+  const [eventBusy, setEventBusy] = useState(false)
+  const [jobExamples, setJobExamples] = useState([])
+  const [selectedJob, setSelectedJob] = useState('')
+  const [jobError, setJobError] = useState('')
   const viewport = useViewport()
-  const path = useMemo(() => api.postPath({ goal: goalText || api.SEEDED_GOALS[0], student_id: studentId }), [studentId, view])
-  const closest = api.getPeople({ goal_id: path.goal.id, student_id: studentId }).slice(0, 3)
+  const landing = useRef(null), goalInput = useRef(null), scroll = useRef(0), sequence = useRef(0)
+  const closeButton = useRef(null), lastFocus = useRef(null)
+  const active = typeof panel === 'number' ? items.find(item => item.id === panel) : null
+  const slots = [5, 3, 7, 4, 9]
+  const you = place('you', viewport), goal = place('goal', viewport)
 
+  useEffect(() => { document.body.dataset.view = view }, [view])
   useEffect(() => {
-    if (!active) return
-    document.body.dataset.view = view
-    document.title = 'WarmPath · Thermal prototype'
-  }, [view, active])
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.dataset.seen = 'true'
+    }), { root: landing.current, threshold:.4 })
+    landing.current.querySelectorAll('.beat').forEach(node => observer.observe(node))
+    return () => observer.disconnect()
+  }, [])
   useEffect(() => {
-    const key = (e) => { if (e.key === 'Escape') setPanel(null) }
-    window.addEventListener('keydown', key)
-    return () => window.removeEventListener('keydown', key)
+    if (panel !== null) { lastFocus.current = document.activeElement; closeButton.current?.focus() }
+    else lastFocus.current?.focus()
+  }, [panel])
+  useEffect(() => {
+    const onKey = event => { if (event.key === 'Escape') setPanel(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const submit = (e) => { e.preventDefault(); setView('map') }
-  const landing = useRef(null), goalInput = useRef(null), scroll = useRef(0)
+  const loadEvents = async () => {
+    setEventBusy(true); setEventError('')
+    try { setEventData(await api.events()) }
+    catch (e) { setEventError(e.message) }
+    finally { setEventBusy(false) }
+  }
+  useEffect(() => { loadEvents() }, [])
+  useEffect(() => { let active = true; api.jobs().then(data => { if(active) setJobExamples(data.items) }).catch(e => { if(active) setJobError(e.message) }); return () => { active = false } }, [])
+
+  const discover = async (text = goalText, jobId = null) => {
+    if (busy) return
+    const query = text.trim()
+    if (!query) { setError('Enter a goal or choose a suggestion.'); goalInput.current?.focus(); return }
+    const id = ++sequence.current
+    setBusy(true); setError(''); setPanel(null)
+    try {
+      const response = await api.path(query, jobId)
+      if (id !== sequence.current) return
+      setGoalText(query); setResult(response); setItems(response.resources); setListMode(false); setView('map')
+    } catch (e) { if (id === sequence.current) setError(e.message) }
+    finally { if (id === sequence.current) setBusy(false) }
+  }
+  const browse = async (saved = false) => {
+    if (busy) return
+    const id = ++sequence.current
+    setBusy(true); setError(''); setPanel(null)
+    try {
+      const response = await api.resources(saved)
+      if (id !== sequence.current) return
+      setResult({ goal:{ label:saved ? 'Your saved resources' : 'Campus resources' }, status:'browse' })
+      setItems(response.items); setListMode(saved ? 'saved' : 'all'); setView('map')
+    } catch (e) { if (id === sequence.current) setError(e.message) }
+    finally { if (id === sequence.current) setBusy(false) }
+  }
+  const toggleSaved = async resource => {
+    if (saving) return
+    setSaving(true); setError('')
+    try {
+      const updated = await api.save(resource.id, !resource.saved)
+      if (listMode === 'saved' && !updated.saved) {
+        setItems(current => current.filter(item => item.id !== updated.id)); setPanel(null)
+      } else {
+        setItems(current => current.map(item => item.id === updated.id ? {...item, saved:updated.saved} : item))
+      }
+    } catch (e) { setError(e.message) }
+    finally { setSaving(false) }
+  }
+  const toGoal = () => { setView('goal'); setPanel(null); setTimeout(() => {
+    landing.current.scrollTo({ top:landing.current.scrollHeight, behavior:REDUCED ? 'instant' : 'smooth' })
+    goalInput.current?.focus({ preventScroll:true })
+  }, 30) }
   const onScroll = () => {
     const el = landing.current
     scroll.current = el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight)
-    el.parentElement.toggleAttribute('data-scrolled', el.scrollTop > 24)
-    if (scroll.current > 0.95 && document.activeElement !== goalInput.current) goalInput.current.focus({ preventScroll: true })
+    el.parentElement.toggleAttribute('data-scrolled', scroll.current > .5)
   }
-  useEffect(() => {
-    if (!active || !landing.current) return undefined
-    const seen = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => { if (entry.isIntersecting) entry.target.dataset.seen = 'true' })
-    }, { root: landing.current, threshold: 0.55 })
-    landing.current.querySelectorAll('.beat').forEach((beat) => seen.observe(beat))
-    return () => seen.disconnect()
-  }, [active])
-  const toGoal = () => landing.current.scrollTo({ top: landing.current.scrollHeight, behavior: REDUCED ? 'auto' : 'smooth' })
-  const you = place('you', viewport), goal = place('goal', viewport)
-  const arrive = (x) => (REDUCED ? 0 : Math.round(1100 + x * 2300))
+  const compact = listMode || viewport.w < 900
 
-  if (!active) return null
-
-  return (
-    <>
-      <Backdrop />
-      <div className="veil" />
-      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
-        <defs>
-          <radialGradient id="hot">
-            <stop offset="0" stopColor="#fff7dc" /><stop offset="0.3" stopColor="#ffe9a8" />
-            <stop offset="0.66" stopColor="#eaaa00" /><stop offset="1" stopColor="#8f5c00" />
-          </radialGradient>
-        </defs>
-      </svg>
-      <div className="hive" aria-hidden="true">
-        <Canvas dpr={[1, 2]} frameloop={view === 'goal' ? 'always' : 'never'} gl={{ alpha: true, antialias: true }} camera={{ fov: 35, position: [0, 0, 10] }}>
-          <hemisphereLight args={['#ffe2a0', '#160a02', 0.75]} />
-          <directionalLight position={[-3, 4, 6]} intensity={2.6} color="#fff3d6" />
-          <pointLight position={[3, -2.5, 2.5]} intensity={45} color="#ff6a1f" />
-          <Hive scroll={scroll} />
-        </Canvas>
-      </div>
-      <div className="swarm" aria-hidden="true">
-        <Canvas orthographic dpr={[1, 2]} gl={{ alpha: false, antialias: false }} camera={{ position: [0, 0, 10], near: 0.1, far: 100 }}>
-          <color attach="background" args={['#000000']} />
-          <Swarm mode={view} viewport={viewport} stops={path.stops} />
-        </Canvas>
-      </div>
-
-      <div className="ui">
-        <header className="bar">
-          <button className="mark" onClick={() => { setView('goal'); setPanel(null) }} aria-label="WarmPath, start a new goal"><i />WarmPath</button>
-          <SectionTabs active="path" />
-        </header>
-
-        <section className="goal" aria-hidden={view !== 'goal'} inert={view !== 'goal'}>
-          <div className="landing" ref={landing} onScroll={onScroll}>
-            <div className="beat">
-              <Words as="h1">Every year, Tech students land the internship you want.</Words>
-              <button className="jump cap" onClick={toGoal}>Set your goal</button>
+  return <>
+    <GraphicsBoundary><Backdrop /></GraphicsBoundary><div className="veil" />
+    <svg width="0" height="0" style={{position:'absolute'}} aria-hidden="true"><defs>
+      <radialGradient id="hot"><stop offset="0" stopColor="#fff7dc"/><stop offset=".3" stopColor="#ffe9a8"/><stop offset=".66" stopColor="#eaaa00"/><stop offset="1" stopColor="#8f5c00"/></radialGradient>
+    </defs></svg>
+    <div className="hive" aria-hidden="true"><GraphicsBoundary>
+      <Canvas dpr={[1,1.5]} frameloop={view === 'goal' ? 'always' : 'never'} gl={{alpha:true, antialias:true}} camera={{fov:35, position:[0,0,10]}}>
+        <hemisphereLight args={['#ffe2a0','#160a02',.75]}/><directionalLight position={[-3,4,6]} intensity={2.6} color="#fff3d6"/>
+        <pointLight position={[3,-2.5,2.5]} intensity={45} color="#ff6a1f"/><Hive scroll={scroll}/>
+      </Canvas>
+    </GraphicsBoundary></div>
+    <main className="ui">
+      <header className="bar">
+        <button className="mark" onClick={() => { setView('goal'); setPanel(null) }} aria-label="WarmPath home"><i/>WarmPath</button>
+        <nav className="toolbar" aria-label="Resource navigation">
+          <span className="local-label">Your browser workspace</span>
+          <button className="pill" disabled={busy} onClick={() => browse(false)}>Browse</button>
+          <button className="pill" disabled={busy} onClick={() => browse(true)}>Saved</button>
+          <button className="pill" onClick={() => { setPanel('events'); loadEvents() }}>Events</button>
+          <button className="pill" onClick={onProfile}>My Profile</button>
+          <button className="pill" onClick={onCourses}>My Courses</button>
+          <a className="pill" href="./community.html">Social Jackets</a>
+        </nav>
+      </header>
+      <section className="goal" aria-hidden={view !== 'goal'} inert={view !== 'goal'}>
+        <div className="landing" ref={landing} onScroll={onScroll}>
+          <div className="beat"><Words as="h1">Your next step starts on campus.</Words><button className="jump cap" onClick={toGoal}>Find your starting point</button></div>
+          <div className="beat right"><Words as="p" className="say">Research teams. Startup programs. Career opportunities. Find the resources that fit your goal.</Words></div>
+          <div className="beat ask"><form onSubmit={event => { event.preventDefault(); discover() }}>
+            <label htmlFor="goal">What would you like to explore at Georgia Tech?</label>
+            <div className="row"><input id="goal" ref={goalInput} maxLength={300} autoComplete="off" value={goalText} onChange={e => setGoalText(e.target.value)} placeholder="Explore robotics research"/>
+              <button className="go" disabled={busy} aria-label="Find resources"><Arrow/></button></div>
+            <ul className="seeds cap">{session.suggestions.map(label => <li key={label}><button type="button" disabled={busy} onClick={() => discover(label)}>{label}</button></li>)}</ul>
+            <div className="job-choice"><label htmlFor="job-example">Or match courses and VIP projects to a public job example</label>
+              <select id="job-example" value={selectedJob} onChange={e => setSelectedJob(e.target.value)}>
+                <option value="">Choose a source-checked job example</option>
+                {jobExamples.map(job => <option key={job.id} value={job.id}>{job.title}</option>)}
+              </select>
+              <button className="pill" type="button" disabled={busy || !selectedJob} onClick={() => discover(jobExamples.find(job => job.id === selectedJob).title, selectedJob)}>Match topics</button>
+              {jobError && <p className="error" role="alert">Job examples unavailable: {jobError}</p>}
             </div>
-            <div className="beat right">
-              <Words as="p" className="say">They joined certain teams and took certain classes. Then they graduated and took that knowledge with them.</Words>
-            </div>
-            <div className="beat ask">
-              <form onSubmit={submit}>
-                <label htmlFor="goal">WarmPath puts their paths on one map. Where do you want to end up?</label>
-                <div className="row">
-                  <input id="goal" ref={goalInput} autoComplete="off" spellCheck="false" value={goalText} onChange={(e) => setGoalText(e.target.value)} placeholder={api.SEEDED_GOALS[0]} />
-                  <button className="go" aria-label="Trace the path"><Arrow /></button>
-                </div>
-                <ul className="seeds cap">
-                  {api.SEEDED_GOALS.slice(1).map((g) => (
-                    <li key={g}><button type="button" onClick={() => setGoalText(g)}>{g}</button></li>
-                  ))}
-                </ul>
-              </form>
-            </div>
-          </div>
-          <p className="cue cap">Scroll</p>
-          <p className="foot cap quiet">
-            <span>Each point is one of {api.ALUMNI_TOTAL} alumni</span>
-            <span>Seeded demo data · Honeycomb model by <a href="https://poly.pizza/m/6Mqdrv1n3Oo" target="_blank" rel="noreferrer">Poly by Google</a>, CC BY 3.0</span>
-          </p>
-        </section>
-
-        <section className="map" aria-hidden={view !== 'map'} inert={view !== 'map'}>
-          <button className="node end" data-have="true" data-side={you.side} style={{ transform: `translate(${you.x}px, ${you.y}px)`, '--d': '36px', '--at': '500ms' }} onClick={() => setStudentId(students.find((s) => s.id !== studentId).id)} aria-label={`Switch demo student. Currently ${path.student.name}`}>
-            <Hex />
-            <span className="tag">
-              <span className="name">You</span>
-              <span className="count">{path.student.major}, {api.ordinal(path.student.school_year)} year</span>
-            </span>
-          </button>
-          {path.stops.map((stop) => (
-            <Node key={stop.activity_id} stop={stop} at={place(stop.activity_id, viewport)} delay={arrive(SPOTS[stop.activity_id].x)} onOpen={() => setPanel(stop.activity_id)} />
-          ))}
-          <button className="node end" data-side={goal.side} style={{ transform: `translate(${goal.x}px, ${goal.y}px)`, '--d': '100px', '--at': `${arrive(SPOTS.goal.x)}ms` }} onClick={() => setPanel('goal')}>
-            <Hex />
-            <span className="tag">
-              <span className="name">{path.goal.label}</span>
-              <span className="count"><b>{path.goal.achievers} alumni</b> got here</span>
-            </span>
-          </button>
-
-          <div className="strip">
-            <h2 className="cap">This week on your path</h2>
-            <ol>
-              {path.events.slice(0, 3).map((event) => {
-                const day = api.eventDay(event.starts_at)
-                const stop = path.stops.find((s) => s.activity_id === event.activity_id)
-                return (
-                  <li key={event.id}>
-                    <b>{day.weekday} {day.day}</b>
-                    <div>{event.title} <span>· {stop.name} · {day.time}, {event.location}</span></div>
-                  </li>
-                )
-              })}
-            </ol>
-          </div>
-
-          <div className="closest">
-            <h2 className="cap">Closest starts to yours</h2>
-            {closest.map((person) => (
-              <button key={person.id} onClick={() => setPanel('goal')}>
-                <b>{person.name}</b>
-                <span>{person.major} ’{String(person.grad_year).slice(2)}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <PeoplePanel open={view === 'map' && panel !== null} path={path} activityId={panel} onClose={() => setPanel(null)} />
-      </div>
-    </>
-  )
-}
-
-function CommunityDialog({ detail, onClose, onOpenRecord, onPublish }) {
-  const [draft, setDraft] = useState('')
-  const [linkedRecordId, setLinkedRecordId] = useState('')
-  const closeRef = useRef(null)
-
-  useEffect(() => {
-    if (!detail) return undefined
-    setDraft('')
-    setLinkedRecordId('')
-    closeRef.current && closeRef.current.focus()
-  }, [detail && detail.kind, detail && detail.id])
-
-  if (!detail) return null
-  const profile = detail.kind === 'profile' ? SOCIAL_PROFILES[detail.id] : null
-  const record = detail.kind === 'record' ? SOCIAL_RECORDS_BY_ID.get(detail.id) : null
-  const isComposer = detail.kind === 'composer'
-  if (!profile && !record && !isComposer) return null
-
-  const relatedRecord = record && record.relatedRecordId ? SOCIAL_RECORDS_BY_ID.get(record.relatedRecordId) : null
-  const title = isComposer ? 'Share an update' : (profile ? profile.name : record.title)
-  const recordOptions = [...SOCIAL_CLUBS, ...SOCIAL_EVENTS]
-
-  const submit = (event) => {
-    event.preventDefault()
-    if (!draft.trim()) return
-    onPublish(draft.trim(), linkedRecordId || null)
-    onClose()
-  }
-
-  return (
-    <div className="social-dialog-scrim" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-      <section className="social-dialog" role="dialog" aria-modal="true" aria-labelledby="social-dialog-title" tabIndex="-1">
-        <div className="social-dialog-head">
-          <div>
-            <span className="cap quiet">{isComposer ? 'Fictional student demo post' : (profile ? 'Demo student profile' : 'Linked demo record')}</span>
-            <h2 id="social-dialog-title">{title}</h2>
-          </div>
-          <button ref={closeRef} className="social-dialog-close" type="button" onClick={onClose}>Close</button>
+            <p className="notice" role="status">{busy ? 'Finding campus resources…' : 'Searches match a curated catalog. Open each source to confirm availability.'}</p>
+            {error && <p className="notice error" role="alert">{error}</p>}
+          </form></div>
         </div>
-
-        {isComposer ? (
-          <form className="community-composer-form" onSubmit={submit}>
-            <label className="cap quiet" htmlFor="community-post-text">Post text</label>
-            <textarea id="community-post-text" maxLength="420" autoFocus value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Share an update…" />
-            <label className="cap quiet" htmlFor="community-linked-record">Link a club or event · optional</label>
-            <select id="community-linked-record" value={linkedRecordId} onChange={(event) => setLinkedRecordId(event.target.value)}>
-              <option value="">No linked record</option>
-              {recordOptions.map((item) => <option key={item.id} value={item.id}>{item.type}: {item.title}</option>)}
-            </select>
-            <div className="community-composer-actions">
-              <button className="community-small-button" type="button" onClick={onClose}>Cancel</button>
-              <button className="community-small-button community-publish" type="submit" disabled={!draft.trim()}>Share update</button>
-            </div>
-            <p className="community-local-note">Demo-only. This post stays in the current page session and is not shared or synced.</p>
-          </form>
-        ) : profile ? (
-          <>
-            <p className="dialog-lede">Fictional student fixture. This summary is not a real account or a profile visibility setting.</p>
-            <dl className="social-profile-fields">
-              <div><dt className="cap">Demo name</dt><dd>{profile.name}</dd></div>
-              <div><dt className="cap">Major · demo data</dt><dd>{profile.major === 'CompE' ? 'Computer Engineering (CompE)' : 'Computer Science (CS)'}</dd></div>
-              <div><dt className="cap">Class standing · demo data</dt><dd>{profile.stage}</dd></div>
-              <div><dt className="cap">Profile type</dt><dd>Fictional student demo</dd></div>
-              <div><dt className="cap">Summary · demo data</dt><dd>{profile.summary}</dd></div>
-            </dl>
-          </>
-        ) : (
-          <>
-            <p className="dialog-lede">Stable fixture ID: <strong>{record.id}</strong></p>
-            {record.type === 'event' ? (
-              <dl className="social-profile-fields">
-                <div><dt className="cap">Organizer · demo data</dt><dd>{record.organizer}</dd></div>
-                <div><dt className="cap">Date and time · demo data</dt><dd>{formatSocialTimestamp(record.starts_at)}</dd></div>
-                <div><dt className="cap">Location · demo data</dt><dd>{record.location}</dd></div>
-                <div><dt className="cap">Source / status</dt><dd>{record.sourceStatus}</dd></div>
-              </dl>
-            ) : (
-              <>
-                <p>{record.summary}</p>
-                <p className="dialog-lede">Source / status: {record.sourceStatus}</p>
-              </>
-            )}
-            {relatedRecord && <button className="community-small-button related-record-button" onClick={() => onOpenRecord(relatedRecord.id)}>Related club: {relatedRecord.title}</button>}
-            <p className="community-record-destination">These are local fixture details. Map and discovery destinations are not wired in the Thermal prototype.</p>
-          </>
-        )}
+        <p className="cue cap">Scroll</p>
+        <p className="foot cap quiet"><span>{session.resource_count} source-linked campus resources</span><span>Honeycomb by <a href="https://poly.pizza/m/6Mqdrv1n3Oo" target="_blank" rel="noreferrer">Poly by Google</a> · CC BY 3.0</span></p>
       </section>
-    </div>
-  )
-}
-
-function Community() {
-  const [posts, setPosts] = useState(SOCIAL_SEED_POSTS)
-  const [detail, setDetail] = useState(null)
-  const [theme, setTheme] = useState(() => {
-    try {
-      return localStorage.getItem(COMMUNITY_THEME_KEY) === 'light' ? 'light' : 'dark'
-    } catch (error) {
-      return 'dark'
-    }
-  })
-  const [mobileFocus, setMobileFocus] = useState('feed')
-  const feedScrollRef = useRef(null)
-  const backgroundScroll = useRef(0)
-  const viewport = useViewport()
-
-  const handleMobileTabKey = (event) => {
-    const tabButtons = Array.from(event.currentTarget.querySelectorAll('[role="tab"]'))
-    const currentIndex = tabButtons.indexOf(document.activeElement)
-    if (currentIndex < 0) return
-    let nextIndex = currentIndex
-    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabButtons.length
-    else if (event.key === 'ArrowLeft') nextIndex = (currentIndex + tabButtons.length - 1) % tabButtons.length
-    else if (event.key === 'Home') nextIndex = 0
-    else if (event.key === 'End') nextIndex = tabButtons.length - 1
-    else return
-    event.preventDefault()
-    tabButtons[nextIndex].focus()
-    tabButtons[nextIndex].click()
-  }
-
-  useEffect(() => {
-    document.body.dataset.view = 'community'
-    document.title = 'Social Jackets · WarmPath'
-    document.body.dataset.communityTheme = theme
-    try { localStorage.setItem(COMMUNITY_THEME_KEY, theme) } catch (error) {}
-  }, [theme])
-
-  useEffect(() => {
-    if (!detail) return undefined
-    const onKey = (event) => { if (event.key === 'Escape') setDetail(null) }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [detail])
-
-  useEffect(() => {
-    const wrapper = feedScrollRef.current
-    if (!wrapper || REDUCED || !window.Lenis) return undefined
-    const lenis = new window.Lenis({
-      wrapper,
-      content: wrapper.firstElementChild,
-      eventsTarget: wrapper,
-      autoRaf: true,
-      smoothWheel: true,
-      syncTouch: false,
-      lerp: 0.12,
-      respectReducedMotion: true,
-    })
-    return () => lenis.destroy()
-  }, [])
-
-  const visiblePosts = [...posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-  const events = [...SOCIAL_EVENTS].sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at))
-
-  const publish = (text, linkedRecordId) => {
-    setPosts((current) => [{
-      id: 'post:session:' + Date.now(),
-      authorId: 'person:1',
-      createdAt: new Date().toISOString(),
-      text,
-      linkedRecordId,
-    }, ...current])
-  }
-
-  return (
-    <>
-      <Backdrop />
-      <div className="veil" />
-      <div className={'hive community-atmosphere community-atmosphere-' + theme} aria-hidden="true">
-        <Canvas dpr={[1, 2]} frameloop="always" gl={{ alpha: true, antialias: true }} camera={{ fov: 35, position: [0, 0, 10] }}>
-          <hemisphereLight args={['#ffe2a0', '#160a02', 0.75]} />
-          <directionalLight position={[-3, 4, 6]} intensity={2.6} color="#fff3d6" />
-          <pointLight position={[3, -2.5, 2.5]} intensity={45} color="#ff6a1f" />
-          <Hive scroll={backgroundScroll} />
-        </Canvas>
-      </div>
-      <div className={'swarm community-atmosphere community-atmosphere-' + theme} aria-hidden="true">
-        <Canvas orthographic dpr={[1, 2]} gl={{ alpha: false, antialias: false }} camera={{ position: [0, 0, 10], near: 0.1, far: 100 }}>
-          <color attach="background" args={['#000000']} />
-          <Swarm mode="map" viewport={viewport} stops={SOCIAL_PATH_FIXTURE.stops} />
-        </Canvas>
-      </div>
-      <main className="community-page" data-theme={theme}>
-        <header className="community-bar">
-          <a className="mark" href="#" aria-label="WarmPath, go to Paths"><i />WarmPath</a>
-          <SectionTabs active="community" />
-        </header>
-
-        <div className="community-content">
-          <header className="community-heading">
-            <div>
-              <span className="cap">Student demo · WarmPath community</span>
-              <h1>Social Jackets</h1>
-              <p>Campus updates from fictional Georgia Tech student profiles.</p>
-            </div>
-            <button
-              className="community-theme-switch"
-              type="button"
-              role="switch"
-              aria-checked={theme === 'light'}
-              aria-label="Light theme"
-              onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
-            >
-              <span>Light</span>
-              <span className="community-theme-track" aria-hidden="true"><i /></span>
-              <span>Dark</span>
-            </button>
-          </header>
-
-          <div className="community-mobile-identity">
-            <span className="community-avatar" aria-hidden="true">MC</span>
-            <div><strong>Maya Chen</strong><span>Computer Engineering · Second-year · Demo student</span></div>
-            <button className="community-small-button" onClick={() => setDetail({ kind: 'profile', id: 'person:1' })}>Profile</button>
-          </div>
-
-          <div className="community-mobile-tabs" role="tablist" aria-label="Social Jackets sections" onKeyDown={handleMobileTabKey}>
-            <button id="community-feed-tab" type="button" role="tab" aria-selected={mobileFocus === 'feed'} aria-controls="community-feed-panel" onClick={() => setMobileFocus('feed')}>Feed</button>
-            <button id="community-campus-tab" type="button" role="tab" aria-selected={mobileFocus === 'campus'} aria-controls="community-campus-panel" onClick={() => setMobileFocus('campus')}>Campus</button>
-          </div>
-
-          <div className="community-dashboard" data-focus={mobileFocus}>
-            <aside className="community-identity">
-              <div className="community-identity-avatar" aria-hidden="true">MC</div>
-              <span className="cap">Current demo student</span>
-              <h2>Maya Chen</h2>
-              <p>Computer Engineering (CompE)</p>
-              <p>Second-year · fictional student profile</p>
-              <button className="community-small-button" onClick={() => setDetail({ kind: 'profile', id: 'person:1' })}>Open demo profile</button>
-              <p className="community-local-note">Social Jackets is student-focused in this prototype. Posts remain in this page session.</p>
-            </aside>
-
-            <section className="community-feed" id="community-feed-panel" role="tabpanel" aria-labelledby="community-feed-tab">
-              <header className="community-feed-head">
-                <div><span className="cap">Student feed</span><h2>Latest updates</h2></div>
-                <button className="community-small-button community-publish" onClick={() => setDetail({ kind: 'composer' })}>Share an update…</button>
-              </header>
-              <div className="community-feed-scroll" ref={feedScrollRef}>
-                <div className="community-feed-content">
-                  {visiblePosts.map((post) => {
-                    const author = SOCIAL_PROFILES[post.authorId]
-                    const record = post.linkedRecordId && SOCIAL_RECORDS_BY_ID.get(post.linkedRecordId)
-                    const initials = author.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
-                    return (
-                      <article className="community-post" key={post.id}>
-                        <header className="community-post-head">
-                          <span className="community-avatar" aria-hidden="true">{initials}</span>
-                          <div className="community-author-block">
-                            <button className="community-author" onClick={() => setDetail({ kind: 'profile', id: author.id })}>{author.name}</button>
-                            <span className="community-author-context">Fictional student demo profile · {author.major}</span>
-                            <time className="community-timestamp" dateTime={post.createdAt}>{formatSocialTimestamp(post.createdAt)}{post.id.startsWith('post:session:') ? ' · Session demo post' : ''}</time>
-                          </div>
-                        </header>
-                        <p className="community-post-text">{post.text}</p>
-                        {record && (
-                          <button className="community-linked-record" onClick={() => setDetail({ kind: 'record', id: record.id })}>
-                            <span><span className="cap linked-type">Linked {record.type} · fixture {record.id}</span><span className="linked-title">{record.title}</span></span>
-                            <span className="linked-action">View details</span>
-                          </button>
-                        )}
-                      </article>
-                    )
-                  })}
-                </div>
-              </div>
-              <p className="community-local-note">Fictional student demo posts · no cross-device sharing</p>
-            </section>
-
-            <aside className="community-events" id="community-campus-panel" role="tabpanel" aria-labelledby="community-campus-tab">
-              <header className="community-events-head">
-                <div><span className="cap">Fictional event fixtures</span><h2>On campus</h2></div>
-                <p>Not official listings</p>
-              </header>
-              <div className="community-event-scroll">
-                {events.map((event) => {
-                  const day = api.eventDay(event.starts_at)
-                  return (
-                    <article className="community-event-card" key={event.id}>
-                      <span className="cap">Club activity · demo data</span>
-                      <h3>{event.title}</h3>
-                      <p className="organizer">{event.organizer}</p>
-                      <p className="community-event-meta"><span>{day.weekdayLong}, {day.month} {day.day} · {day.time}</span><span>{event.location}</span></p>
-                      <p className="community-source">{event.sourceStatus}</p>
-                      <button className="community-small-button" onClick={() => setDetail({ kind: 'record', id: event.id })}>Event details</button>
-                    </article>
-                  )
-                })}
-              </div>
-            </aside>
-          </div>
+      {view === 'map' && <section className="map" aria-label="Resource results">
+        <div className="graph-caption"><b>{result?.goal.label}</b> · {items.length} {items.length === 1 ? 'resource' : 'resources'}<br/>Explore official campus resources related to your goal.
+          {result?.job && <><br/><a href={result.job.url} target="_blank" rel="noreferrer" style={{color:'var(--glow)'}}>View employer listing ↗</a> · Description-based topic matches · Checked {result.job.verified_on}</>}
+          {busy && <span role="status"> Loading…</span>}{error && <p className="error" role="alert">{error}</p>}
         </div>
-
-        <CommunityDialog
-          detail={detail}
-          onClose={() => setDetail(null)}
-          onOpenRecord={(id) => setDetail({ kind: 'record', id })}
-          onPublish={publish}
-        />
-      </main>
-    </>
-  )
+        {!items.length ? <div className="catalog"><div><h2>{result?.status === 'no_match' ? 'No matching resources yet' : 'Nothing saved yet'}</h2>
+          <p>Try another goal or browse the campus catalog.</p><button className="pill" onClick={toGoal}>Change goal</button> <button className="pill" onClick={() => browse(false)}>Browse resources</button></div></div>
+        : compact ? <div className="catalog">{items.map(resource => <button className="resource-card" key={resource.id} onClick={() => setPanel(resource.id)}>
+          <h3>{resource.name}</h3><p>{resource.kind}{resource.saved ? ' · Saved' : ''}</p><p>{resource.summary}</p></button>)}</div>
+        : <>
+          <svg className="connections" width={viewport.w} height={viewport.h} aria-hidden="true">{items.map((resource, i) => {
+            const at = place(slots[i], viewport)
+            return <path className={resource.saved ? 'saved' : ''} key={resource.id} d={`M${you.x},${you.y} C${at.x-80},${you.y} ${at.x-80},${at.y} ${at.x},${at.y} S${goal.x-60},${goal.y} ${goal.x},${goal.y}`}/>
+          })}</svg>
+          <button className="node end" data-side={you.side} style={{transform:`translate(${you.x}px,${you.y}px)`,'--d':'36px'}} onClick={toGoal}><Hex/><span className="tag"><span className="name">Your goal</span><span className="count">Edit your search</span></span></button>
+          {items.map((resource,i) => <ResourceNode key={resource.id} resource={resource} at={place(slots[i],viewport)} onOpen={() => setPanel(resource.id)}/>)}
+          <button className="node end" data-side={goal.side} style={{transform:`translate(${goal.x}px,${goal.y}px)`,'--d':'76px'}} onClick={() => browse(true)}><Hex/><span className="tag"><span className="name">Your next steps</span><span className="count">Review saved resources</span></span></button>
+        </>}
+        <div className="strip"><h2 className="cap">From GT Engage and the campus calendar</h2>
+          {eventError ? <p className="error">{eventError}</p> : <ol>{(eventData?.items || []).slice(0,2).map(event => <li key={event.url}><b>{new Date(event.starts_at).toLocaleDateString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric'})}</b><div><a href={event.url} target="_blank" rel="noreferrer">{event.title} ↗</a></div></li>)}</ol>}
+          <p className="event-note">{eventData?.stale ? 'Snapshot needs refresh · ' : ''}Open the source for schedules and registration.</p><button className="pill" onClick={() => setPanel('events')}>View events</button>
+        </div>
+        <div className="graph-actions"><p>Explore a different goal or keep useful resources in your saved list.</p><button className="pill" onClick={toGoal}>Change goal</button></div>
+      </section>}
+      <aside className="panel" data-open={panel !== null} aria-hidden={panel === null} inert={panel === null} aria-label="Resource details">
+        <button className="close cap" ref={closeButton} onClick={() => setPanel(null)}>Close</button>
+        {panel === 'events' ? <><h2>Campus events</h2>{eventBusy && <p role="status">Loading events…</p>}{eventError && <p className="error" role="alert">{eventError}</p>}<button className="pill" disabled={eventBusy} onClick={loadEvents}>Reload snapshot</button><EventList data={eventData}/></>
+        : active && <><p className="cap quiet">{active.kind}</p><h2>{active.name}</h2><p className="lede">{active.summary}</p>
+          <a className="pill hot" href={active.url} target="_blank" rel="noreferrer">Open official resource ↗</a>
+          <button className="pill" disabled={saving} onClick={() => toggleSaved(active)}>{saving ? 'Saving…' : active.saved ? 'Remove from saved' : 'Save resource'}</button>
+          <p role="status" className="notice">{active.saved ? 'Saved to your private browser workspace.' : ''}</p>
+          {error && <p className="error" role="alert">{error}</p>}
+          <dl><dt>Access</dt><dd>{active.access}</dd><dt>Source</dt><dd><a href={active.source_url} target="_blank" rel="noreferrer">View source ↗</a></dd><dt>Catalog entry checked</dt><dd>{active.verified_on}</dd></dl>
+          {active.topics?.length > 0 && <><h3>Topics in the description</h3><div className="topic-list">{active.topics.map(topic => <span key={topic}>{topic}</span>)}</div></>}
+          {active.related_jobs?.length > 0 && <><h3>Related job topics</h3><p className="quiet">These matches compare published descriptions. They do not verify alumni attendance or establish that a course satisfies every job requirement.</p>
+            {active.related_jobs.map(job => <article className="job-match" key={job.id}><h4><a href={job.url} target="_blank" rel="noreferrer">{job.title} ↗</a></h4>
+              <p>{job.employer} · {job.location} · Checked {job.verified_on}</p><p><strong>Shared topics:</strong> {job.matched_topics.join(', ')}</p><p>{job.context}</p></article>)}
+          </>}
+          <p className="quiet">This is a campus resource, not a claim that participation causes a career outcome. Check the source for current dates and eligibility.</p></>}
+      </aside>
+    </main>
+  </>
 }
 
+function ProfileField({label, value, onChange, type='text', ...rest}) {
+  return <label className="profile-field"><span>{label}</span><input aria-label={label} type={type} value={value ?? ''} onChange={e => onChange(e.target.value)} {...rest}/></label>
+}
 
-function Reply({ id }) {
-  const [ask, setAsk] = useState(() => api.getAsk(id))
-  useEffect(() => { document.body.dataset.view = 'reply' }, [])
-  useEffect(() => { document.body.dataset.accepted = ask.status === 'accepted' }, [ask.status])
-  useEffect(() => api.subscribe(() => setAsk(api.getAsk(id))), [id])
-  const first = ask.student.name.split(' ')[0]
-  const accepted = ask.status === 'accepted'
-  return (
-    <>
-      <Backdrop />
-      <div className="veil" />
-      <main className="ui reply">
-        <article>
-          <span className="mark"><i />WarmPath</span>
-          <h1>{ask.student.name} would like 15 minutes of your time.</h1>
-          <p className="who">{ask.student.major}, {api.ordinal(ask.student.school_year)} year at Georgia Tech</p>
-          <dl>
-            <dt className="cap">What you share</dt>
-            <dd className="tie">{ask.shared_tie.replace(/^You are both/, 'You are both').replace('your next stop', `${first}’s next stop`)}</dd>
-            <dt className="cap">{first}’s question</dt>
-            <dd className="msg">{ask.message}</dd>
-          </dl>
-          <button className="accept" disabled={accepted} onClick={() => setAsk(api.acceptAsk(id))}>
-            {accepted ? 'Accepted' : 'Accept a 15-minute call'}
-          </button>
-          <p className="after">{accepted ? `${first} can see that you said yes.` : 'One tap. No account needed.'}</p>
-        </article>
-      </main>
-    </>
-  )
+function ProfileSelect({label, value, onChange, options}) {
+  return <label className="profile-field"><span>{label}</span><select aria-label={label} value={value ?? ''} onChange={e => onChange(e.target.value)}>{options.map(([v,t]) => <option key={v} value={v}>{t}</option>)}</select></label>
+}
+
+function ProfileEntry({section, entry, onChange, resources, review=false}) {
+  const field = (key, value) => onChange({...entry, [key]:value})
+  const options = resources.filter(r => section === 'courses' ? r.kind === 'Course' : r.kind === 'VIP project')
+  return <div className="profile-entry-fields">
+    {section === 'contacts' ? <>
+      <ProfileSelect label="Contact type" value={entry.kind || 'email'} onChange={v => field('kind',v)} options={['email','phone','portfolio','github','linkedin'].map(v => [v,v])}/>
+      <ProfileField label="Contact value" value={entry.value} onChange={v => field('value',v)} maxLength={500}/>
+    </> : section === 'experiences' ? <>
+      <ProfileSelect label="Experience type" value={entry.kind || 'job'} onChange={v => field('kind',v)} options={['job','internship','research','vip','club','project','volunteering'].map(v => [v,v])}/>
+      <ProfileField label="Role or project title" value={entry.title} onChange={v => field('title',v)} maxLength={200}/>
+      <ProfileField label="Organization" value={entry.organization} onChange={v => field('organization',v)} maxLength={200}/>
+      <div className="profile-columns"><ProfileField label="Start (YYYY or YYYY-MM)" value={entry.start} onChange={v => field('start',v)} maxLength={7}/>
+      <ProfileField label="End (YYYY or YYYY-MM)" value={entry.end} onChange={v => field('end',v)} disabled={entry.ongoing} maxLength={7}/></div>
+      <label className="profile-check"><input type="checkbox" checked={entry.ongoing || false} onChange={e => onChange({...entry, ongoing:e.target.checked, end:e.target.checked ? '' : entry.end})}/>I currently do this</label>
+      <label className="profile-field"><span>Description</span><textarea aria-label="Description" value={entry.description || ''} onChange={e => field('description',e.target.value)} maxLength={4000}/></label>
+    </> : <>
+      <div className="profile-columns"><ProfileField label="Course code" value={entry.code} onChange={v => field('code',v)} maxLength={30}/>
+      <ProfileField label="Course title" value={entry.title} onChange={v => field('title',v)} maxLength={200}/></div>
+      <ProfileField label="Institution" value={entry.institution} onChange={v => field('institution',v)} maxLength={200}/>
+      <div className="profile-columns"><ProfileField label="Term (for example Fall 2026)" value={entry.term} onChange={v => field('term',v)} maxLength={50}/>
+      <ProfileSelect label="Course status" value={entry.status || 'unspecified'} onChange={v => field('status',v)} options={['unspecified','planned','in_progress','taken','completed'].map(v => [v,v==='completed' ? 'Completed (self-reported)' : v.replace('_',' ')])}/></div>
+      <ProfileSelect label="Record type" value={entry.record_type || 'coursework'} onChange={v => field('record_type',v)} options={[["coursework","Coursework"],["transfer_credit","Transfer credit"],["exam_credit","Exam / AP credit"]]}/>
+    </>}
+    {section !== 'contacts' && <ProfileSelect label="Link a campus resource (optional; confirm the match)" value={entry.resource_id || ''} onChange={v => field('resource_id',v ? Number(v) : null)} options={[["",'No linked resource'], ...options.map(r => [r.id,r.name])]}/>}
+    {!review && <label className="profile-check"><input type="checkbox" checked={entry.visible || false} onChange={e => field('visible',e.target.checked)}/>Show this entry when my profile is public</label>}
+    {!review && <p className="quiet">{entry.source === 'resume' ? 'Imported from your resume' : entry.source === 'transcript' ? 'Imported from your transcript' : 'Entered manually'} · Self-reported</p>}
+  </div>
+}
+
+function ProfileScreen({onBack,onCourses}) {
+  const [record,setRecord] = useState(null), [profile,setProfile] = useState(null), [loading,setLoading] = useState(true)
+  const [busy,setBusy] = useState(false), [error,setError] = useState(''), [notice,setNotice] = useState('')
+  const [register,setRegister] = useState(false), [email,setEmail] = useState(''), [password,setPassword] = useState(''), [name,setName] = useState('')
+  const [options,setOptions] = useState({resources:[],cities:[]}), [drafts,setDrafts] = useState([]), [draft,setDraft] = useState(null)
+  const [selected,setSelected] = useState({}), [pasted,setPasted] = useState(''), [matches,setMatches] = useState(null), [deleteText,setDeleteText] = useState('')
+  const dirty = Boolean(record && JSON.stringify(profile) !== JSON.stringify(record.profile))
+  const fileInput = useRef(null)
+  const accept = data => {setRecord(data); setProfile(structuredClone(data.profile))}
+  const refreshExtras = async () => {
+    const [o,d,m] = await Promise.all([api.request('/profile-options'),api.request('/resumes'),api.request('/me/matches')])
+    setOptions(o); setDrafts(d.items); setMatches(m)
+  }
+  const load = async () => {
+    setError(''); setLoading(true)
+    try {const data = await api.request('/me'); accept(data); await refreshExtras()}
+    catch(e) {if(e.status !== 401) setError(e.message)}
+    finally {setLoading(false)}
+  }
+  useEffect(() => {load()}, [])
+  useEffect(() => {
+    const warn = e => {if(dirty) {e.preventDefault(); e.returnValue=''}}
+    window.addEventListener('beforeunload',warn)
+    return () => window.removeEventListener('beforeunload',warn)
+  }, [dirty])
+  const run = async action => {setBusy(true);setError('');setNotice('');try {await action()} catch(e) {setError(e.message)} finally {setBusy(false)}}
+  const auth = e => {e.preventDefault(); run(async () => {
+    const data = await api.request('/auth/' + (register ? 'register' : 'login'), {method:'POST',body:JSON.stringify({email,password,...(register ? {name} : {})})})
+    accept(data);setPassword('');await refreshExtras()
+  })}
+  const change = (key,value) => setProfile(p => ({...p,[key]:value}))
+  const add = section => {
+    const entry = {id:crypto.randomUUID(),source:'manual',source_id:null,visible:false,
+      ...(section === 'contacts' ? {kind:'email',value:''} : section === 'courses' ? {code:'',title:'',institution:'',term:'',status:'unspecified',resource_id:null} : {kind:'job',title:'',organization:'',start:'',end:'',ongoing:false,description:'',resource_id:null})}
+    change(section,[...profile[section],entry])
+  }
+  const save = () => run(async () => {
+    accept(await api.request('/me',{method:'PUT',body:JSON.stringify({version:record.version,profile})}))
+    setNotice('Profile saved.');await refreshExtras()
+  })
+  const openDraft = data => {setDraft(data);setSelected({});setNotice('Review suggestions and choose which entries to import. Nothing is selected automatically.')}
+  const upload = file => run(async () => {
+    if(!file) return
+    if(file.size > 5*1024*1024) throw new Error('Choose a file up to 5 MB.')
+    const extension = file.name.split('.').pop().toLowerCase()
+    openDraft(await api.request('/resumes?filename=resume.'+encodeURIComponent(extension),{method:'POST',body:file,headers:{'Content-Type':'application/octet-stream'},timeout:45000}))
+    if(fileInput.current) fileInput.current.value=''
+    await refreshExtras()
+  })
+  const leave = () => {if(!dirty || confirm('Leave without saving your profile edits?')) onBack()}
+  return <main className="profile-page">
+    <header className="profile-header"><button className="mark" onClick={leave}><i/>WarmPath</button><nav><button className="pill" disabled={busy} onClick={() => {if(!dirty || confirm('Leave without saving profile edits?')) onCourses()}}>My Courses</button><button className="pill" onClick={leave} disabled={busy}>Back to resources</button></nav></header>
+    <div className="profile-intro"><p className="cap quiet">Your campus story</p><h1>My Profile</h1><p>Add your experiences and ways to connect. Your classes and transcript imports live on My Courses.</p></div>
+    {error && <p className="profile-message error" role="alert">{error}</p>}
+    {notice && <p className="profile-message" role="status">{notice}</p>}
+    {loading ? <p role="status">Loading your profile…</p> : !record ? <section className="profile-card profile-auth"><h2>{register ? 'Create your account' : 'Sign in'}</h2>
+      <p>Your resume and draft profile stay private. These local accounts do not verify Georgia Tech membership. Use a new password; password recovery is not available in this local build.</p>
+      <form onSubmit={auth}><fieldset disabled={busy}>
+        {register && <ProfileField label="Your name" value={name} onChange={setName} required maxLength={150}/>}
+        <ProfileField label="Account email" type="email" value={email} onChange={setEmail} required autoComplete="username"/>
+        <ProfileField label="Password (12–128 characters)" type="password" value={password} onChange={setPassword} required minLength={12} maxLength={128} autoComplete={register ? 'new-password' : 'current-password'}/>
+        <button className="pill hot" type="submit">{busy ? 'Please wait…' : register ? 'Create account' : 'Sign in'}</button>
+        <button className="pill" type="button" onClick={() => {setRegister(!register);setError('')}}>{register ? 'Already have an account' : 'Create an account'}</button>
+      </fieldset></form>{error && <button className="pill" onClick={load}>Retry loading</button>}
+    </section> : <>
+      <div className="profile-actions"><span>{record.email} · {dirty ? 'Unsaved changes' : 'Saved'}</span><button className="pill hot" disabled={busy || !dirty} onClick={save}>Save profile</button>
+        <button className="pill" disabled={busy} onClick={() => {if(!dirty || confirm('Reload and discard your unsaved profile edits?')) load()}}>Reload profile</button>
+        <button className="pill" disabled={busy} onClick={() => {if(dirty && !confirm('Sign out without saving your edits?')) return;run(async () => {await api.request('/auth/logout',{method:'POST'});setRecord(null);setProfile(null);setDraft(null);setDrafts([]);setPasted('');setMatches(null)})}}>Sign out</button></div>
+      <div className="profile-layout"><div>
+        <section className="profile-card"><h2>About you</h2><fieldset disabled={busy}>
+          <ProfileField label="Name" value={profile.name} onChange={v => change('name',v)} maxLength={150}/>
+          <ProfileSelect label="Student or alumni" value={profile.kind} onChange={v => change('kind',v)} options={[["student","Student"],["alum","Alumni"]]}/>
+          <div className="profile-columns"><ProfileField label="Major" value={profile.major} onChange={v => change('major',v)} maxLength={200}/>
+          <ProfileField label="Graduation year" type="number" value={profile.grad_year} onChange={v => change('grad_year',v ? Number(v) : null)} min={1900} max={2100}/></div>
+          <label className="profile-field"><span>Introduction</span><textarea aria-label="Introduction" maxLength={2000} value={profile.introduction} onChange={e => change('introduction',e.target.value)}/></label>
+        </fieldset></section>
+        {['contacts','experiences'].map(section => <section className="profile-card" key={section}><h2>{section === 'contacts' ? 'Contact information' : 'Experiences'}</h2>
+          <fieldset disabled={busy}>{profile[section].length === 0 && <p className="quiet">No entries yet. Add one below or import a resume suggestion.</p>}
+          {profile[section].map((entry,index) => <article className="profile-entry" key={entry.id}>
+            <ProfileEntry section={section} entry={entry} resources={options.resources} onChange={value => change(section,profile[section].map((item,i) => i===index ? value : item))}/>
+            <button className="pill" onClick={() => change(section,profile[section].filter((_,i) => i!==index))}>Remove {section === 'courses' ? 'class' : section === 'contacts' ? 'contact' : 'experience'}</button>
+          </article>)}<button className="pill" onClick={() => add(section)}>Add {section === 'courses' ? 'class' : section === 'contacts' ? 'contact' : 'experience'}</button></fieldset>
+        </section>)}
+        <section className="profile-card"><h2>Sharing</h2><fieldset disabled={busy}>
+          <label className="profile-check"><input type="checkbox" checked={profile.profile_visible} onChange={e => change('profile_visible',e.target.checked)}/>Make my profile public</label>
+          <p className="quiet">A public profile shares your name, major, graduation year, introduction, and entries you explicitly choose to show. Resume files and review drafts are never public.</p>
+          <ProfileSelect label="City" value={profile.city_id || ''} onChange={v => setProfile(p => ({...p,city_id:v ? Number(v) : null,share_city:v ? p.share_city : false}))} options={[["","No city selected"], ...options.cities.map(c => [c.id,`${c.name}, ${c.region || c.country_code}`])]}/>
+          {!options.cities.length && <p className="quiet">The shared city catalog is not populated yet. City sharing will be available when it is added.</p>}
+          <label className="profile-check"><input type="checkbox" disabled={!profile.city_id} checked={profile.share_city} onChange={e => change('share_city',e.target.checked)}/>Share my selected city with my public profile</label>
+        </fieldset></section>
+        <button className="pill hot" disabled={busy || !dirty} onClick={save}>Save profile</button>
+      </div><div>
+        <section className="profile-card"><h2>Import your resume</h2><p>Upload PDF or DOCX (up to 5 MB, 20 PDF pages). Review and edit suggestions before importing them. Raw files are processed without being saved.</p>
+          <fieldset disabled={busy}><label className="profile-field"><span>Resume file</span><input ref={fileInput} type="file" accept=".pdf,.docx" onChange={e => {const file=e.target.files[0];e.target.value='';upload(file)}}/></label>
+          <details><summary>Paste resume text instead</summary><label className="profile-field"><span>Resume text</span><textarea aria-label="Resume text" value={pasted} onChange={e => setPasted(e.target.value)} maxLength={50000}/></label>
+          <button className="pill" disabled={pasted.trim().length < 20} onClick={() => run(async () => {openDraft(await api.request('/resumes/text',{method:'POST',body:JSON.stringify({text:pasted})}));setPasted('');await refreshExtras()})}>Parse pasted text</button></details></fieldset>
+          {busy && <p role="status">Processing…</p>}<p className="quiet">Drafts expire after 24 hours. Importing or discarding a draft deletes its extracted text. Scanned PDFs need pasted text or manual entry.</p>
+          {drafts.map(d => <div className="profile-draft-link" key={d.id}><button className="pill" disabled={busy} onClick={() => run(async () => openDraft(await api.request('/resumes/'+d.id)))}>Review draft</button><span className="quiet">Expires {new Date(d.expires_at).toLocaleString()}</span><button className="pill" disabled={busy} onClick={() => run(async () => {await api.request('/resumes/'+d.id,{method:'DELETE'});if(draft?.id===d.id)setDraft(null);await refreshExtras()})}>Discard</button></div>)}
+        </section>
+        {draft && <section className="profile-card resume-review"><h2>Review resume suggestions</h2><p>Choose entries to import. New entries are private. Existing entries are preserved and duplicates are skipped. Selecting a name, major, or graduation year replaces that field in your profile and follows your profile's sharing setting.</p>
+          {draft.warnings.map(w => <p className="quiet" key={w}>{w}</p>)}
+          <details><summary>Read extracted resume text</summary><pre>{draft.text}</pre></details>
+          <fieldset disabled={busy}>{draft.candidates.length===0 && <p>No structured suggestions found. Use the extracted text to fill your profile manually.</p>}
+          {draft.candidates.map((candidate,index) => <article className="profile-entry" key={candidate.id}>
+            <label className="profile-check"><input type="checkbox" checked={Boolean(selected[candidate.id])} onChange={e => setSelected(s => ({...s,[candidate.id]:e.target.checked}))}/>Import {['name','major','grad_year'].includes(candidate.section) ? `${candidate.section.replace('grad_year','graduation year')} (replaces current value)` : candidate.section === 'courses' ? 'class' : candidate.section === 'contacts' ? 'contact' : 'experience'}</label>
+            {['name','major','grad_year'].includes(candidate.section) ? <ProfileField label={'Suggested '+candidate.section.replace('grad_year','graduation year')} type={candidate.section==='grad_year' ? 'number' : 'text'} value={candidate.value} onChange={v => setDraft(d => ({...d,candidates:d.candidates.map((c,i) => i===index ? {...c,value:candidate.section==='grad_year' ? Number(v) : v} : c)}))}/> :
+              <ProfileEntry section={candidate.section} entry={candidate.value} resources={options.resources} review onChange={value => setDraft(d => ({...d,candidates:d.candidates.map((c,i) => i===index ? {...c,value} : c)}))}/>}
+            <details><summary>Source text</summary><pre>{candidate.evidence}</pre></details>
+          </article>)}
+          {dirty && <p>Save your profile edits before importing suggestions.</p>}
+          <button className="pill hot" disabled={dirty || !Object.values(selected).some(Boolean)} onClick={() => run(async () => {
+            const data = await api.request('/resumes/'+draft.id+'/import',{method:'POST',body:JSON.stringify({version:record.version,courses_version:record.courses_version,selections:draft.candidates.filter(c => selected[c.id]).map(c => ({id:c.id,value:c.value}))})})
+            accept(data);setDraft(null);setNotice(`Selected entries imported. ${data.duplicates_skipped} duplicates skipped.`);await refreshExtras()
+          })}>Import selected entries</button></fieldset>
+        </section>}
+        <section className="profile-card"><h2>Related job topics</h2><p>Link a class or VIP project to its campus catalog entry and save to see related job descriptions. These matches do not verify your skills or eligibility.</p>
+          {matches?.items.length ? matches.items.map(job => <article className="profile-entry" key={job.id}><a href={job.url} target="_blank" rel="noreferrer">{job.title} ↗</a><p>{job.matched_topics.join(', ')}</p></article>) : <p className="quiet">No matches from saved catalog links yet.</p>}
+        </section>
+        <section className="profile-card"><details><summary>Delete my account and profile</summary><p>Deletes your profile, resume drafts, and account sessions. This cannot be undone. Your anonymous resource workspace is separate.</p>
+          <ProfileField label="Type DELETE to confirm" value={deleteText} onChange={setDeleteText}/><button className="pill" disabled={busy || deleteText!=='DELETE'} onClick={() => run(async () => {await api.request('/me',{method:'DELETE'});setRecord(null);setProfile(null);setDraft(null);setDrafts([]);setDeleteText('');setPasted('');setNotice('Account and profile deleted.')})}>Delete account permanently</button></details></section>
+      </div></div>
+    </>}
+  </main>
+}
+
+function CoursesScreen({onBack,onProfile}) {
+  const [collection,setCollection] = useState(null), [loading,setLoading] = useState(true), [needsLogin,setNeedsLogin] = useState(false)
+  const [busy,setBusy] = useState(false), [error,setError] = useState(''), [notice,setNotice] = useState('')
+  const [options,setOptions] = useState([]), [drafts,setDrafts] = useState([]), [draft,setDraft] = useState(null), [selected,setSelected] = useState({})
+  const [editing,setEditing] = useState(null), [pasted,setPasted] = useState(''), [matches,setMatches] = useState(null)
+  const [search,setSearch] = useState(''), [institution,setInstitution] = useState(''), [status,setStatus] = useState(''), [limit,setLimit] = useState(50)
+  const run = async action => {setBusy(true);setError('');setNotice('');try {await action()} catch(e) {setError(e.message)} finally {setBusy(false)}}
+  const extras = async () => {const [o,d,m] = await Promise.all([api.request('/profile-options'),api.request('/transcripts'),api.request('/me/matches')]);setOptions(o.resources);setDrafts(d.items);setMatches(m)}
+  const load = async () => {setLoading(true);setError('');try {setCollection(await api.request('/me/courses'));setNeedsLogin(false);await extras()} catch(e) {if(e.status===401)setNeedsLogin(true);else setError(e.message)} finally {setLoading(false)}}
+  useEffect(() => {load()},[])
+  useEffect(() => {setLimit(50)},[search,institution,status])
+  useEffect(() => {const warn=e=>{if(editing){e.preventDefault();e.returnValue=''}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn)},[editing])
+  const leave = target => {if(!editing || confirm('Leave without saving this course edit?')) target()}
+  const openDraft = async id => {setDraft(await api.request('/transcripts/'+id));setSelected({})}
+  const upload = file => run(async () => {
+    if(!file)return
+    if(!file.name.toLowerCase().endsWith('.pdf') || file.size>5*1024*1024)throw new Error('Choose a PDF up to 5 MB or paste transcript text.')
+    const data=await api.request('/transcripts',{method:'POST',body:file,headers:{'Content-Type':'application/octet-stream'},timeout:45000})
+    await openDraft(data.id);await extras();setNotice('Review every course against the original transcript before importing.')
+  })
+  const edit = row => {if(editing && !confirm('Discard the current course edit?'))return;setEditing({isNew:!row,course:row ? structuredClone(row) : {code:'',title:'',institution:'',term:'',status:'unspecified',record_type:'coursework',resource_id:null,visible:false},version:collection.version})}
+  const saveCourse = () => run(async () => {setCollection(await api.request('/me/courses'+(editing.isNew ? '' : '/'+editing.course.id),{method:editing.isNew?'POST':'PUT',body:JSON.stringify({version:editing.version,course:editing.course})}));setEditing(null);await extras();setNotice('Course saved.')})
+  const rows=collection?.items || []
+  const filtered=rows.filter(c=>(!institution || c.institution===institution)&&(!status || c.status===status)&&[c.code,c.title,c.term,c.institution].join(' ').toLowerCase().includes(search.toLowerCase()))
+    .sort((a,b)=>{const order=t=>{const y=Number(t.match(/\d{4}/)?.[0]||0);return y*10+(/fall/i.test(t)?4:/summer/i.test(t)?3:/spring/i.test(t)?2:1)};return order(b.term)-order(a.term)||a.code.localeCompare(b.code)})
+  const groups=Object.groupBy(filtered.slice(0,limit),c=>c.term || 'Term not specified')
+  return <main className="profile-page courses-page">
+    <header className="profile-header"><button className="mark" onClick={()=>leave(onBack)}><i/>WarmPath</button><nav><button className="pill" disabled={busy} onClick={()=>leave(onProfile)}>My Profile</button><button className="pill" disabled={busy} onClick={()=>leave(onBack)}>Back to resources</button></nav></header>
+    <div className="profile-intro"><p className="cap quiet">Your academic journey</p><h1>My Courses</h1><p>Keep your course history in one place. Import a transcript or add courses yourself. Grades and GPA are not used.</p></div>
+    {error && <p className="profile-message error" role="alert">{error}</p>}{notice && <p className="profile-message" role="status">{notice}</p>}
+    {loading ? <p role="status">Loading courses…</p> : needsLogin ? <section className="profile-card"><h2>Sign in to manage courses</h2><p>Use your WarmPath account to keep courses and transcript drafts private.</p><button className="pill hot" onClick={onProfile}>Sign in or create an account</button></section> : !collection ? <button className="pill" onClick={load}>Retry loading courses</button> : <>
+      <div className="profile-actions"><span>{collection.total} saved course entries · Private unless you choose to share</span><button className="pill hot" disabled={busy} onClick={()=>edit(null)}>Add course</button><button className="pill" disabled={busy} onClick={()=>{if(editing&&!confirm('Reload and discard your course edit?'))return;setEditing(null);load()}}>Reload courses</button></div>
+      <div className="profile-layout"><div>
+        {editing && <section className="profile-card course-editor"><h2>{editing.isNew?'Add a course':'Edit course'}</h2><fieldset disabled={busy}><ProfileEntry section="courses" entry={editing.course} resources={options} onChange={course=>setEditing(e=>({...e,course}))}/><button className="pill hot" onClick={saveCourse}>Save course</button><button className="pill" onClick={()=>setEditing(null)}>Cancel edit</button></fieldset></section>}
+        <section className="profile-card"><h2>Course history</h2>
+          <ProfileField label="Search courses" value={search} onChange={setSearch} placeholder="Code, title, institution or term"/>
+          <div className="profile-columns"><ProfileSelect label="Filter by institution" value={institution} onChange={setInstitution} options={[["","All institutions"],...[...new Set(rows.map(c=>c.institution).filter(Boolean))].sort().map(i=>[i,i])]}/><ProfileSelect label="Filter by status" value={status} onChange={setStatus} options={[["","All statuses"],...['unspecified','planned','in_progress','taken','completed'].map(s=>[s,s.replace('_',' ')])]}/></div>
+          <p className="quiet">Showing {Math.min(limit,filtered.length)} of {filtered.length} matching entries. Listed courses do not establish passing or prerequisite completion.</p>
+          {!filtered.length && <p>{rows.length?'No courses match these filters.':'No courses yet. Add a course or import a transcript.'}</p>}
+          {Object.entries(groups).map(([term,items])=><section key={term} className="course-term"><h3>{term}</h3>{items.map(c=><article className="profile-entry course-card" key={c.id}><h4>{c.code || 'Uncoded course'}{c.title && ' · '+c.title}</h4><p>{c.institution || 'Institution not specified'} · {c.status.replace('_',' ')} · {c.record_type.replace('_',' ')}</p><p className="quiet">{c.source==='transcript'?'Transcript import':c.source==='resume'?'Resume import':'Manual entry'} · {c.visible?'Shared when your profile is public':'Private'}</p><button className="pill" disabled={busy} onClick={()=>edit(c)}>Edit {c.code || c.title}</button><button className="pill" disabled={busy} onClick={()=>{if(confirm('Remove this course entry?'))run(async()=>{setCollection(await api.request('/me/courses/'+c.id+'?version='+collection.version,{method:'DELETE'}));if(editing?.course.id===c.id)setEditing(null);await extras();setNotice('Course removed.')})}}>Remove {c.code || c.title}</button></article>)}</section>)}
+          {filtered.length>limit && <button className="pill" onClick={()=>setLimit(n=>n+50)}>Show 50 more</button>}
+        </section>
+      </div><div>
+        <section className="profile-card"><h2>Import a transcript</h2><p>Upload a text-based PDF (up to 5 MB and 20 pages) or paste transcript text. Review the course list before importing. Scanned PDFs need pasted text or manual entry.</p>
+          <fieldset disabled={busy}><label className="profile-field"><span>Transcript PDF</span><input aria-label="Transcript PDF" type="file" accept=".pdf" onChange={e=>{const file=e.target.files[0];e.target.value='';upload(file)}}/></label>
+          <details><summary>Paste transcript text instead</summary><label className="profile-field"><span>Transcript text</span><textarea aria-label="Transcript text" value={pasted} onChange={e=>setPasted(e.target.value)} maxLength={50000}/></label><button className="pill" disabled={pasted.trim().length<20} onClick={()=>run(async()=>{const data=await api.request('/transcripts/text',{method:'POST',body:JSON.stringify({text:pasted})});setPasted('');await openDraft(data.id);await extras()})}>Parse transcript text</button></details></fieldset>
+          {busy && <p role="status">Processing…</p>}<p className="quiet">Only course suggestions are retained for review. Raw files, raw transcript text, grades and GPA are not saved in transcript drafts. Drafts expire after 24 hours or are deleted on import/discard.</p>
+          {drafts.map(d=><div className="profile-draft-link" key={d.id}><button className="pill" disabled={busy} onClick={()=>run(()=>openDraft(d.id))}>Review transcript draft</button><span className="quiet">Expires {new Date(d.expires_at).toLocaleString()}</span><button className="pill" disabled={busy} onClick={()=>run(async()=>{await api.request('/transcripts/'+d.id,{method:'DELETE'});if(draft?.id===d.id)setDraft(null);await extras()})}>Discard transcript</button></div>)}
+        </section>
+        {draft && <section className="profile-card transcript-review"><h2>Review transcript courses</h2><p>{draft.row_count} course rows detected. Compare every page with the original; unfamiliar layouts may need manual entry.</p>{draft.warnings.map((w,i)=><p className="quiet" key={i}>{w}</p>)}
+          <fieldset disabled={busy}><button className="pill" onClick={()=>setSelected(Object.fromEntries(draft.candidates.map(c=>[c.id,true])))}>Select all courses</button><button className="pill" onClick={()=>setSelected({})}>Clear selection</button>
+          {!draft.candidates.length && <p>No course rows could be identified. Paste text in subject/code/title rows or add courses manually.</p>}
+          {draft.candidates.map((c,index)=><article className="profile-entry transcript-candidate" key={c.id}>
+            <label className="profile-check"><input type="checkbox" checked={!!selected[c.id]} onChange={e=>setSelected(s=>({...s,[c.id]:e.target.checked}))}/>Import {c.course.code || 'course'}</label>
+            <p className="quiet">Page {c.location.page}, extracted line {c.location.line}</p>{c.warnings.map((w,i)=><p key={i} className="quiet">{w}</p>)}
+            {c.possible_duplicates?.length>0 && <p className="course-warning">An existing entry may match. Matching institution/course/term entries will be skipped, preserving your edits. Missing details need review.</p>}
+            <ProfileEntry section="courses" entry={c.course} resources={options} review onChange={course=>setDraft(d=>({...d,candidates:d.candidates.map((r,i)=>i===index?{...r,course}:r)}))}/>
+            <label className="profile-check"><input type="checkbox" checked={!!c.confirm_separate} onChange={e=>{const checked=e.target.checked;setDraft(d=>({...d,candidates:d.candidates.map((r,i)=>i===index?{...r,confirm_separate:checked}:r)}))}}/>Keep a separate entry if institution or term is missing and a possible match exists</label>
+          </article>)}
+          {editing && <p>Save or cancel your course edit before importing.</p>}
+          <button className="pill hot" disabled={!!editing || !Object.values(selected).some(Boolean)} onClick={()=>run(async()=>{const result=await api.request('/transcripts/'+draft.id+'/import',{method:'POST',body:JSON.stringify({version:collection.version,selections:draft.candidates.filter(c=>selected[c.id]).map(c=>({id:c.id,course:c.course,confirm_separate:!!c.confirm_separate}))})});setCollection(result);setDraft(null);await extras();setNotice(`Courses imported. ${result.duplicates_skipped} duplicates skipped; existing entries preserved.`)})}>Import selected courses</button></fieldset>
+        </section>}
+        <section className="profile-card"><h2>Related job topics</h2><p>Link courses to catalog entries to compare published topics. These matches do not establish your skills or eligibility.</p>{matches?.items.length?matches.items.map(j=><article className="profile-entry" key={j.id}><a href={j.url} target="_blank" rel="noreferrer">{j.title} ↗</a><p>{j.matched_topics.join(', ')}</p></article>):<p className="quiet">No matches from saved catalog links yet.</p>}</section>
+      </div></div>
+    </>}
+  </main>
 }
 
 function App() {
-  const [hash, setHash] = useState(location.hash)
-  useEffect(() => {
-    const on = () => setHash(location.hash)
-    window.addEventListener('hashchange', on)
-    return () => window.removeEventListener('hashchange', on)
-  }, [])
-  const reply = hash.match(/^#\/reply\/(\d+)/)
-  const community = hash === '#/community'
-  return (
-    <>
-      <Experience active={!reply && !community} />
-      {community && <Community />}
-      {reply && <Reply id={reply[1]} />}
-    </>
-  )
+  const [page,setPage] = useState(location.hash.slice(2))
+  useEffect(()=>{if(page==='community')location.replace(new URL('./community.html',location.href).href)},[page])
+  useEffect(()=>{const changed=()=>setPage(location.hash.slice(2));window.addEventListener('hashchange',changed);return()=>window.removeEventListener('hashchange',changed)},[])
+  const navigate = name => {location.hash=name?'#/'+name:'';setPage(name)}
+  const [session, setSession] = useState(null), [error, setError] = useState('')
+  const load = async () => { setError(''); try { setSession(await api.session()) } catch(e) { setError(e.message) } }
+  useEffect(() => { load() }, [])
+  if (location.hash.startsWith('#/reply/')) return <main className="boot"><h1>This prototype reply is unavailable</h1><p>Old prototype asks are not real outreach. No alumni-history dataset or recipient accounts are connected.</p><a href="/thermal/">Explore campus resources</a></main>
+  if (!session) return <main className="boot"><h1>WarmPath</h1><p role={error ? 'alert' : 'status'}>{error || 'Connecting to your campus workspace…'}</p>{error && <><p>Start the local backend, then open http://127.0.0.1:8000/thermal/.</p><button className="pill" onClick={load}>Retry connection</button></>}</main>
+  if(page==='profile') return <ProfileScreen onBack={()=>navigate('')} onCourses={()=>navigate('courses')}/>
+  if(page==='courses') return <CoursesScreen onBack={()=>navigate('')} onProfile={()=>navigate('profile')}/>
+  return <Experience session={session} onProfile={()=>navigate('profile')} onCourses={()=>navigate('courses')}/>
 }
 
 createRoot(document.getElementById('root')).render(<App />)

@@ -34,30 +34,30 @@
 <body>
 <main>
   <h1>WarmPath prototypes</h1>
-  <p class="lede">Thermal is the working browser prototype for WarmPath paths, people and Ask. It also includes Social Jackets, the student-focused community page with fictional student demo posts and campus activity fixtures.</p>
+  <p class="lede">Thermal connects campus resources, profiles and course histories to the local WarmPath backend. Social Jackets uses the same database for public account-authored posts and sourced campus events.</p>
 
   <article>
     <a href="thermal/index.html"><img src="shots/thermal.jpg" alt="Thermal path prototype: glowing strands run from You through five stops to a goal on a near-black ground" width="1440" height="900"></a>
     <div>
       <h2>Thermal</h2>
-      <p>Explore the path flow, open the people panel, draft an Ask, and try the alum reply page. The prototype uses the shared fake API and invented profiles.</p>
+      <p>Explore sourced campus resources and public events, manage your profile, and import resumes or transcripts for review. Start the local backend before opening Thermal; see the run instructions below.</p>
       <dl>
         <dt>Built with</dt><dd>React, react-three-fiber, ShaderGradient</dd>
-        <dt>Path route</dt><dd><code>thermal/index.html</code></dd>
-        <dt>Community route</dt><dd><code>thermal/index.html#/community</code></dd>
+        <dt>Main route</dt><dd><code>thermal/index.html</code></dd>
+        <dt>Community</dt><dd><code>thermal/community.html</code></dd>
       </dl>
-      <div class="links"><a href="thermal/index.html">Open Thermal</a><a href="thermal/index.html#/community">Open Social Jackets</a><a href="thermal/index.html#/reply/5">Alum reply page</a></div>
+      <div class="links"><a href="thermal/index.html">Open Thermal</a><a href="thermal/community.html">Open Social Jackets</a><a href="thermal/index.html#/courses">My Courses</a></div>
     </div>
   </article>
 
   <section class="feature" aria-labelledby="social-jackets-title">
     <h2 id="social-jackets-title">Social Jackets</h2>
-    <p>A student-focused community page with fictional student demo profiles, a newest-first feed, compact text composer, and campus activity and event fixtures. New posts last for the current page session. Event and linked-record details open locally; geographic map and discovery destinations are not wired in Thermal.</p>
-    <div class="links"><a href="thermal/index.html#/community">Open Social Jackets</a></div>
+    <p>A community page with public member profiles, a newest-first persistent feed, a text composer, and sourced campus events. Authors can edit or delete their posts and link existing resources or events. Geographic maps remain pending.</p>
+    <div class="links"><a href="thermal/community.html">Open Social Jackets</a></div>
   </section>
 
   <footer>
-    <p>Social Jackets profiles, posts, clubs, and events are fictional student demo data. They are not real student accounts or event listings. The existing path and alum reply flow remains a separate demo. Thermal loads libraries from CDNs and needs an internet connection.</p>
+    <p>Social Jackets and Thermal share the local FastAPI/PostgreSQL backend. Public posting requires an account and a publicly shared profile; private profile fields and uploads stay private. Both interfaces load CDN libraries and need internet access.</p>
     <p>Open <a href="README.md">prototypes/README.md</a> for run instructions and prototype limitations.</p>
   </footer>
 </main>

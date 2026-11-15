@@ -1,35 +1,30 @@
-# WarmPath prototypes
+# WarmPath interfaces and prototypes
 
-The current browser prototype is [Thermal](thermal/index.html). It demonstrates the existing path, people/Ask, and alum reply flow, plus [Social Jackets](thermal/index.html#/community), the student-focused WarmPath community page.
+[Thermal](thermal/index.html) is the connected main UI: real campus resources/events, private browser-workspace saves, local accounts/profiles, reviewed resume imports, and a separate My Courses page with transcript import. It uses FastAPI/PostgreSQL and does not load the fictional path API.
 
-## Features
+[Social Jackets](thermal/community.html) connects Shehryar Sardar's community design to the same FastAPI/PostgreSQL backend. Real account holders can publish, edit and delete posts, link campus resources/events and open explicitly shared profiles. The light/dark theme remains. Thermal links to it; `thermal/index.html#/community` redirects there. Navigation returns to resources, My Profile and My Courses.
 
-- **Thermal paths:** enter a goal, inspect the path map, switch demo students from the “You” node, open people, draft an Ask, and use the `#/reply/{id}` page.
-- **Social Jackets:** browse fictional club activities and event fixtures, read a newest-first feed from fictional student demo profiles, open concise demo profile summaries, and compose a text post with an optional linked club or event.
-- **Shared visual system:** the Thermal prototype follows the colors, typography, controls, and motion direction in [DESIGN.md](../DESIGN.md).
+Transit and Engineering Pad were removed upstream. The React/Vite app under `frontend/` and Expo app under `mobile/` remain separate prototypes, not consumers of these backend features yet.
 
-## Running it
+## Run
 
-Open [index.html](index.html) in a browser, or serve the repository:
+From the repository root after installing `backend/requirements-dev.txt` and initializing PostgreSQL:
 
-```sh
-cd prototypes
-python -m http.server 4712
+```powershell
+.\.venv\Scripts\python.exe -m backend.manage start
+.\.venv\Scripts\python.exe -m backend.manage migrate
+.\.venv\Scripts\python.exe -m backend.manage run
 ```
 
-Then visit `http://localhost:4712`. Thermal loads libraries from CDNs, so it needs an internet connection. Serve the files over HTTP so the 3D honeycomb model loads; opening Thermal directly from disk uses the simpler stand-in.
+Open **http://127.0.0.1:8000/thermal/** or **http://127.0.0.1:8000/thermal/community.html**. Both load CDN libraries and need internet. Both need the backend; a static server cannot provide their APIs. See [local setup](../docs/backend-local-testing.md), [profiles/resumes](../docs/profiles-and-resumes.md), and [courses/transcripts](../docs/courses-and-transcripts.md).
 
-Open `thermal/index.html#/community` to start at Social Jackets. On the path page, the top tabs move between Paths and Social Jackets. The “You” node in the path map still switches between the two demo students. Ask acceptance uses local storage to synchronize browser tabs; it is not multi-device persistence.
+## Evidence and persistence
 
-## Demo data and limits
+Connected Thermal uses source-linked resources and public event snapshots. User-entered profiles/course histories are not verified attendance or alumni outcomes. It does not invent alumni counts, lift or sendable asks.
 
-[shared/fake-api.js](shared/fake-api.js) contains invented path profiles and event placeholders shaped like the existing path API draft in [docs/mvp.md](../docs/mvp.md#api-contract). Social Jackets reuses stable fixture IDs for linked clubs and events. Community profiles, posts, and event details are fictional student demo data; posts created in the composer remain in the current page session and are not shared or synced.
-
-Events are invented placeholders, not real listings, and profile summaries are not real accounts or visibility settings. Event and linked-record actions open local fixture details. Geographic map and discovery destinations are not wired in this prototype. Social Jackets does not include alumni in this phase.
-
-The typed goal still resolves to the one seeded NVIDIA example. Production persistence, community APIs, geographic maps, voice interaction, alumni integration, and mobile delivery are not implemented by this browser prototype.
+Social Jackets does not load fixtures. Posts persist in the shared `post` table, authors come from signed-in accounts, and the events panel uses sourced public snapshots. Posts are publicly readable while the author's profile is public. Private contacts, resumes and transcripts are not exposed through posts; course/experience details appear only when explicitly shared. See [community contracts and checks](../docs/community.md). Geographic maps and alumni-history integration remain pending.
 
 ## Credits
 
-- Honeycomb model in Thermal: “Honeycomb” by Poly by Google, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), via [Poly Pizza](https://poly.pizza/m/6Mqdrv1n3Oo). Stored at [thermal/models/honeycomb.glb](thermal/models/honeycomb.glb).
-- Hexagonal lattice in Thermal: adapted from [prisoner849's fiddle](https://jsfiddle.net/prisoner849/jzLdcemb/).
+- Honeycomb: "Honeycomb" by Poly by Google, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), via [Poly Pizza](https://poly.pizza/m/6Mqdrv1n3Oo), stored under `thermal/models/`.
+- Hexagonal lattice: adapted from [prisoner849's fiddle](https://jsfiddle.net/prisoner849/jzLdcemb/).
