@@ -9,6 +9,7 @@ import { HexIcon, hexPoints } from '../shared/icons.jsx'
 import { useViewport } from '../map/layout.js'
 import { Swarm } from '../map/Swarm.jsx'
 import { CLUBS, EVENTS, PROFILES, RECORDS, formatPostTime, isSessionPost, session } from './data.js'
+import { Bee } from './Bee.jsx'
 import { Details } from './Details.jsx'
 import './community.css'
 
@@ -65,7 +66,8 @@ export function Community({ students, studentId, onStudent }) {
   const [composing, setComposing] = useState(false)
   const [draft, setDraft] = useState('')
   const [linked, setLinked] = useState('')
-  const draftInput = useRef(null), opener = useRef(null)
+  const [flights, setFlights] = useState([])      // bees in the air: { id, dir, width }
+  const draftInput = useRef(null), opener = useRef(null), stage = useRef(null)
   const viewport = useViewport()
 
   const me = PROFILES[`person:${studentId}`]
@@ -85,6 +87,17 @@ export function Community({ students, studentId, onStudent }) {
     const swap = setTimeout(() => setShown(view), 130)
     return () => clearTimeout(swap)
   }, [view, shown])
+
+  // Switch the view. A pointer press also sends a bee across, the way the switch moved;
+  // keyboard presses and reduced motion get the plain swap.
+  const go = (target, e) => {
+    if (target !== view && !REDUCED && e && e.detail > 0) {
+      const flight = { id: Date.now(), dir: target === 'campus' ? 1 : -1, width: stage.current.offsetWidth }
+      setFlights((now) => [...now.slice(-1), flight])
+    }
+    setView(target)
+  }
+  const landed = (id) => setFlights((now) => now.filter((flight) => flight.id !== id))
 
   const openDetail = (target) => {
     if (!detail) opener.current = document.activeElement
@@ -133,7 +146,7 @@ export function Community({ students, studentId, onStudent }) {
   const empty = (what, otherCount, otherView, otherLabel) => (
     <div className="card empty">
       <p>No {what} match “{query.trim()}”.</p>
-      {otherCount > 0 && <button className="arrow-link cap" onClick={() => setView(otherView)}>{otherCount} in {otherLabel}</button>}
+      {otherCount > 0 && <button className="arrow-link cap" onClick={(e) => go(otherView, e)}>{otherCount} in {otherLabel}</button>}
       <button className="arrow-link cap" onClick={() => setQuery('')}>Clear search</button>
     </div>
   )
@@ -206,10 +219,12 @@ export function Community({ students, studentId, onStudent }) {
               </div>
 
               <div className="stream-bar">
-                <Switch label="Show" value={view} onChange={setView} options={VIEWS} />
+                <Switch label="Show" value={view} onChange={go} options={VIEWS} />
                 <p className="stream-count" aria-live="polite">{q ? `${count} for “${query.trim()}”` : count}</p>
               </div>
 
+              <div className="stream-stage" ref={stage}>
+              {flights.map((flight) => <Bee key={flight.id} flight={flight} onDone={landed} />)}
               <div className="stream-panel" key={shown} data-view={shown} data-leaving={view !== shown} data-still={q ? 'true' : undefined}>
                 {shown === 'posts' ? (
                   <>
@@ -263,6 +278,7 @@ export function Community({ students, studentId, onStudent }) {
                 )}
                 <p className="stream-note" style={{ '--i': 7 }}>Demo data. The profiles, posts and events here are invented, and the events are not real listings.</p>
               </div>
+              </div>
             </section>
 
             <aside className="card rail" key={shown} aria-label={shown === 'posts' ? 'On campus this week' : 'Latest posts'}>
@@ -282,7 +298,7 @@ export function Community({ students, studentId, onStudent }) {
                       )
                     })}
                   </ol>
-                  <button className="arrow-link cap" onClick={() => setView('campus')}>All events and clubs</button>
+                  <button className="arrow-link cap" onClick={(e) => go('campus', e)}>All events and clubs</button>
                 </>
               ) : (
                 <>
@@ -290,14 +306,14 @@ export function Community({ students, studentId, onStudent }) {
                   <ol>
                     {[...posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3).map((post) => (
                       <li key={post.id}>
-                        <button className="rail-post" onClick={() => setView('posts')}>
+                        <button className="rail-post" onClick={(e) => go('posts', e)}>
                           <span className="rail-title">{PROFILES[post.authorId].name}</span>
                           <span className="rail-sub">{post.text}</span>
                         </button>
                       </li>
                     ))}
                   </ol>
-                  <button className="arrow-link cap" onClick={() => setView('posts')}>All posts</button>
+                  <button className="arrow-link cap" onClick={(e) => go('posts', e)}>All posts</button>
                 </>
               )}
             </aside>

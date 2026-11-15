@@ -47,7 +47,7 @@ export function Switch({ label, options, value, onChange }) {
   return (
     <div className="switch cap" data-index={index} role="group" aria-label={label}>
       {options.map((o) => (
-        <button key={o.value} type="button" aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
+        <button key={o.value} type="button" aria-pressed={o.value === value} onClick={(e) => onChange(o.value, e)}>
           {o.label}
         </button>
       ))}
