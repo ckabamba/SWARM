@@ -25,6 +25,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from backend.manage import ROOT, database_url
+from backend.api.settings import allowed_hosts, public_origin
 
 metadata = MetaData()
 resources = Table('api_resources', metadata,
@@ -85,6 +86,7 @@ def initialize_schema(engine):
 
 
 def create_app(url=None):
+    origin = public_origin()
     engine = create_engine(url or database_url(), pool_pre_ping=True)
 
     @asynccontextmanager
@@ -116,16 +118,19 @@ def create_app(url=None):
                 await cleanup_task
             engine.dispose()
 
-    app = FastAPI(title='WarmPath local resource API', lifespan=lifespan)
+    app = FastAPI(title='WarmPath API', lifespan=lifespan)
+    app.state.public_origin = origin
+    app.state.secure_cookies = bool(origin)
     app.state.engine = engine
     from backend.api.profiles import install_profiles
     profile_service = install_profiles(app, engine)
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost', 'testserver'])
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts(origin))
 
     @app.middleware('http')
     async def same_origin(request: Request, call_next):
-        origin = request.headers.get('origin')
-        if request.method not in ('GET', 'HEAD', 'OPTIONS') and origin and origin != str(request.base_url).rstrip('/'):
+        request_origin = request.headers.get('origin')
+        expected_origin = app.state.public_origin or str(request.base_url).rstrip('/')
+        if request.method not in ('GET', 'HEAD', 'OPTIONS') and request_origin and request_origin != expected_origin:
             return JSONResponse({'error': {'code': 'forbidden', 'message': 'Use the same-origin WarmPath app.'}}, status_code=403)
         response = await call_next(request)
         if request.url.path.startswith('/api/'):
@@ -152,7 +157,7 @@ def create_app(url=None):
         record = conn.execute(select(workspaces).where(workspaces.c.id == key,
             workspaces.c.expires_at > datetime.now(timezone.utc))).mappings().first()
         if not record:
-            raise HTTPException(401, 'Your local workspace expired. Reload the page.')
+            raise HTTPException(401, 'Your workspace expired. Reload the page.')
         return record
 
     def visible_resource(row, saved_ids, conn, selected_job=None):
@@ -191,7 +196,8 @@ def create_app(url=None):
                 key = hashlib.sha256(token.encode()).hexdigest()
                 record = {'id': key, 'goal': '', 'expires_at': datetime.now(timezone.utc) + timedelta(days=30)}
                 conn.execute(insert(workspaces).values(**record))
-                response.set_cookie('warmpath_workspace', token, httponly=True, samesite='strict', max_age=30*86400)
+                response.set_cookie('warmpath_workspace', token, httponly=True, samesite='strict',
+                                    secure=app.state.secure_cookies or request.url.scheme == 'https', max_age=30*86400)
             count = conn.scalar(select(func.count()).select_from(resources))
             return {'goal': record['goal'], 'resource_count': count, 'identity': 'private browser workspace',
                     'alumni_status': 'not_available', 'suggestions': ['Find an internship', 'Explore robotics research', 'Launch a startup', 'Find campus events']}

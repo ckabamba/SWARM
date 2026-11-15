@@ -32,7 +32,7 @@ copy .env.example .env      # then set VITE_DATA_SOURCE=api
 npm run dev
 ```
 
-First-time backend setup (Python environment, local PostgreSQL, migrations, event import) is in [docs/backend-local-testing.md](../docs/backend-local-testing.md).
+First-time backend setup (Python environment, Docker/existing PostgreSQL, migrations and event import) is in [Running WarmPath after cloning](../docs/running-warmpath.md). Root `.env` configures the database; `frontend/.env` only selects this client's data mode. Ordinary users will use a hosted application URL, not these development commands.
 
 How it fits together:
 

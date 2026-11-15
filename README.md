@@ -6,6 +6,8 @@ The project began with the Georgia Tech SGA hackathon prompt on connecting stude
 
 ## Current status
 
+**New clone or connection error?** Follow [Running WarmPath after cloning](docs/running-warmpath.md). The connected app needs a running API and PostgreSQL; downloading HTML does not include either. Teammates can use the documented Docker database without the original Windows portable installation. Ordinary users will use a shared hosted URL once deployment is configured.
+
 **Courses now have their own page:** [My Courses](http://127.0.0.1:8000/thermal/#/courses) supports term-grouped history, search/filters, manual edits, and reviewed PDF/pasted-text transcript import. Grades and GPA are excluded. Existing courses are migrated without losing edits. Run the new migration before startup; see [course/transcript setup and API changes](docs/courses-and-transcripts.md).
 
 **My Profile now works locally:** create a password account; edit experiences and contacts; manage classes on My Courses; upload PDF/DOCX or paste resume text; review selected suggestions; save with explicit sharing controls. These accounts do not verify email/GT membership and have no password recovery yet. See [profile/resume setup and API](docs/profiles-and-resumes.md), including the migration command before first startup. Anonymous resource saves remain separate from accounts.

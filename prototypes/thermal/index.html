@@ -1051,7 +1051,7 @@ function App() {
   const load = async () => { setError(''); try { setSession(await api.session()) } catch(e) { setError(e.message) } }
   useEffect(() => { load() }, [])
   if (location.hash.startsWith('#/reply/')) return <main className="boot"><h1>This prototype reply is unavailable</h1><p>Old prototype asks are not real outreach. No alumni-history dataset or recipient accounts are connected.</p><a href="/thermal/">Explore campus resources</a></main>
-  if (!session) return <main className="boot"><h1>WarmPath</h1><p role={error ? 'alert' : 'status'}>{error || 'Connecting to your campus workspace…'}</p>{error && <><p>Start the local backend, then open http://127.0.0.1:8000/thermal/.</p><button className="pill" onClick={load}>Retry connection</button></>}</main>
+  if (!session) return <main className="boot"><h1>WarmPath</h1><p role={error ? 'alert' : 'status'}>{error || 'Connecting to your campus workspace…'}</p>{error && <><p>Please use the WarmPath website address provided by your team. If the service is unavailable, try again shortly.</p><button className="pill" onClick={load}>Retry connection</button></>}</main>
   if(page==='profile') return <ProfileScreen onBack={()=>navigate('')} onCourses={()=>navigate('courses')}/>
   if(page==='courses') return <CoursesScreen onBack={()=>navigate('')} onProfile={()=>navigate('profile')}/>
   return <Experience session={session} onProfile={()=>navigate('profile')} onCourses={()=>navigate('courses')}/>
