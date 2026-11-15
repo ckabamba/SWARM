@@ -39,7 +39,7 @@ Public lift uses public alumni with at least one eligible shared history as its 
 | `PUT /me/history/{course\|experience}/{id}` | `{version,activity_id?,school_year?,history_confirmed,visible}`. Use the source collection's revision. Unresolved matching stays needs_review, with no contribution. |
 | `GET /activities?q=` | Authenticated matching choices; excludes other people's private-only definitions. |
 | `GET /goals?q=` | Public shared alumni activities `{items:[{id,label,type,achievers}],evidence,fixture_evidence:false}`. |
-| `POST /path` | Existing `{goal,job_id?}` resource search remains unchanged. `{mode:"alumni",goal_id}` requires login and returns goal/student/stops/events/reason plus evidence and population. No client identity accepted. |
+| `POST /path` | Existing `{goal,job_id?}` resource search remains unchanged. `{mode:"alumni",goal_id}` requires login and returns goal/student/stops/events/reason plus evidence and population. No client identity accepted. Alternatively `{mode:"alumni",goal:"..."}` resolves text only against public shared alumni goals and returns `{match,path}`; ambiguous/no-match results have `path:null` and candidates under `match`. Supply exactly one of `goal` and `goal_id`; selecting an ID preserves the direct path response. Missing embeddings use keyword matching with `fallback_reason`. |
 | `GET /people?goal_id=&activity_id=` | Authenticated ranked alumni `{items,evidence,fixture_evidence:false}`. Optional activity filters earlier participation. Items include factual editable draft and can_ask. No goal retains the legacy empty response. |
 | `POST /asks` | `{alum_id,goal_id,message,request_id}` with UUID request ID. Sender comes from login; recipient must be a public alumni account sharing this goal. Same ID/payload retries return the same ask; a different payload returns 409. |
 | `GET /asks?box=all\|inbox\|outbox&before=&limit=` | Participant-only `{items,next_cursor}`. |
@@ -51,3 +51,19 @@ Ask records return `{id,sender:{id,name},recipient:{id,name},goal:{id,label},mes
 ## Verification and rollout
 
 Run `python -m pytest backend/tests -q` against the isolated `warmpath_test` database. Tests cover canonical matching, retakes/private timing, imports, revisions, counts/lift, privacy withdrawal, ownership, idempotency and accepted-state persistence after app restart. Never run these tests against RDS. Follow [database rollout](database-rollout.md) for the existing AWS target and resources/events-only initialization. Cloud access, runtime-role rehearsal and actual migration remain deployment steps.
+
+
+### Legacy local embeddings migration
+
+Event embeddings now use revision `0011`, after `0010_asks`. A database that applied the unpushed `0009_event_embedding` is **not** at main's `0009_history_sync`, despite its version marker. Do not run a blind upgrade or stamp it directly to head.
+
+After backing up that local database, verify the old state: `event_embedding` exists, `activity_contribution` and `ask` do not, and `activity.canonical_key` and `person_activity.history_managed` are absent. For that exact state, use Alembic on one transaction/connection to stamp `0008`, upgrade through `0010`, verify the existing embedding table matches `0011_event_embedding.py`, then stamp `0011` to acknowledge the already-applied embedding schema. Preserve the embedding table and its rows. If any checks differ, inspect the actual schema before choosing a recovery path. Fresh databases and databases using main's real `0009` use the normal upgrade to head.
+
+Existing databases that applied the legacy embeddings revision need this explicit recovery before starting the updated API.
+
+
+### Connected path map
+
+Build `frontend/` with `VITE_DATA_SOURCE=api`, then open `/app/` (also linked from Thermal). Sign in and describe a goal in the original landing screen?s single input. Ambiguous text offers candidates; an unmatched query leaves the map empty and links to resource discovery. The connected view preserves the original landing, honeycomb map and side drawer, using returned activity IDs and counts. Lines represent aggregate associations, not reconstructed individual alumni histories. Candidate buttons appear below the input only when the match is ambiguous. Selecting a node loads the authenticated people/ask flow. Fixture mode remains a separate demo and is never a fallback on API failure.
+
+Browser verification: after an API-mode build, run `python -m backend.tests.profile_server` and `python -m backend.tests.check_path_map`. These use temporary synthetic accounts only in `warmpath_test`, remove those accounts afterward, and check real path/text/people requests plus mobile, ambiguity, no-match, request failure and sign-out states.

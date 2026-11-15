@@ -102,6 +102,83 @@ def extract(data, kind):
     return value
 
 
+# Codes are case-insensitive only inside an explicitly labeled coursework section.
+COURSE_CODE = re.compile(r'\b([A-Z]{2,6})[ \t-]*(\d{3,4}[A-Z]?)\b')
+COURSE_HEADING = re.compile(
+    r'^(?:(?:relevant|selected|related|technical|key|advanced|academic|completed)\s+)?'
+    r'(?:coursework|course work|courses)\b\s*[:\-\u2013\u2014]?\s*(.*)$', re.I)
+COURSE_TERM = re.compile(r'\b(Fall|Spring|Summer|Winter)\s+((?:19|20)\d{2})\b', re.I)
+
+
+def course_suggestions(lines, course_lines):
+    """Preserve code/title pairs, mixed lists and distinct explicitly stated terms."""
+    found = {}
+    def put(code, title, evidence, term=''):
+        title = title.strip(' \t:()-\u2013\u2014')
+        # A resume is not a transcript: never turn grade/GPA metadata into a course.
+        title = re.split(r'\b(?:GPA|grade|credits?)\s*:', title, flags=re.I)[0].strip(' ;|')
+        if not code and re.match(r'^(?:GPA|CGPA|grades?|credits?|graduation|expected graduation)\b', title, re.I):
+            return
+        if not code and (not re.search(r'[A-Za-z]', title) or not 2 <= len(title) <= 200):
+            return
+        key = (code or title.casefold(), term.casefold())
+        if key in found:
+            if code and title and not found[key][0]['title']:
+                found[key][0]['title'] = title[:200]
+            return
+        candidate = {'code':code, 'title':title[:200], 'institution':'', 'status':'unspecified'}
+        if term:
+            candidate['term'] = term
+        found[key] = (candidate, evidence)
+
+    term = ''
+    for line in course_lines:
+        if line is None:
+            term = ''
+            continue
+        term_match = COURSE_TERM.search(line)
+        if term_match:
+            term = term_match[1].title() + ' ' + term_match[2]
+            body = COURSE_TERM.sub('', line).strip(' :()-')
+        else:
+            body = line
+        # DOCX tables extract as "code | title"; keep that pair together.
+        body = re.sub(r'(' + COURSE_CODE.pattern + r')\s*\|\s*([^|,;]+)',
+            lambda m: m[0] if re.search(COURSE_CODE.pattern, m[4], re.I) else m[1]+' '+m[4], body, flags=re.I)
+        # Shared-subject lists: CS 1331/1332 or CS 1331, 1332.
+        subject = None
+        for chunk in re.split(r'[,;|\u2022\u00b7]|/(?=\s*\d{3,4}\b)', body):
+            chunk = chunk.strip(' *-\t')
+            if not chunk:
+                continue
+            matches = list(re.finditer(COURSE_CODE.pattern, chunk, re.I))
+            if not matches and subject and re.fullmatch(r'\d{3,4}[A-Za-z]?', chunk):
+                put(subject+' '+chunk.upper(), '', line, term)
+                continue
+            if not matches:
+                put('', chunk, line, term)
+                subject = None
+                continue
+            for i, match in enumerate(matches):
+                subject = match[1].upper()
+                end = matches[i+1].start() if i+1<len(matches) else len(chunk)
+                title = chunk[match.end():end].strip(' :()-\u2013\u2014')
+                # Titles preceding parenthesized codes: Data Structures (CS 1332).
+                if i == 0 and not title:
+                    title = chunk[:match.start()].strip(' :()-')
+                put(subject+' '+match[2].upper(), title, line, term)
+    coded = {candidate['code'] for candidate, _ in found.values() if candidate['code']}
+    for line in lines:
+        for match in COURSE_CODE.finditer(line):
+            if match[1] in {'GPA','SAT','ACT','FALL','SPRING','SUMMER','WINTER','MAY','JUNE','JULY'}:
+                continue
+            code = match[1]+' '+match[2]
+            if code not in coded:
+                put(code, '', line)
+                coded.add(code)
+    return list(found.values())
+
+
 def parse_text(value):
     value = value.replace('\x00', '')
     lines = [line.strip() for line in value.splitlines() if line.strip()]
@@ -140,21 +217,23 @@ def parse_text(value):
                 'research experience': 'research', 'projects': 'project', 'vip': 'vip',
                 'vip projects': 'vip', 'clubs': 'club', 'volunteering': 'volunteering'}
     stops = {'education', 'skills', 'technical skills', 'awards', 'certifications', 'interests', 'summary', 'objective'}
-    course_heads = {'courses', 'coursework', 'relevant coursework', 'relevant courses'}
     def flush():
         if current and section in set(headings.values()):
             groups.append((section, list(current)))
         if current and section == 'courses':
+            course_lines.append(None)
             course_lines.extend(current)
         current.clear()
     for line in lines:
-        head = line.lower().strip(': ')
+        heading_line = line.lstrip(' *-\u2022').strip()
+        course_heading = COURSE_HEADING.match(heading_line)
+        head = heading_line.lower().strip(': ')
         prefix = line.split(':', 1)[0].lower().strip()
-        if head in headings or head in stops or prefix in course_heads:
+        if head in headings or head in stops or prefix in stops or course_heading:
             flush()
-            section = headings.get(head, 'courses' if prefix in course_heads else None)
-            if section == 'courses' and ':' in line:
-                current.append(line.split(':', 1)[1])
+            section = headings.get(head, 'courses' if course_heading else None)
+            if course_heading and course_heading[1]:
+                current.append(course_heading[1])
             continue
         if section == 'courses':
             current.append(line)
@@ -164,23 +243,8 @@ def parse_text(value):
                 flush()
             current.append(line)
     flush()
-    # Course codes only; a code anywhere is a suggestion, never proof of attendance.
-    seen = set()
-    for line in lines:
-        for match in re.finditer(r'\b([A-Z]{2,5})\s?-?\s?(\d{4}[A-Z]?)\b', line):
-            code = match[1] + ' ' + match[2]
-            if code not in seen:
-                seen.add(code)
-                add('courses', {'code': code, 'title': '', 'institution': '', 'status': 'unspecified'}, line)
-    for line in course_lines:
-        if re.search(r'\b[A-Z]{2,5}\s?-?\s?\d{4}', line):
-            continue
-        for title in re.split(r'[,;|•]', line):
-            title = title.strip(' -')
-            if (2 <= len(title) <= 200 and not re.search(r'\b[A-Z]{2,5}\s?-?\s?\d{4}', title)
-                    and title.lower() not in seen):
-                seen.add(title.lower())
-                add('courses', {'code': '', 'title': title, 'institution': '', 'status': 'unspecified'}, line)
+    for candidate, evidence in course_suggestions(lines, course_lines):
+        add('courses', candidate, evidence)
     for kind, group in groups[:60]:
         header = group[0]
         split = re.split(r'\s[|–—]\s|\s+at\s+', header, maxsplit=1)

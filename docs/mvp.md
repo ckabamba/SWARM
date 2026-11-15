@@ -120,7 +120,7 @@ Of these, `person`, `activity`, and `person_activity` exist as migrations under 
 
 These are requirements to design, not finalized table definitions or migrations. Map coordinates represent campus places or cities, not live alumni positions. Decide how profile visibility affects both city counts and people lists.
 
-The event location reference exists. `campus_place` holds 22 campus buildings with coordinates from OpenStreetMap, and `event_place` links each imported public event to one of them with a `kind` of `campus`, `online`, or `unknown`, plus the room when the listing gave one. `backend/events/places.py` writes the links by matching the listing's location text against known building names, and `events_with_places(conn)` returns each event with `location_kind`, `room`, and a `place` of `{ id, name, latitude, longitude }` or `null`. No API route serves this yet. Links from events to clubs, activities, and resources are still to be built.
+The event location reference exists. `campus_place` holds 22 campus buildings with coordinates from OpenStreetMap, and `event_place` links each imported public event to one of them with a `kind` of `campus`, `online`, or `unknown`, plus the room when the listing gave one. `backend/events/places.py` writes the links by matching the listing's location text against known building names, and `events_with_places(conn)` returns each event with `location_kind`, `room`, and a `place` of `{ id, name, latitude, longitude }` or `null`. `GET /api/events` serves these fields on each item; an event without a link reads as `unknown` with no place. Links from events to clubs, activities, and resources are still to be built.
 
 Two earlier contract gaps are settled in the path engine. A student's `school_year` is not stored: it is derived from `grad_year`, assuming a four-year degree and an academic year that starts in August. `stops[].typical_year` is now returned, as described under the path contract below. One gap remains: Ask responses below contain placeholders. Do not silently adopt extra fields or infer missing schemas.
 
@@ -149,24 +149,58 @@ The original proposed defaults keep activities with a lift of 1.5 or more and at
 
 ## API contract
 
+### Alumni peer map
+
+`GET /api/alumni-connections?q=Google` requires an authenticated alumni account
+(401 signed out, 403 student). Optional `q` is at most 300 characters; all
+space-separated words must appear in the public name, major or shared activity
+labels. Empty `q` browses peers. No model or semantic match is required.
+
+Returns `{viewer: {id,name,kind,major,grad_year}, items: [...], fixture_evidence}`.
+Each item has `id,name,major,grad_year`, `goal: {id,label}` (latest shared job,
+otherwise latest shared activity), `shared_count`, `shared_tie`, up to three
+`shared` records `{id,name,type,resource_id,resource_name,url,school_year,shared}`,
+`can_ask`, `draft`, and `evidence: self_reported|synthetic_demo`.
+Up to three peers rank by shared non-career activities, same major, graduation
+year proximity, name and ID. Shared catalog resource IDs join equivalent course
+records. Own private history can personalize the viewer's results; other people's
+private history and hidden profiles are excluded. Self is excluded. Synthetic
+records require the existing local-only demo flag and cannot receive real asks.
+Eligible account holders reuse `/asks` with their returned `goal.id`.
+
+Alumni use the existing React landing composition and a peer map: You through a
+shared course/activity to another alum. A direct line when no activity overlaps
+means discovery only, not a claimed shared history. Student paths are unchanged.
+This relationship map does not represent alumni cities or live positions.
+The Expo peer screen remains pending.
+
+For the existing local synthetic1000 dataset, run
+`python -m backend.seed.demo_alumni_account` once. It attaches a regular password
+login to one fixture alumnus; credentials are written only to the ignored
+`.local/alumni-demo-login.json`. It refuses remote databases and existing logins.
+With `WARMPATH_DEMO_HISTORIES=1`, sign in at `/app/` to see the alumni landing
+and try `Google`, `CS 1332`, or an empty search. Demo peers remain visibly
+synthetic and cannot receive real asks. No generated person is made real.
+
 **Implemented update:** [Reviewed history, live paths and asks](history-and-paths.md) is the current contract for `/path` alumni mode, `/people`, `/goals`, `/me/history`, `/activities` and `/asks`. It supersedes the legacy prototype examples below: identity comes from the account cookie, never a client-supplied student ID. Resource mode remains compatible.
 
 
 ### Implemented local Thermal slice
 
-The current local service implements resource discovery and public event snapshots, not the historical alumni-path contract below. Real alumni histories are not connected. Local accounts/profiles, courses/transcripts and community posts use the separate implemented contracts linked above. All paths use `/api`; see [run/test instructions](backend-local-testing.md).
+The current local service implements resource discovery, public event snapshots, and authenticated alumni paths from explicitly shared histories. The historical prototype contract below does not define connected identity or permissions. Local accounts/profiles, courses/transcripts and community posts use the separate implemented contracts linked above. All paths use `/api`; see [run/test instructions](backend-local-testing.md).
 
 | Route | Current behavior |
 | --- | --- |
 | `GET /health`, `GET /ready` | Process health and PostgreSQL readiness |
 | `GET /session` | Creates/reuses an opaque HttpOnly, SameSite=Strict browser-workspace cookie; returns saved goal, catalog count, suggestions, and unavailable alumni status |
 | `POST /path` | `{ "goal": "Explore robotics research" }`; returns original goal label, up to five real `resources`, `matched`/`no_match`, `matching: "keyword"`, and unavailable evidence with null achievers/lift |
+| `POST /path` (alumni mode) | `{ "mode": "alumni", "goal_id": 12 }` returns a direct path; `{ "mode": "alumni", "goal": "..." }` returns `{match, path}` with null path for ambiguous/no-match results. Requires login, rejects client identity and accepts exactly one goal input. |
 | `GET /jobs` | Two curated public employer examples with source links, topic labels, location/context, and check dates; not a live vacancy feed |
 | `GET /resources?saved_only=false` | `{ "items": [...] }` for the catalog or the current workspace's saved list |
 | `PUT/DELETE /saved/{resource_id}` | Idempotent save/remove in the current workspace; returns `{ "id": 9, "saved": true }` or false |
-| `GET /events` | Up to 12 unexpired public listings from the latest successful source snapshots, with source/retrieval timestamps and stale status |
-| `GET /people` | Explicit empty/unavailable result; no sample alumni |
-| `GET /asks/{id}` | 404; prototype asks are not real outreach |
+| `GET /events` | Up to 12 unexpired public listings from the latest successful source snapshots, with source/retrieval timestamps and stale status. Each item also has `location_kind` (`campus`, `online` or `unknown`), `room`, and `place` (`{ id, name, latitude, longitude }` or `null`) |
+| `GET /people?goal_id=&activity_id=` | Authenticated public alumni rankings with factual drafts and `can_ask`; no goal returns the legacy empty response. See [history contract](history-and-paths.md). |
+| `GET /asks/{id}` | Authenticated participant-only persistent ask; see [history contract](history-and-paths.md). |
 
 A resource has `id`, `name`, `kind`, `summary`, `url`, `source_url`, `access`, `verified_on`, and `saved`. Events have `url`, `title`, `starts_at`, `ends_at`, `fetched_at`, `source`, and nullable `location`/`organizer`/`description`. `description` is the listing's own text with markup removed, at most 4,000 characters; for calendar-feed events it is the body only, without the contact details that follow it. It is untrusted text: render it as text, and pass it to a model as data, never as instructions. Dates/timestamps retain explicit time zones; the client formats event times in Eastern time. Error responses use `{ "error": { "code": "...", "message": "..." } }` with 401, 403, 404, 422, or 503 as appropriate. This local slice has no student impersonation, public ask acceptance, LLM calls, or production identity model.
 
@@ -227,7 +261,7 @@ Three fields were added with the path engine:
 - `reason` is `null` when there are stops. When `stops` is empty it is `"not_enough_achievers"` (fewer than 3 visible alumni reached the goal) or `"no_stop_meets_threshold"`. Thin data is a normal response, not an error.
 - `fixture_evidence` is `true` when generated demo alumni are part of the counts. Clients must label such results as demo data.
 
-The engine in `backend/engine/paths.py` produces this shape from a goal Activity id and a student id. It returns `event: null` and `events: []` until events are matched to activities ([#12](https://github.com/ckabamba/SWARM/issues/12)), and it does not parse free-text goals. Serving it over HTTP is role 2's work in [#8](https://github.com/ckabamba/SWARM/issues/8); the local `POST /path` above still returns resource matches only.
+The engine in `backend/engine/paths.py` produces this shape from a goal Activity id and a student id. It returns `event: null` and `events: []` until events are matched to activities ([#12](https://github.com/ckabamba/SWARM/issues/12)), and it does not parse free-text goals. The authenticated alumni mode of `POST /path` serves it with the signed-in account as student; see [the current contract](history-and-paths.md).
 
 `GET /people?goal_id=12&student_id=1&activity_id=3` returns the following. Leave out `activity_id` to get the alumni behind the goal itself.
 
@@ -278,6 +312,8 @@ LLM capabilities may include goal understanding, campus resource discovery, grou
 - If a goal or resource cannot be matched, return a clear no-result or clarification response rather than silently substituting an unrelated goal.
 - Voice is a way to access the same discovery capabilities. Define input/output behavior and providers separately; speech transcription and synthesis need not be performed by the language model.
 - Keep text access available when microphone access, speech services, or AI are unavailable. Describe degraded behavior accurately rather than promising all speech works offline.
+- Event embeddings exist for semantic search: `backend/events/embeddings.py` embeds each event's title, organizer, location and description locally with fastembed (`BAAI/bge-small-en-v1.5`, an optional dependency in `backend/requirements-embeddings.txt`) into `event_embedding`, and `search(conn, query)` returns upcoming events by similarity, labelled `match_basis: description_similarity`, or by keyword with a `fallback_reason` when embeddings are unavailable. `GET /api/events/search?q=...&limit=5` (limit 1 to 20) serves it with the same response. Similarity is never alumni evidence.
+- Typed goals resolve to path-engine activities in `backend/engine/goals.py`: `match_goal(conn, text)` returns `status` `matched` (with `goal: { id, label, type, score }` for `path_for_goal`), `ambiguous` (candidates for the student to choose, no goal chosen) or `no_match`. It uses the same local embeddings, with thresholds tuned on the seeded activities, and falls back to word overlap with a `fallback_reason`. Connected matching considers only non-fixture activities explicitly shared by public alumni, like `/api/goals`; isolated tests may opt into fixtures. It never substitutes an unrelated goal. `POST /api/path` with `{mode: "alumni", goal: "..."}` serves it after authentication and returns `{match, path}`; `path` is null for ambiguous/no-match results. Selecting `{mode: "alumni", goal_id: id}` keeps the existing direct path response. Exactly one of goal text and goal ID is required; client-supplied `student_id` is rejected. The unpushed `/api/alumni-path` prototype is superseded.
 
 ## Development and demo data
 
@@ -291,3 +327,11 @@ The original path fixture plan remains useful:
 - Seed one goal Activity each for research, a startup and grad school, a `city` on every alum, and about 20 events attached to stops.
 
 Extend the fixture plan with authored sample posts, clubs/resources, campus locations, and several alumni cities to exercise both map views. Keep invented events explicitly marked as placeholders; any claimed real listings must retain their actual source and details. A demo should not imply that fixture counts establish real alumni outcomes.
+
+
+### Explicit local synthetic-history mode
+
+`WARMPATH_DEMO_HISTORIES=1` enables fixture histories on a loopback database only, with no public deployment origin. `/health` adds `synthetic_histories`; path/people/goals responses label this mode with `evidence: "synthetic_demo"` and fixture metadata. Authentication still identifies the viewer, private real histories remain excluded, and generated people have no accounts or sendable asks. Default mode still excludes all fixtures. This opt-in supports the user's temporary local demo dataset; it is not production evidence. See [demo setup](demo-alumni.md).
+
+
+Alumni path resource links: `POST /path` alumni responses add `stops[].resource`, either null or `{id,name,url,summary}` from the shared resource catalog. `GET /people` adds `items[].courses`: `{id,name,url,school_year}` for eligible shared courses taken before the selected goal. Demo participation stays labeled synthetic even when the referenced course/resource is real. Counts and lift continue to use eligible `person_activity` memberships, not course descriptions or model output.

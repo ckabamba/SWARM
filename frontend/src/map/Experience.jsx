@@ -1,23 +1,32 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import api from '../shared/fake-api.js'
 import { REDUCED } from '../shared/motion.js'
 import { Backdrop } from '../shared/Backdrop.jsx'
 import { Hex, Words, Arrow } from '../shared/controls.jsx'
 import { TopBar } from '../shared/TopBar.jsx'
+import { LivePeoplePanel } from '../people/LivePeoplePanel.jsx'
+import { Access } from '../history/Shared.jsx'
+import './live-experience.css'
 import { PeoplePanel } from '../people/PeoplePanel.jsx'
-import { SPOTS, place, useViewport } from './layout.js'
+import { SPOTS, spotsFor, place, useViewport } from './layout.js'
 import { Swarm } from './Swarm.jsx'
 import { Hive } from './Hive.jsx'
 import { Node } from './Node.jsx'
+import { AlumniNodes, AlumniPanel, peerLayout } from './AlumniMap.jsx'
 
-export function Experience({ active = true, students, studentId, onStudent }) {
+export function Experience({ active = true, students, studentId, onStudent, live = null }) {
+  const Gate = live ? Access : Fragment
   const [view, setView] = useState('goal')
   const [goalText, setGoalText] = useState('')
   const [panel, setPanel] = useState(null)           // activity id, 'goal', or null
   const viewport = useViewport()
-  const path = useMemo(() => api.postPath({ goal: goalText || api.SEEDED_GOALS[0], student_id: studentId }), [studentId, view])
-  const closest = api.getPeople({ goal_id: path.goal.id, student_id: studentId }).slice(0, 3)
+  const fixturePath = useMemo(() => live ? null : api.postPath({ goal: goalText || api.SEEDED_GOALS[0], student_id: studentId }), [studentId, view, goalText, !!live])
+  const path = live ? (live.path || { student: {name:'You'}, goal:{label:'',achievers:0}, stops:[], events:[] }) : fixturePath
+  const peerGraph = useMemo(() => path.peers ? peerLayout(path.peers,viewport.w < 700) : null, [path.peers,viewport.w < 700])
+  const spots = useMemo(() => peerGraph?.spots || spotsFor(path.stops), [path.stops, peerGraph])
+  useEffect(() => { if (live) { setView(live.path ? 'map' : 'goal'); setPanel(null) } }, [live?.path])
+  const closest = live ? [] : api.getPeople({ goal_id: path.goal.id, student_id: studentId }).slice(0, 3)
 
   useEffect(() => {
     if (!active) return
@@ -30,13 +39,13 @@ export function Experience({ active = true, students, studentId, onStudent }) {
     return () => window.removeEventListener('keydown', key)
   }, [])
 
-  const submit = (e) => { e.preventDefault(); setView('map') }
+  const submit = (e) => { e.preventDefault(); if (live) live.submit(); else if (fixturePath.reason !== 'no_match') setView('map') }
   const landing = useRef(null), goalInput = useRef(null), scroll = useRef(0)
   const onScroll = () => {
     const el = landing.current
     scroll.current = el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight)
     el.parentElement.toggleAttribute('data-scrolled', el.scrollTop > 24)
-    if (scroll.current > 0.95 && document.activeElement !== goalInput.current) goalInput.current.focus({ preventScroll: true })
+    if (scroll.current > 0.95 && document.activeElement !== goalInput.current) goalInput.current?.focus({ preventScroll: true })
   }
   useEffect(() => {
     if (!active || !landing.current) return undefined
@@ -47,7 +56,7 @@ export function Experience({ active = true, students, studentId, onStudent }) {
     return () => seen.disconnect()
   }, [active])
   const toGoal = () => landing.current.scrollTo({ top: landing.current.scrollHeight, behavior: REDUCED ? 'auto' : 'smooth' })
-  const you = place('you', viewport), goal = place('goal', viewport)
+  const you = place('you', viewport, spots), goal = place('goal', viewport, spots)
   const arrive = (x) => (REDUCED ? 0 : Math.round(1100 + x * 2300))
 
   if (!active) return null
@@ -75,65 +84,76 @@ export function Experience({ active = true, students, studentId, onStudent }) {
       <div className="swarm" aria-hidden="true">
         <Canvas orthographic dpr={[1, 2]} gl={{ alpha: false, antialias: false }} camera={{ position: [0, 0, 10], near: 0.1, far: 100 }}>
           <color attach="background" args={['#000000']} />
-          <Swarm mode={view} viewport={viewport} stops={path.stops} />
+          <Swarm key={`${path.goal.id || 'empty'}:${path.stops.length}:${path.peers?.map(p=>p.id).join(',') || ''}`} mode={view} viewport={viewport} stops={path.stops} spots={spots} aggregate={true} routes={peerGraph?.routes}/>
         </Canvas>
       </div>
 
-      <div className="ui">
+      <div className={live ? `ui live-experience${live.alumni ? ' alumni-experience' : ''}` : "ui"}>
         <TopBar active="path" onHome={() => { setView('goal'); setPanel(null) }} students={students} studentId={studentId} onStudent={onStudent} />
 
         <section className="goal" aria-hidden={view !== 'goal'} inert={view !== 'goal'}>
           <div className="landing" ref={landing} onScroll={onScroll}>
             <div className="beat">
-              <Words as="h1">Every year, Tech students land the internship you want.</Words>
-              <button className="jump cap" onClick={toGoal}>Set your goal</button>
+              <Words as="h1">{live?.alumni ? 'Your next connection started at Tech, too.' : 'Every year, Tech students land the internship you want.'}</Words>
+              <button className="jump cap" onClick={toGoal}>{live?.alumni ? 'Find fellow alumni' : 'Set your goal'}</button>
             </div>
             <div className="beat right">
-              <Words as="p" className="say">They joined certain teams and took certain classes. Then they graduated and took that knowledge with them.</Words>
+              <Words as="p" className="say">{live?.alumni ? 'Different companies. Shared classes, teams and experiences. See where your paths cross.' : 'They joined certain teams and took certain classes. Then they graduated and took that knowledge with them.'}</Words>
             </div>
             <div className="beat ask">
+              <Gate>
               <form onSubmit={submit}>
-                <label htmlFor="goal">WarmPath puts their paths on one map. Where do you want to end up?</label>
+                <label htmlFor="goal">{live?.alumni ? 'WarmPath puts your alumni network on one map. Who would you like to meet?' : 'WarmPath puts their paths on one map. Where do you want to end up?'}</label>
                 <div className="row">
-                  <input id="goal" ref={goalInput} autoComplete="off" spellCheck="false" value={goalText} onChange={(e) => setGoalText(e.target.value)} placeholder={api.SEEDED_GOALS[0]} />
-                  <button className="go" aria-label="Trace the path"><Arrow /></button>
+                  <input id="goal" ref={goalInput} autoComplete="off" spellCheck="false" required={!!live && !live.alumni} maxLength={300} value={live ? live.query : goalText} onChange={(e) => live ? live.setQuery(e.target.value) : setGoalText(e.target.value)} placeholder={live?.alumni ? 'Company, name or course' : live ? 'Your goal' : api.SEEDED_GOALS[0]} />
+                  <button className="go" aria-label={live?.alumni ? 'Find alumni' : 'Trace the path'} disabled={live && (live.busy || (!live.alumni && !live.query.trim()))}><Arrow /></button>
                 </div>
                 <ul className="seeds cap">
-                  {api.SEEDED_GOALS.slice(1).map((g) => (
+                  {!live && api.SEEDED_GOALS.slice(1).map((g) => (
                     <li key={g}><button type="button" onClick={() => setGoalText(g)}>{g}</button></li>
                   ))}
                 </ul>
+                {!live && goalText && fixturePath.reason === 'no_match' && <p role="status">Choose one company, such as NVIDIA, Google, Microsoft or Apple. This demo has synthetic histories for 25 companies.</p>}
+                {live?.alumni && <p className="quiet">Try Google or CS 1332, or leave blank to browse your closest connections.</p>}
+                {live?.busy && <p role="status">{live.alumni ? 'Finding fellow alumni...' : 'Finding your path...'}</p>}
+                {live?.error && <p role="alert">{live.error}</p>}
+                {live?.match?.status === 'no_match' && <p role="status">No shared alumni goal matches yet. Try another goal or <a href="/thermal/">browse campus resources</a>.</p>}
+                {live?.match?.status === 'ambiguous' && <div role="group" aria-label="Choose a matching goal"><p>Which goal did you mean?</p>{live.match.candidates.map(g => <button className="pill" type="button" key={g.id} onClick={() => live.submit(g.id)}>{g.label}</button>)}</div>}
               </form>
+              </Gate>
             </div>
           </div>
           <p className="cue cap">Scroll</p>
           <p className="foot cap quiet">
-            <span>Each point is one of {api.ALUMNI_TOTAL} alumni</span>
-            <span>Seeded demo data · Honeycomb model by <a href="https://poly.pizza/m/6Mqdrv1n3Oo" target="_blank" rel="noreferrer">Poly by Google</a>, CC BY 3.0</span>
+            <span>{live ? (live.demo ? "Synthetic demo - Invented alumni and histories" : "Shared histories, not verified outcomes") : `${api.ALUMNI_TOTAL} synthetic alumni - Invented histories`}</span>
+            <span>{live ? "WarmPath" : "Seeded demo data"} · Honeycomb model by <a href="https://poly.pizza/m/6Mqdrv1n3Oo" target="_blank" rel="noreferrer">Poly by Google</a>, CC BY 3.0</span>
           </p>
         </section>
 
         <section className="map" aria-hidden={view !== 'map'} inert={view !== 'map'}>
-          <button className="node end" data-have="true" data-side={you.side} style={{ transform: `translate(${you.x}px, ${you.y}px)`, '--d': '36px', '--at': '500ms' }} onClick={() => onStudent(students.find((s) => s.id !== studentId).id)} aria-label={`Switch demo student. Currently ${path.student.name}`}>
+          <button className="node end" data-have="true" data-side={you.side} style={{ transform: `translate(${you.x}px, ${you.y}px)`, '--d': '36px', '--at': '500ms' }} onClick={() => live ? location.assign("#/history") : onStudent(students.find((s) => s.id !== studentId).id)} aria-label={live ? "Review your history" : `Switch demo student. Currently ${path.student.name}`}>
             <Hex />
             <span className="tag">
               <span className="name">You</span>
-              <span className="count">{path.student.major}, {api.ordinal(path.student.school_year)} year</span>
+              <span className="count">{[path.student.major, path.student.school_year && `${api.ordinal(path.student.school_year)} year`].filter(Boolean).join(", ") || path.student.name}</span>
             </span>
           </button>
+          {path.peers && <AlumniNodes peers={path.peers} spots={spots} viewport={viewport} onOpen={setPanel}/>}
           {path.stops.map((stop) => (
-            <Node key={stop.activity_id} stop={stop} at={place(stop.activity_id, viewport)} delay={arrive(SPOTS[stop.activity_id].x)} onOpen={() => setPanel(stop.activity_id)} />
+            <Node total={path.goal.achievers} key={stop.activity_id} stop={stop} at={place(stop.activity_id, viewport, spots)} delay={arrive(spots[stop.activity_id].x)} onOpen={() => setPanel(stop.activity_id)} />
           ))}
-          <button className="node end" data-side={goal.side} style={{ transform: `translate(${goal.x}px, ${goal.y}px)`, '--d': '100px', '--at': `${arrive(SPOTS.goal.x)}ms` }} onClick={() => setPanel('goal')}>
+          {!live?.alumni && <button className="node end" data-side={goal.side} style={{ transform: `translate(${goal.x}px, ${goal.y}px)`, '--d': '100px', '--at': `${arrive(SPOTS.goal.x)}ms` }} onClick={() => setPanel('goal')}>
             <Hex />
             <span className="tag">
               <span className="name">{path.goal.label}</span>
-              <span className="count"><b>{path.goal.achievers} alumni</b> got here</span>
+              <span className="count"><b>{path.goal.achievers} alumni</b> {live ? "shared this goal" : "got here"}</span>
             </span>
-          </button>
+          </button>}
 
           <div className="strip">
-            <h2 className="cap">This week on your path</h2>
+            {(!live || live.demo || path.fixture_evidence) && <p className="cap">Synthetic demo - Invented alumni and histories</p>}
+            <h2 className="cap">{live?.alumni ? 'Your alumni network' : live ? 'Your path' : 'This week on your path'}</h2>
+            {live && <><button className="pill" onClick={() => { setView("goal"); setPanel(null) }}>{live.alumni ? 'Find other alumni' : 'Change goal'}</button><p className="quiet">{live.alumni ? 'Course and activity stops show what you share. Direct lines are people to explore.' : path.reason === 'not_enough_achievers' ? 'At least three shared alumni histories are needed to show stops.' : path.reason ? 'No earlier activity meets the evidence thresholds.' : 'Lines show aggregate associations, not individual alumni routes.'}</p></>}
             <ol>
               {path.events.slice(0, 3).map((event) => {
                 const day = api.eventDay(event.starts_at)
@@ -148,7 +168,7 @@ export function Experience({ active = true, students, studentId, onStudent }) {
             </ol>
           </div>
 
-          <div className="closest">
+          {!live && <div className="closest">
             <h2 className="cap">Closest starts to yours</h2>
             {closest.map((person) => (
               <button key={person.id} onClick={() => setPanel('goal')}>
@@ -156,10 +176,10 @@ export function Experience({ active = true, students, studentId, onStudent }) {
                 <span>{person.major} ’{String(person.grad_year).slice(2)}</span>
               </button>
             ))}
-          </div>
+          </div>}
         </section>
 
-        <PeoplePanel open={view === 'map' && panel !== null} path={path} activityId={panel} onClose={() => setPanel(null)} />
+        {live?.alumni ? <AlumniPanel person={view === 'map' && path.peers?.find(p=>p.id===panel)} onClose={()=>setPanel(null)}/> : live ? <LivePeoplePanel open={view === "map" && panel !== null} path={path} activityId={panel} onClose={() => setPanel(null)}/> : <PeoplePanel open={view === 'map' && panel !== null} path={path} activityId={panel} onClose={() => setPanel(null)} />}
       </div>
     </>
   )

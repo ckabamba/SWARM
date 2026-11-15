@@ -1,0 +1,23 @@
+.live-experience .strip { max-width:520px; }
+.live-experience .strip p { font-size:13px; }
+.live-experience .goal form [role=group] { margin-top:20px; }
+.live-experience .goal form [role=group] .pill { margin:4px; }
+.live-experience .goal form [role=alert], .live-experience .goal form [role=status] { margin-top:20px; }
+.alumni-experience .peer-node .tag { width:240px; margin-left:-120px; }
+.alumni-experience .peer-node .name { font-size:18px; }
+.alumni-experience .peer-node .count { display:block; }
+.alumni-experience .peer-tie .tag { width:180px; margin-left:-90px; }
+.alumni-experience .panel { z-index:7; }
+@media(max-width:700px) {
+  .live-experience .foot { left:18px; right:18px; font-size:9px; }
+  .live-experience .foot span:last-child { display:none; }
+  .live-experience .strip { left:18px; bottom:20px; width:calc(100vw - 36px); max-width:none; }
+  .live-experience .node .tag { width:150px; margin-left:-75px; }
+  .live-experience .node .name { font-size:13px; }
+  .live-experience .node .count { font-size:11px; }
+  .alumni-experience .peer-node .tag { width:148px; margin-left:-74px; }
+  .alumni-experience .peer-tie .tag { width:110px; margin-left:-55px; }
+  .alumni-experience .peer-node .name { font-size:14px; }
+  .alumni-experience .peer-node .count { white-space:normal; }
+  .alumni-experience .strip p { font-size:11px; }
+}

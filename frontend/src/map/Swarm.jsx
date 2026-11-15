@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { REDUCED } from '../shared/motion.js'
-import { STRANDS, SAMPLES, DUST, HEX_R, SPOTS, mulberry, dealStrands, hexKey, hexLattice, place } from './layout.js'
+import { STRANDS as DEMO_STRANDS, SAMPLES, DUST as DEMO_DUST, HEX_R, SPOTS, mulberry, dealStrands, hexKey, hexLattice, place } from './layout.js'
 
 const HEAT = `
   vec3 heat(float t) {
@@ -14,9 +14,12 @@ const HEAT = `
   }
 `
 
-export function Swarm({ mode, viewport, stops }) {
+export function Swarm({ mode, viewport, stops, spots = SPOTS, aggregate = false, routes = null }) {
+  const STRANDS = routes ? routes.length : aggregate ? Math.max(1, stops.length) : DEMO_STRANDS
+  // Ambient decoration, independent of the number of alumni or associations.
+  const DUST = DEMO_DUST
   const { gl } = useThree()
-  const strands = useMemo(() => dealStrands(stops), [stops])
+  const strands = useMemo(() => aggregate ? (stops.length ? stops.map(s => [s.activity_id]) : [[]]) : dealStrands(stops), [stops, aggregate])
 
   const dust = useMemo(() => {
     const rand = mulberry(4)
@@ -28,19 +31,28 @@ export function Swarm({ mode, viewport, stops }) {
       size: 5 + rand() * 8,
       x: 0, y: 0, heat: 0, alpha: 0,
     }))
-  }, [])
+  }, [DUST, STRANDS])
 
   // Strand curves in world pixels (origin at centre, y up).
   const curves = useMemo(() => {
     const rand = mulberry(29)
     const { w, h } = viewport
     const world = (p) => new THREE.Vector3(p.x - w / 2, h / 2 - p.y, 0)
-    const you = place('you', viewport), goal = place('goal', viewport)
-    const order = [...stops].sort((a, b) => SPOTS[a.activity_id].x - SPOTS[b.activity_id].x)
+    if (routes) return routes.map(keys => {
+      const points = keys.map(key=>world(place(key,viewport,spots)))
+      const curve = new THREE.CurvePath()
+      for(let i=0;i<points.length-1;i++) {
+        const a=points[i],b=points[i+1],reach=(b.x-a.x)*.5
+        curve.add(new THREE.CubicBezierCurve3(a,new THREE.Vector3(a.x+reach,a.y,0),new THREE.Vector3(b.x-reach,b.y,0),b))
+      }
+      return curve.getSpacedPoints(SAMPLES-1)
+    })
+    const you = place('you', viewport, spots), goal = place('goal', viewport, spots)
+    const order = [...stops].sort((a, b) => spots[a.activity_id].x - spots[b.activity_id].x)
     return strands.map((ids) => {
       const pts = [world({ x: you.x, y: you.y + (rand() - 0.5) * 10 })]
       order.filter((s) => ids.includes(s.activity_id)).forEach((s) => {
-        const p = place(s.activity_id, viewport)
+        const p = place(s.activity_id, viewport, spots)
         const spread = 3 + s.achievers * 1.5
         pts.push(world({ x: p.x + (rand() - 0.5) * 6, y: p.y + (rand() - 0.5) * spread }))
       })
@@ -52,7 +64,7 @@ export function Swarm({ mode, viewport, stops }) {
       }
       return route.getSpacedPoints(SAMPLES - 1)
     })
-  }, [strands, stops, viewport])
+  }, [strands, stops, viewport, spots, routes])
 
   // The hive: every cell on screen, and for the cells on a route, how many strands cross it.
   const hexGeo = useMemo(() => {
@@ -85,7 +97,7 @@ export function Swarm({ mode, viewport, stops }) {
     g.setAttribute('aHeat', new THREE.BufferAttribute(new Float32Array(DUST), 1))
     g.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(DUST), 1))
     return g
-  }, [])
+  }, [DUST, STRANDS])
 
   const trailGeo = useMemo(() => {
     const g = new THREE.BufferGeometry()
@@ -99,7 +111,7 @@ export function Swarm({ mode, viewport, stops }) {
     g.setAttribute('aU', new THREE.BufferAttribute(u, 1))
     g.setAttribute('aStrand', new THREE.BufferAttribute(s, 1))
     return g
-  }, [])
+  }, [DUST, STRANDS])
 
   useEffect(() => {
     const pos = trailGeo.attributes.position
@@ -138,7 +150,7 @@ export function Swarm({ mode, viewport, stops }) {
         float a = wall * (0.03 + vRim * 0.055 + vNear * 0.2 + vHeat * 0.42) + fill * (vHeat * 0.17 + vNear * 0.025);
         gl_FragColor = vec4(vec3(0.92, 0.67, 0.0) * a, 1.0);
       }`,
-  }), [gl])
+  }), [gl, STRANDS])
 
   const dustMat = useMemo(() => new THREE.ShaderMaterial({
     transparent: true, depthTest: false, blending: THREE.AdditiveBlending,
@@ -159,7 +171,7 @@ export function Swarm({ mode, viewport, stops }) {
         float a = smoothstep(0.5, 0.0, d);
         gl_FragColor = vec4(heat(vHeat) * a * a * vAlpha, 1.0);
       }`,
-  }), [gl])
+  }), [gl, STRANDS])
 
   const trailMat = useMemo(() => new THREE.ShaderMaterial({
     transparent: true, depthTest: false, blending: THREE.AdditiveBlending,
@@ -181,14 +193,14 @@ export function Swarm({ mode, viewport, stops }) {
         float a = smoothstep(0.5, 0.0, d);
         gl_FragColor = vec4(vec3(1.0, 0.34, 0.09) * a * a * 0.085 * vOn, 1.0);
       }`,
-  }), [gl])
+  }), [gl, STRANDS])
 
   const pointer = useRef({ x: 9999, y: 9999, sx: 9999, sy: 9999 })
   useEffect(() => {
-    const move = (e) => { pointer.current.x = e.clientX - window.innerWidth / 2; pointer.current.y = window.innerHeight / 2 - e.clientY }
+    const move = (e) => { if (REDUCED) return; pointer.current.x = e.clientX - window.innerWidth / 2; pointer.current.y = window.innerHeight / 2 - e.clientY }
     window.addEventListener('pointermove', move)
     return () => window.removeEventListener('pointermove', move)
-  }, [])
+  }, [DUST, STRANDS])
 
   const clock = useRef({ mapAt: null })
   useEffect(() => {
@@ -197,7 +209,7 @@ export function Swarm({ mode, viewport, stops }) {
   }, [mode, trailMat])
 
   useFrame(({ clock: c }, dt) => {
-    const t = c.elapsedTime
+    const t = REDUCED ? 0 : c.elapsedTime
     const { w, h } = viewport
     const state = clock.current
     if (state.mapAt === 'pending') state.mapAt = t
