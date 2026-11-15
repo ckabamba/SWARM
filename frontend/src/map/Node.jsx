@@ -7,11 +7,11 @@ export function Node({ at, delay, stop, onOpen, total, disabled = false }) {
     <button
       className="node" data-have={stop.have} data-next={stop.next} data-side={at.side}
       style={{ transform: `translate(${at.x}px, ${at.y}px)`, '--d': `${d}px`, '--at': `${delay}ms` }}
-      onClick={onOpen} disabled={disabled}
+      onClick={onOpen} disabled={disabled} aria-label={`${stop.name}: ${stop.achievers} of ${total} alumni`}
     >
       <Hex />
       <span className="tag">
-        <span className="name">{stop.name}</span>
+        <span className="name">{stop.type === 'course' && stop.resource ? stop.resource.name.match(/^[A-Z]+\s+\d+/)?.[0] || stop.name : stop.name}</span>
         <span className="count"><b>{stop.achievers} of {total}</b> did this · {stop.type}</span>
         {stop.have && <span className="state cap">You have this</span>}
         {stop.next && <span className="state cap">Next for you</span>}

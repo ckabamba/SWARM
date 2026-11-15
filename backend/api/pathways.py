@@ -9,7 +9,7 @@ from fastapi import HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import and_, insert, or_, select, text, update
 
-from backend.engine.paths import NotFound, path_for_goal, people_for_goal
+from backend.engine.paths import NotFound, path_for_goal, people_for_goal, _PUBLIC_HISTORY
 
 
 class AskCreate(BaseModel):
@@ -38,7 +38,13 @@ class PathwayService:
             result = path_for_goal(conn, goal_id, actor['person_id'], include_fixtures=self.demo_histories)
         except NotFound as error:
             raise HTTPException(404, str(error)) from None
-        return {**result, 'mode': 'alumni', 'evidence': 'synthetic_demo' if self.demo_histories else 'self_reported',
+        resource_rows = conn.execute(text("""SELECT a.id AS activity_id,r.id,r.name,r.url,r.summary
+            FROM activity a JOIN api_resources r ON r.id=a.resource_id WHERE a.id=ANY(:ids)"""),
+            {'ids':[s['activity_id'] for s in result['stops']]}).mappings()
+        resources = {r['activity_id']:{k:r[k] for k in ('id','name','url','summary')} for r in resource_rows}
+        for stop in result['stops']:
+            stop['resource'] = resources.get(stop['activity_id'])
+        return {**result, 'mode': 'alumni' , 'evidence': 'synthetic_demo' if self.demo_histories else 'self_reported',
                 'population': 'Includes invented demo alumni' if self.demo_histories else 'Public alumni with explicitly shared history',
                 'school_year_basis': 'estimated_from_graduation_year'}
 
@@ -51,7 +57,15 @@ class PathwayService:
         goal = conn.scalar(select(goals.c.name).where(goals.c.id == goal_id))
         accounts = self.profiles.tables['account']
         reachable = set(conn.scalars(select(accounts.c.person_id).where(accounts.c.person_id.in_([p['id'] for p in people]))))
+        course_rows=conn.execute(text(f"""WITH history AS ({_PUBLIC_HISTORY})
+            SELECT h.person_id,r.id,r.name,r.url,h.school_year
+            FROM history h JOIN activity a ON a.id=h.activity_id
+            JOIN api_resources r ON r.id=a.resource_id
+            JOIN history goal ON goal.person_id=h.person_id AND goal.activity_id=:goal
+            WHERE h.person_id=ANY(:ids) AND a.type='course' AND h.school_year<goal.school_year
+            ORDER BY h.school_year,r.name"""),{'include_fixtures':self.demo_histories,'ids':[p['id'] for p in people],'goal':goal_id}).mappings().all()
         for person in people:
+            person['courses']=[{k:r[k] for k in ('id','name','url','school_year')} for r in course_rows if r['person_id']==person['id']]
             tie = person['shared_tie']
             introduction = (' ' + tie + '.') if tie else ''
             person.update(can_ask=person['id'] in reachable,

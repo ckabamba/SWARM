@@ -13,6 +13,7 @@ function Person({ person, goalId }) {
     finally {setBusy(false)}
   }
   return <section className="person"><header><h3>{person.name}</h3><span className="who">{person.major} {person.grad_year}</span></header><p className="tie">{person.shared_tie}</p>
+    {person.courses?.length > 0 && <div><span className="cap">Courses before this goal</span><ul>{person.courses.map(c => <li key={c.id}><a href={c.url} target="_blank" rel="noreferrer">{c.name}</a> ? Year {c.school_year}</li>)}</ul></div>}
     {sent ? <p role="status">Ask sent. <a href={`#/reply/${sent.id}`}>View status</a></p> : person.can_ask && <>
       {!editing && <button className="pill" onClick={() => setEditing(true)}>Ask {person.name}</button>}
       {editing && <div className="draft" data-open="true"><div><textarea aria-label={`Message to ${person.name}`} value={message} maxLength={2000} disabled={busy || !!attempt.current} onChange={e => setMessage(e.target.value)}/><div className="acts"><button className="pill" disabled={busy} onClick={() => setEditing(false)}>Cancel</button><button className="pill hot" disabled={busy || !message.trim()} onClick={send}>{busy ? 'Sending...' : 'Send the ask'}</button></div></div></div>}
@@ -31,6 +32,7 @@ export function LivePeoplePanel({open,path,activityId,onClose}) {
   return <aside className="panel" data-open={open} aria-label="Matching alumni" aria-hidden={!open} inert={!open}>
     <button className="close cap" onClick={onClose}>Close</button><h2>{stop?.name || path.goal.label}</h2>
     <p className="lede">{path.fixture_evidence ? 'Synthetic demo alumni. These invented people cannot receive real asks.' : 'Public alumni with explicitly shared histories. Participation is self-reported.'}</p>
+    {stop?.resource && <p><a className="pill" href={stop.resource.url} target="_blank" rel="noreferrer">Open course resource</a><br/>{stop.resource.summary}</p>}
     {error ? <><p role="alert">{error}</p><button className="pill" onClick={()=>setRetry(n=>n+1)}>Retry</button></> : people === null ? <p role="status">Loading alumni...</p> : people.length ? people.map(p=><Person key={`${path.goal.id}:${activityId}:${p.id}`} person={p} goalId={path.goal.id}/>) : <p>No eligible alumni are available for this selection.</p>}
   </aside>
 }

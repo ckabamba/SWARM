@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 from backend.api.app import create_app
 from backend.manage import database_url
-from backend.seed.load_demo_alumni import load, PREFIX
+from backend.seed.load_demo_alumni import load, enrich_courses, PREFIX
 from backend.tests.test_profiles import app, register
 from backend.tests.test_history import save_profile
 from backend.events import embeddings
@@ -15,6 +15,9 @@ def test_local_demo_opt_in_and_privacy(app, monkeypatch):
     monkeypatch.setattr(embeddings,'_model',Broken())
     with app.state.engine.begin() as conn:
         people=load(conn)
+        before=conn.scalar(text('SELECT count(*) FROM person_activity WHERE person_id=ANY(:ids)'),{'ids':people})
+        enrich_courses(conn)
+        assert conn.scalar(text('SELECT count(*) FROM person_activity WHERE person_id=ANY(:ids)'),{'ids':people})==before
     try:
         with TestClient(app) as normal:
             register(normal)
@@ -28,10 +31,14 @@ def test_local_demo_opt_in_and_privacy(app, monkeypatch):
             assert result['path']['goal']['achievers']==40
             assert result['path']['fixture_evidence'] and result['path']['evidence']=='synthetic_demo'
             assert result['path']['stops']
+            courses=[s for s in result['path']['stops'] if s['type']=='course']
+            assert courses and all(s['resource']['id'] in range(101,109) for s in courses)
+            assert all(s['achievers']>=3 and s['lift']>=1.5 and s['typical_year']<5 for s in courses)
             goal=result['path']['goal']['id']
             alumni=client.get('/api/people',params={'goal_id':goal}).json()
             assert alumni['fixture_evidence'] and alumni['items']
             assert all(not p['can_ask'] for p in alumni['items'])
+            assert all(p['courses'] and all(c['school_year']<5 for c in p['courses']) for p in alumni['items'])
             hidden=client.post('/api/path',json={'mode':'alumni','goal':'secretxyz'}).json()
             assert hidden['match']['status']=='no_match'
             # Private contributions cannot leak into the public demo population either.

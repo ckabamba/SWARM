@@ -299,3 +299,6 @@ Extend the fixture plan with authored sample posts, clubs/resources, campus loca
 ### Explicit local synthetic-history mode
 
 `WARMPATH_DEMO_HISTORIES=1` enables fixture histories on a loopback database only, with no public deployment origin. `/health` adds `synthetic_histories`; path/people/goals responses label this mode with `evidence: "synthetic_demo"` and fixture metadata. Authentication still identifies the viewer, private real histories remain excluded, and generated people have no accounts or sendable asks. Default mode still excludes all fixtures. This opt-in supports the user's temporary local demo dataset; it is not production evidence. See [demo setup](demo-alumni.md).
+
+
+Alumni path resource links: `POST /path` alumni responses add `stops[].resource`, either null or `{id,name,url,summary}` from the shared resource catalog. `GET /people` adds `items[].courses`: `{id,name,url,school_year}` for eligible shared courses taken before the selected goal. Demo participation stays labeled synthetic even when the referenced course/resource is real. Counts and lift continue to use eligible `person_activity` memberships, not course descriptions or model output.

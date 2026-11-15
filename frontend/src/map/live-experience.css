@@ -6,7 +6,7 @@
 @media(max-width:700px) {
   .live-experience .foot { left:18px; right:18px; font-size:9px; }
   .live-experience .foot span:last-child { display:none; }
-  .live-experience .strip { left:18px; bottom:20px; max-width:calc(100vw - 36px); }
+  .live-experience .strip { left:18px; bottom:20px; width:calc(100vw - 36px); max-width:none; }
   .live-experience .node .tag { width:150px; margin-left:-75px; }
   .live-experience .node .name { font-size:13px; }
   .live-experience .node .count { font-size:11px; }

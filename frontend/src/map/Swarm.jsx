@@ -16,7 +16,8 @@ const HEAT = `
 
 export function Swarm({ mode, viewport, stops, spots = SPOTS, aggregate = false }) {
   const STRANDS = aggregate ? Math.max(1, stops.length) : DEMO_STRANDS
-  const DUST = aggregate ? STRANDS : DEMO_DUST
+  // Ambient decoration, independent of the number of alumni or associations.
+  const DUST = DEMO_DUST
   const { gl } = useThree()
   const strands = useMemo(() => aggregate ? (stops.length ? stops.map(s => [s.activity_id]) : [[]]) : dealStrands(stops), [stops, aggregate])
 
@@ -187,7 +188,7 @@ export function Swarm({ mode, viewport, stops, spots = SPOTS, aggregate = false 
 
   const pointer = useRef({ x: 9999, y: 9999, sx: 9999, sy: 9999 })
   useEffect(() => {
-    const move = (e) => { pointer.current.x = e.clientX - window.innerWidth / 2; pointer.current.y = window.innerHeight / 2 - e.clientY }
+    const move = (e) => { if (REDUCED) return; pointer.current.x = e.clientX - window.innerWidth / 2; pointer.current.y = window.innerHeight / 2 - e.clientY }
     window.addEventListener('pointermove', move)
     return () => window.removeEventListener('pointermove', move)
   }, [DUST, STRANDS])
@@ -199,7 +200,7 @@ export function Swarm({ mode, viewport, stops, spots = SPOTS, aggregate = false 
   }, [mode, trailMat])
 
   useFrame(({ clock: c }, dt) => {
-    const t = c.elapsedTime
+    const t = REDUCED ? 0 : c.elapsedTime
     const { w, h } = viewport
     const state = clock.current
     if (state.mapAt === 'pending') state.mapAt = t
