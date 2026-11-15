@@ -53,7 +53,9 @@ events = Table('api_public_events', metadata,
     Column('ends_at', DateTime(timezone=True), nullable=False),
     Column('fetched_at', DateTime(timezone=True), nullable=False),
     Column('source', Text, nullable=False, server_default='gt-calendar'),
-    Column('location', Text, nullable=True), Column('organizer', Text, nullable=True))
+    Column('location', Text, nullable=True), Column('organizer', Text, nullable=True),
+    # Plain text from the public listing. Untrusted: render as text, never as HTML.
+    Column('description', Text, nullable=True))
 feeds = Table('api_feeds', metadata, Column('name', Text, primary_key=True),
     Column('fetched_at', DateTime(timezone=True), nullable=False))
 
@@ -82,6 +84,7 @@ def initialize_schema(engine):
         conn.execute(text("ALTER TABLE api_public_events ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'gt-calendar'"))
         conn.execute(text('ALTER TABLE api_public_events ADD COLUMN IF NOT EXISTS location TEXT'))
         conn.execute(text('ALTER TABLE api_public_events ADD COLUMN IF NOT EXISTS organizer TEXT'))
+        conn.execute(text('ALTER TABLE api_public_events ADD COLUMN IF NOT EXISTS description TEXT'))
         conn.execute(text("ALTER TABLE api_resources ADD COLUMN IF NOT EXISTS topics TEXT[] NOT NULL DEFAULT '{}'"))
 
 
