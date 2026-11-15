@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -139,7 +140,7 @@ export default function AskConversationModal({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -278,4 +279,4 @@ const styles = StyleSheet.create({
   sendButtonDisabled: {
     opacity: 0.45,
   },
-});
+}));

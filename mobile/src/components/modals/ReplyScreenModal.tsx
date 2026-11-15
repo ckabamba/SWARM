@@ -1,4 +1,5 @@
 import React from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import {
   StyleSheet,
   Text,
@@ -113,7 +114,7 @@ export default function ReplyScreenModal({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(6, 4, 11, 0.88)',
@@ -259,4 +260,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
   },
-});
+}));

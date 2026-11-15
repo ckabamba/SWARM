@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createThemedStyles } from './src/theme/themedStyles';
 import { StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -16,7 +17,7 @@ import { useWarmPathStore } from './src/store/warmPathStore';
 import { AccountProvider } from './src/store/AccountContext';
 import { useAccount } from './src/store/AccountContext';
 import AuthGateScreen from './src/screens/AuthGateScreen';
-import { THEME } from './src/theme/tokens';
+import { getThemeMode, THEME } from './src/theme/tokens';
 
 function AppContent() {
   const { account } = useAccount();
@@ -27,6 +28,7 @@ function AppContent() {
   const [panX, setPanX] = useState(0);
 
   const { preferences } = useWarmPathStore();
+  const isLightTheme = getThemeMode() === 'light';
 
   const handleOpenMap = (focusActivityId?: number) => {
     if (focusActivityId !== undefined) {
@@ -50,7 +52,7 @@ function AppContent() {
   if (!account && !demoMode) {
     return (
       <GestureHandlerRootView style={styles.container}>
-        <StatusBar style="light" />
+        <StatusBar style={isLightTheme ? 'dark' : 'light'} />
         <ThermalShell currentTab="home">
           <AuthGateScreen onEnterDemo={() => { setDemoMode(true); setCurrentTab('home'); }} />
         </ThermalShell>
@@ -87,7 +89,7 @@ function AppContent() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style={isLightTheme ? 'dark' : 'light'} />
       <ThermalShell
         currentTab={currentTab}
         onHomePress={() => {
@@ -116,7 +118,7 @@ export default function App() {
   return <AccountProvider><AppContent /></AccountProvider>;
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: THEME.colors.void,
@@ -124,4 +126,4 @@ const styles = StyleSheet.create({
   screenWrapper: {
     flex: 1,
   },
-});
+}));

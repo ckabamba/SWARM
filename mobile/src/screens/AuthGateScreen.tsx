@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { createThemedStyles } from '../theme/themedStyles';
 import { THEME } from '../theme/tokens';
 import { useAccount } from '../store/AccountContext';
 
@@ -56,7 +57,7 @@ function Field(props: React.ComponentProps<typeof TextInput> & { label: string }
   return <View style={styles.field}><Text style={styles.label}>{label}</Text><TextInput {...input} style={styles.input} placeholderTextColor={THEME.colors.ash} autoCorrect={false} returnKeyType="next" /></View>;
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   fill: { flex: 1 },
   scroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 18 },
   panel: { width: '100%', maxWidth: 470, gap: 12, padding: 21, borderWidth: 1, borderColor: THEME.colors.line, borderRadius: THEME.rounded.card, backgroundColor: THEME.colors.panelSolid },
@@ -82,4 +83,4 @@ const styles = StyleSheet.create({
   demoButton: { minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: THEME.rounded.pill, borderWidth: 1, borderColor: THEME.colors.gold, backgroundColor: 'rgba(234,170,0,0.09)' },
   demoButtonText: { color: THEME.colors.glow, fontSize: 13, fontWeight: '700' },
   demoNote: { color: THEME.colors.ash, fontSize: 10, lineHeight: 15, textAlign: 'center' },
-});
+}));

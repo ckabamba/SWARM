@@ -1,6 +1,7 @@
 ﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { createThemedStyles } from '../theme/themedStyles';
 import { THEME } from '../theme/tokens';
 import { DiscoveryResource, PublicEvent, warmPathApi } from '../services/warmPathApi';
 import { DEMO_DISCOVERY_RESOURCES, DEMO_EVENTS } from '../demo/fixtures';
@@ -95,7 +96,7 @@ function ResourceCard({ resource }: { resource: DiscoveryResource | DemoDiscover
     {demo ? <Text style={styles.source}>Fictional demo fixture · {resource.id}</Text> : resource.source_url ? <Text style={styles.source}>Source link is supplied by WarmPath.</Text> : null}
   </View>;
 }
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: { flex: 1 },
   scroll: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: THEME.spacing.gutter, paddingBottom: 28, gap: 11 },
@@ -126,4 +127,4 @@ const styles = StyleSheet.create({
   error: { color: '#ff9b83', fontSize: 12, textAlign: 'center' },
   demoBanner: { borderWidth: 1, borderColor: 'rgba(234,170,0,0.45)', borderRadius: THEME.rounded.field, backgroundColor: 'rgba(234,170,0,0.1)', padding: 9 },
   demoText: { color: THEME.colors.glow, fontSize: 10.5, lineHeight: 15 },
-});
+}));

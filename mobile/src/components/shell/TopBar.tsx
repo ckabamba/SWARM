@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -65,7 +66,7 @@ export default function TopBar({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   safeArea: {
     backgroundColor: THEME.colors.void,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
@@ -124,4 +125,4 @@ const styles = StyleSheet.create({
   rightSpacer: {
     width: 44, // preserves clear area for Expo Go top-right menu
   },
-});
+}));

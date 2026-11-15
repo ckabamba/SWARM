@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createThemedStyles } from '../theme/themedStyles';
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAccount } from '../store/AccountContext';
@@ -276,7 +277,7 @@ function ComposerModal({ visible, editing, demoMode, body, setBody, selectedLink
   </Modal>;
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: { flex: 1, paddingHorizontal: THEME.spacing.gutter, paddingTop: 14 },
   heading: { gap: 3, marginBottom: 10 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
@@ -339,4 +340,4 @@ const styles = StyleSheet.create({
   profileModal: { width: '100%', maxWidth: 420, borderRadius: THEME.rounded.card, borderWidth: 1, borderColor: THEME.colors.line, backgroundColor: THEME.colors.panelSolid, padding: 18, gap: 10 },
   profileName: { ...THEME.typography.headline, color: THEME.colors.bone },
   disclaimer: { color: THEME.colors.ash, fontSize: 10, lineHeight: 14, borderTopWidth: 1, borderTopColor: THEME.colors.line, paddingTop: 8 },
-});
+}));

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import {
   StyleSheet,
   Text,
@@ -60,7 +61,7 @@ export default function NewGoalModal({
             value={inputText}
             onChangeText={setInputText}
             placeholder="e.g. SWE internship at NVIDIA"
-            placeholderTextColor="rgba(244, 238, 230, 0.4)"
+            placeholderTextColor={THEME.colors.ash}
             selectionColor={THEME.colors.ember}
             autoFocus
           />
@@ -95,7 +96,7 @@ export default function NewGoalModal({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(6, 4, 11, 0.8)',
@@ -183,4 +184,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: THEME.colors.bone,
   },
-});
+}));

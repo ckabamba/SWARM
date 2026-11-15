@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Student, Stop, Alum, Ask, AskMessage, Goal, ProfileInfo } from '../types/warmpath';
+import { setThemeMode, ThemeMode } from '../theme/tokens';
 
 const STORAGE_KEYS = {
   ACTIVE_STUDENT_ID: 'warmpath.active_student_id',
@@ -171,6 +172,7 @@ const DEFAULT_HAVE_MAP: Record<number, number[]> = {
 export interface MobilePreferences {
   lowBatteryMode: boolean;
   weeklyReminders: boolean;
+  themeMode: ThemeMode;
 }
 
 // Global in-memory state
@@ -194,6 +196,7 @@ let currentAsks: Ask[] = [
 let currentPrefs: MobilePreferences = {
   lowBatteryMode: false,
   weeklyReminders: true,
+  themeMode: 'dark',
 };
 let currentProfileInfo: Record<string, ProfileInfo> = {};
 
@@ -265,7 +268,13 @@ function computeStops(studentId: number, haveMap: Record<number, number[]>): Sto
     }
     if (savedGoal) currentGoal = JSON.parse(savedGoal);
     if (savedAsks) currentAsks = JSON.parse(savedAsks);
-    if (savedPrefs) currentPrefs = JSON.parse(savedPrefs);
+    if (savedPrefs) {
+      currentPrefs = {
+        ...currentPrefs,
+        ...JSON.parse(savedPrefs),
+      };
+    }
+    setThemeMode(currentPrefs.themeMode);
     if (savedProfileInfo) currentProfileInfo = JSON.parse(savedProfileInfo);
 
     notify();
@@ -420,6 +429,7 @@ export function useWarmPathStore() {
 
   const setPreferences = useCallback((patch: Partial<MobilePreferences>) => {
     currentPrefs = { ...currentPrefs, ...patch };
+    setThemeMode(currentPrefs.themeMode);
     AsyncStorage.setItem(STORAGE_KEYS.PREFS, JSON.stringify(currentPrefs));
     notify();
   }, []);

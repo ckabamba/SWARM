@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { createThemedStyles } from '../theme/themedStyles';
 import { useAccount } from '../store/AccountContext';
 import { THEME } from '../theme/tokens';
 
@@ -55,7 +56,7 @@ function DemoProfile({ onExitDemo }: { onExitDemo?: () => void }) {
   </ScrollView>;
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: THEME.spacing.gutter, paddingBottom: 32, gap: 14 },
   header: { gap: 5, marginBottom: 4 },
@@ -77,4 +78,4 @@ const styles = StyleSheet.create({
   secondaryButtonText: { color: THEME.colors.bone, fontSize: 13, fontWeight: '600' },
   error: { color: '#ff9b83', fontSize: 12, lineHeight: 17 },
   footer: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 3 },
-});
+}));

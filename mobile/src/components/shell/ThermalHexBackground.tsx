@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
+import { createThemedStyles } from '../../theme/themedStyles';
 import { StyleSheet, View, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Defs, RadialGradient, Stop as SvgStop } from 'react-native-svg';
 import { generateHexLattice, getHexPath, HEX_R } from '../../math/hexMath';
 import { mulberry } from '../../math/strandMath';
-import { THEME } from '../../theme/tokens';
+import { getThemeMode, THEME } from '../../theme/tokens';
 
 interface ThermalHexBackgroundProps {
   panX?: number; // Parallax offset on Map
@@ -62,7 +63,9 @@ export default function ThermalHexBackground({
         {/* Honeycomb lattice walls in faint Buzz Gold */}
         <Path
           d={latticePathData}
-          stroke="rgba(234, 170, 0, 0.13)"
+          stroke={getThemeMode() === 'light'
+            ? 'rgba(11, 31, 69, 0.12)'
+            : 'rgba(234, 170, 0, 0.13)'}
           strokeWidth={0.8}
           fill="none"
         />
@@ -84,7 +87,7 @@ export default function ThermalHexBackground({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     position: 'absolute',
     top: 0,
@@ -94,4 +97,4 @@ const styles = StyleSheet.create({
     width: CANVAS_W,
     height: CANVAS_H,
   },
-});
+}));

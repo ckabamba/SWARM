@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createThemedStyles } from '../theme/themedStyles';
 import { StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
 import StudentHeader from '../components/home/StudentHeader';
 import ActiveGoalCard from '../components/home/ActiveGoalCard';
@@ -111,7 +112,7 @@ export default function HomeScreen({ onOpenMap, onOpenProfile }: HomeScreenProps
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -137,4 +138,4 @@ const styles = StyleSheet.create({
     color: THEME.colors.ash,
     letterSpacing: 0.9,
   },
-});
+}));
