@@ -35,6 +35,24 @@ const send = (method, path, body) => request(path, { method, body: body === unde
 
 const api = {
   request,
+  goals: (q = '') => request('/goals?q=' + encodeURIComponent(q)),
+  path: (goal_id) => send('POST', '/path', { mode: 'alumni', goal_id }),
+  people: (goal_id, activity_id = null) => request('/people?goal_id=' + encodeURIComponent(goal_id) + (activity_id ? '&activity_id=' + encodeURIComponent(activity_id) : '')),
+  history: () => request('/me/history'),
+  activities: (q = '') => request('/activities?q=' + encodeURIComponent(q)),
+  saveHistory: (kind, id, body) => send('PUT', '/me/history/' + kind + '/' + encodeURIComponent(id), body),
+  courses: () => request('/me/courses'),
+  saveCourse: (id, version, course) => send(id ? 'PUT' : 'POST', '/me/courses' + (id ? '/' + encodeURIComponent(id) : ''), { version, course }),
+  deleteCourse: (id, version) => send('DELETE', '/me/courses/' + encodeURIComponent(id) + '?version=' + version),
+  transcriptText: (text) => send('POST', '/transcripts/text', { text }),
+  transcriptFile: (file) => request('/transcripts?filename=' + encodeURIComponent(file.name), { method: 'POST', body: file, headers: { 'Content-Type': 'application/octet-stream' }, timeout: 40000 }),
+  transcript: (id) => request('/transcripts/' + encodeURIComponent(id)),
+  importTranscript: (id, version, selections) => send('POST', '/transcripts/' + encodeURIComponent(id) + '/import', { version, selections }),
+  discardTranscript: (id) => send('DELETE', '/transcripts/' + encodeURIComponent(id)),
+  asks: () => request('/asks'),
+  ask: (id) => request('/asks/' + encodeURIComponent(id)),
+  createAsk: (body) => send('POST', '/asks', body),
+  acceptAsk: (id) => send('POST', '/asks/' + encodeURIComponent(id) + '/accept'),
   /** GET /api/session: this browser's private workspace. Sets the workspace cookie on first call. */
   session: () => request('/session'),
   /** GET /api/resources: the campus resource catalog. Needs a workspace, so call session() first. */

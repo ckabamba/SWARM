@@ -16,6 +16,7 @@ from backend.api.profiles import bounded_extract, now
 from backend.api.resume_parser import parse_text
 from backend.manage import database_url
 from backend.migrate import migrate
+from backend.api.catalog_setup import initialize_catalog
 
 
 @pytest.fixture
@@ -25,6 +26,7 @@ def app():
     with engine.connect() as conn:
         assert conn.scalar(text('SELECT current_database()')) == 'warmpath_test'
     migrate(url)
+    initialize_catalog(url)
     with engine.begin() as conn:
         conn.execute(text('DELETE FROM account_rate_limit'))
     yield create_app(url)

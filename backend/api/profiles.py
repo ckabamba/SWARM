@@ -67,7 +67,8 @@ class ProfileService:
     def initialize(self):
         metadata = MetaData()
         for name in ('person', 'account', 'account_session', 'person_profile', 'resume_draft',
-                     'account_rate_limit', 'alumni_city', 'api_resources', 'api_job_examples', 'person_course', 'transcript_draft', 'post', 'api_public_events'):
+                     'account_rate_limit', 'alumni_city', 'api_resources', 'api_job_examples', 'person_course', 'transcript_draft', 'post', 'api_public_events',
+                     'activity', 'person_activity', 'activity_contribution', 'ask'):
             try:
                 self.tables[name] = Table(name, metadata, autoload_with=self.engine)
             except NoSuchTableError:
@@ -143,6 +144,7 @@ class ProfileService:
         conn.execute(update(people).where(people.c.id == actor['person_id']).values(
             name=profile.name, kind=profile.kind, major=profile.major or None, grad_year=profile.grad_year,
             city_id=profile.city_id, share_city=profile.share_city, profile_visible=profile.profile_visible))
+        self.history.sync(conn, actor['person_id'])
         return self.profile(conn, actor)
 
     def store_draft(self, actor, parsed, table_name='resume_draft'):
@@ -173,6 +175,8 @@ def install_profiles(app, engine):
     service = ProfileService(engine)
     from backend.api.courses import install_courses
     courses = install_courses(app, service, bounded_extract, now)
+    from backend.api.history import install_history
+    install_history(app, service, courses)
     from backend.api.community import install_community
     install_community(app, service)
 

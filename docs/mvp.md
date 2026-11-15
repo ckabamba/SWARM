@@ -147,6 +147,9 @@ The original proposed defaults keep activities with a lift of 1.5 or more and at
 
 ## API contract
 
+**Implemented update:** [Reviewed history, live paths and asks](history-and-paths.md) is the current contract for `/path` alumni mode, `/people`, `/goals`, `/me/history`, `/activities` and `/asks`. It supersedes the legacy prototype examples below: identity comes from the account cookie, never a client-supplied student ID. Resource mode remains compatible.
+
+
 ### Implemented local Thermal slice
 
 The current local service implements resource discovery and public event snapshots, not the historical alumni-path contract below. Real alumni histories are not connected. Local accounts/profiles, courses/transcripts and community posts use the separate implemented contracts linked above. All paths use `/api`; see [run/test instructions](backend-local-testing.md).
