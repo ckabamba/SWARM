@@ -6,9 +6,9 @@ The project began with the Georgia Tech SGA hackathon prompt on connecting stude
 
 ## Current status
 
-Planning and interactive design prototypes. Three browser prototypes exist under [prototypes/](prototypes/README.md), with a shared fake API, invented people, and placeholder events. They demonstrate the original path, people, and Ask flow; every typed goal currently resolves to the same NVIDIA example. Ask acceptance synchronizes browser tabs through local storage, not separate devices.
+Planning and interactive design prototypes. The Thermal browser prototype under [prototypes/](prototypes/README.md) demonstrates the path, people, and Ask flow plus Social Jackets, a student-focused community page with fictional student demo profiles, posts, clubs, and event fixtures. The path flow uses a shared fake API, and every typed goal currently resolves to the same NVIDIA example. Ask acceptance synchronizes browser tabs through local storage, not separate devices; community posts composed in Social Jackets remain in the current page session.
 
-The production backend, database, community feed, geographic maps, voice interaction, and mobile application are not implemented yet. [DESIGN.md](DESIGN.md) defines the visual direction derived from the Thermal prototype.
+The production backend, database, shared community persistence, geographic maps, voice interaction, and mobile application are not implemented yet. [DESIGN.md](DESIGN.md) defines the visual direction derived from the Thermal prototype.
 
 ## Three core experiences
 
@@ -80,14 +80,14 @@ The resource-model decisions in #14 remain dependencies for affected schema, fix
 
 ## Team
 
-Five roles cover the expanded service. Christofort's assignment is confirmed; the other teammates' names remain TBA.
+Five roles cover the expanded service. Christofort Kabamba owns role 2 and Shehryar Sardar owns role 4; owners for roles 1, 3, and 5 remain TBA.
 
 | # | Role | Responsibility | Done when | Owner |
 | --- | --- | --- | --- | --- |
 | 1 | Data, discovery engine, and event sources | Shared schema and migrations, development fixtures, path statistics and people ranking, resource/event ingestion and matching, normalized campus locations and alumni cities | The backend can query consistent records, ranked paths/people, and locations; imported events retain their sources | TBA |
 | 2 | Backend and LLM | Shared API contracts, account/access logic, persistence, resource search orchestration, LLM and speech integration, fallbacks, and deployment | All experiences use a deployed API; posts and asks persist; discovery supports the agreed text/voice behavior and failure cases | Christofort Kabamba |
 | 3 | Paths, resource discovery, and alumni connections | Path graph, resource search/results, text/voice controls, people panel, shared ties, and Ask/reply flow on web and mobile | Users discover a resource or path, inspect an alum, and send/accept an ask across devices using accessible desktop and mobile interfaces | TBA |
-| 4 | Community, profiles, and shared app design | Post composer/feed, club/event highlights and posting forms, account/profile screens, shared navigation and components, visual design, and mobile app integration | Users create posts and browse highlights; profiles and navigation work across all experiences; the shared shell supports the chosen mobile delivery approach | TBA |
+| 4 | Community, profiles, and shared app design | Post composer/feed, club/event highlights and posting forms, account/profile screens, shared navigation and components, visual design, and mobile app integration | Users create posts and browse highlights; profiles and navigation work across all experiences; the shared shell supports the chosen mobile delivery approach | Shehryar Sardar |
 | 5 | Geographic maps and demo coordination | Interactive campus activity map, alumni-city map, location details and agreed filters, web/mobile map interactions, demo script and pitch coordination | Users explore campus activities and alumni cities and open shared records on web and mobile; the team can demonstrate the integrated service | TBA |
 
 Roles 3, 4, and 5 each implement and verify their own features on web and mobile. Role 4 coordinates shared navigation, design, and mobile integration; it does not build every mobile feature. Role 1 supplies event/location data, role 2 exposes it, and roles 3–5 present it in their respective experiences. Role 5 coordinates the demo, with each owner supplying and verifying their part.

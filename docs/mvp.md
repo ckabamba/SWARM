@@ -36,13 +36,13 @@ Accounts and login, real profiles, community content, geographic maps, and mobil
 | Community | Define post fields and club/event highlighting. Reactions, comments, follows, and private messaging are not yet committed. |
 | Data sources | Define user-entered profiles/posts, club-maintained information, and permitted public event sources/imports. |
 | API contracts | Preserve existing consumers; specify expanded shapes, errors, pagination, and visibility before integration. |
-| Ownership | Fill the remaining teammate names for the five assigned roles below; confirm framework-dependent mobile paths when choosing mobile delivery. |
+| Ownership | Fill the remaining owner names for roles 1, 3, and 5; confirm framework-dependent mobile paths when choosing mobile delivery. |
 
 Implementation work is linked from the [README issue index](../README.md#implementation-issues). [#14](https://github.com/ckabamba/SWARM/issues/14) still holds the resource-source/model decisions affecting schema, fixtures, and the engine; expanding the product scope does not settle extraction methods or fallback semantics. The voice, mobile, and map issues likewise retain open technology and interaction decisions.
 
 ## Repo layout
 
-The five roles in the [README](../README.md#team) own the areas below. These are planned production folders; the current implementation is under `prototypes/`. Christofort Kabamba owns role 2; the other teammate names remain TBA. This replaces the previous path-only allocation: event ingestion moves to role 1, the people/Ask flow moves to role 3, and role 5 owns geographic-map interfaces as well as demo coordination. No code is moved by this documentation update.
+The five roles in the [README](../README.md#team) own the areas below. These are planned production folders; the current implementation is under `prototypes/`. Christofort Kabamba owns role 2 and Shehryar Sardar owns role 4; owners for roles 1, 3, and 5 remain TBA. This replaces the previous path-only allocation: event ingestion moves to role 1, the people/Ask flow moves to role 3, and role 5 owns geographic-map interfaces as well as demo coordination. No code is moved by this documentation update.
 
 | Path | Role | Holds |
 | --- | --- | --- |
