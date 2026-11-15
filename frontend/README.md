@@ -18,15 +18,40 @@ npm run preview   # serve the production build locally
 
 `node_modules/` and `dist/` are ignored by git.
 
-## The data is a development fixture
+## Using the backend
 
-Nothing here talks to a backend yet. [src/shared/fake-api.js](src/shared/fake-api.js) is a copy of [prototypes/shared/fake-api.js](../prototypes/shared/fake-api.js) turned into an ES module. Every person in it is invented and the events are placeholders, not real listings. Every typed goal resolves to the same NVIDIA example.
+By default the app runs on fixtures and needs no backend. To read real data, run both servers:
+
+```powershell
+# terminal 1, from the repo root: FastAPI on http://127.0.0.1:8000
+.\.venv\Scripts\python.exe -m backend.manage run
+
+# terminal 2
+cd frontend
+copy .env.example .env      # then set VITE_DATA_SOURCE=api
+npm run dev
+```
+
+First-time backend setup (Python environment, local PostgreSQL, migrations, event import) is in [docs/backend-local-testing.md](../docs/backend-local-testing.md).
+
+How it fits together:
+
+- The dev server proxies `/api` to `http://127.0.0.1:8000` (see `vite.config.js`). Open the app at `localhost` or `127.0.0.1`; the backend rejects any other host name.
+- [src/shared/api.js](src/shared/api.js) is the HTTP client: session, resources, events, jobs, posts and the signed-in profile. It has a 12-second timeout and throws on any failure.
+- [src/shared/data-source.js](src/shared/data-source.js) reads `VITE_DATA_SOURCE`. In `api` mode a call that fails falls back to the fixture and logs a `[WarmPath]` warning in the console, so the app still renders with the backend down.
+- Only Social Jackets is wired. Its feed reads `GET /api/posts` and its events read `GET /api/events`; [src/community/data.js](src/community/data.js) adapts both to the shapes the components already use. In `api` mode the line under the stream says which parts are real.
+- Still on fixtures in every mode: the path map, the people panel, asks and the reply page, plus Social Jackets clubs, the composer and the signed-in profile. The backend's `POST /api/path` returns resources, not alumni stops, and `/api/people` and asks are not available yet.
+- `npm run build` output has no proxy. Serving it needs the API on the same origin.
+
+## The fixtures
+
+In fixture mode nothing talks to a backend. [src/shared/fake-api.js](src/shared/fake-api.js) is a copy of [prototypes/shared/fake-api.js](../prototypes/shared/fake-api.js) turned into an ES module. Every person in it is invented and the events are placeholders, not real listings. Every typed goal resolves to the same NVIDIA example.
 
 Its functions return the JSON shapes drafted in [docs/mvp.md](../docs/mvp.md#api-contract), with one exception: stops carry `typical_year`, which is not in the contract. It is flagged where it is set and is still an open contract gap.
 
 Asks are kept in the browser's local storage. Accepting an ask on the reply page updates other tabs in the same browser, not other devices.
 
-Social Jackets data is in [src/community/data.js](src/community/data.js). Its profiles are the two demo students, and its clubs and events are the path fixture's records under stable ids (`club:5`, `event:42`). A post written in the composer stays in the open tab and is gone after a reload.
+Social Jackets data is in [src/community/data.js](src/community/data.js). Its profiles are the two demo students, and its clubs and events are the path fixture's records under stable ids (`club:5`, `event:42`). In `api` mode the posts and events come from the backend instead. A post written in the composer stays in the open tab and is gone after a reload.
 
 ## Layout
 
@@ -38,7 +63,7 @@ Folders follow the ownership table in [docs/mvp.md](../docs/mvp.md#repo-layout).
 | `src/map/` | Path map: layout maths, the WebGL lattice and strands, the 3D honeycomb, checkpoints, and the landing and map screen. |
 | `src/people/` | People panel with drafted asks, and the alum reply page. |
 | `src/community/` | Social Jackets: profile card, composer, posts, events and clubs, the details drawer, and its fixtures. |
-| `src/shared/` | Fake API, backdrop, the top bar with search and the account menu, the theme, icons, small shared controls, and the reduced-motion flag. |
+| `src/shared/` | Fake API, the backend client and the data-source switch, backdrop, the top bar with search and the account menu, the theme, icons, small shared controls, and the reduced-motion flag. |
 | `src/app.css` | The prototype's stylesheet, unchanged. |
 | `src/shared/shell.css` | Theme tokens and the top bar. It loads after `app.css` and restates the few prototype rules that had a fixed colour. |
 | `public/models/` | `honeycomb.glb`: "Honeycomb" by Poly by Google, CC BY 3.0, <https://poly.pizza/m/6Mqdrv1n3Oo>. |
