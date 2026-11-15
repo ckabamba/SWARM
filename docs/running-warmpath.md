@@ -96,4 +96,6 @@ The service is prepared to serve Thermal and `/api` together from one host. The 
 - Route the full site to FastAPI, preserving the external Host header. If TLS terminates at a reverse proxy, trust forwarded headers only from that proxy's addresses (`FORWARDED_ALLOW_IPS` for Uvicorn). Keep the API port private to the proxy; do not blindly trust every client or open PostgreSQL to the internet.
 - Refresh public events on an operator-controlled schedule. Verify accounts, posts and courses across two browsers at the HTTPS URL before sharing it.
 
+A worked example for a short, costed demo window (one EC2 host behind CloudFront, with cleanup steps) is in [deploy/aws-demo](../deploy/aws-demo/README.md).
+
 Users then open the shared URL and need no local environment. The $100 total AWS budget still requires a costed hosting window and cleanup plan before provisioning; see [the budget plan](backend-design.md#100-total-aws-budget). These changes do not deploy or incur AWS charges. Local accounts still lack GT/email verification, password recovery and production moderation.

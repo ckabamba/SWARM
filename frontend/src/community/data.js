@@ -15,8 +15,9 @@ import { DATA_SOURCE, load } from '../shared/data-source.js'
  *
  * In api mode (see shared/data-source.js) the feed comes from GET /api/posts and the events
  * from GET /api/events, adapted to the shapes above in this file. If either call fails, that
- * list falls back to its fixture. A signed-in account (shared/account.js) posts through
- * POST /api/posts. Clubs stay on fixtures: the backend has campus resources, not clubs.
+ * list stays empty and the note under the stream says so; fixtures never stand in for it.
+ * A signed-in account (shared/account.js) posts through POST /api/posts. The backend has
+ * campus resources, not clubs, so api mode lists no clubs.
  */
 const PATH = fake.postPath({ goal: fake.SEEDED_GOALS[0], student_id: 1 })
 
@@ -36,7 +37,8 @@ export const PROFILES = Object.fromEntries(fake.getStudents().map((s) => [`perso
   note: 'An invented demo profile. It is not a real account.',
 }]))
 
-export const CLUBS = PATH.stops.filter((stop) => stop.type === 'club').map((stop) => ({
+/* Invented clubs, for fixture mode only. */
+export const CLUBS = DATA_SOURCE === 'api' ? [] : PATH.stops.filter((stop) => stop.type === 'club').map((stop) => ({
   id: `club:${stop.activity_id}`,
   type: 'club',
   title: stop.name,
@@ -44,7 +46,7 @@ export const CLUBS = PATH.stops.filter((stop) => stop.type === 'club').map((stop
   source: 'Demo fixture, shared with the path map',
 }))
 
-/* The fixture events. The page shows these in fixture mode, and whenever GET /api/events fails. */
+/* The fixture events. The page shows these in fixture mode only. */
 export const EVENTS = PATH.events.map((event) => {
   const stop = PATH.stops.find((item) => item.activity_id === event.activity_id)
   return {
@@ -155,11 +157,11 @@ function set(next) {
   listeners.forEach((fn) => fn())
 }
 
+/* Only called in api mode, where a source is 'api' or 'unavailable'. */
 function noteFor(postsSource, eventsSource) {
-  if (postsSource === 'fixture' && eventsSource === 'fixture') return FIXTURE_NOTE
-  const posts = postsSource === 'api' ? 'Posts are from WarmPath accounts with a public profile.' : 'The posts here are invented demo data.'
-  const events = eventsSource === 'api' ? 'Events are public Georgia Tech listings; confirm details at the source.' : 'The events here are invented, not real listings.'
-  return `${posts} ${events} Clubs are still demo data.`
+  const posts = postsSource === 'api' ? 'Posts are from WarmPath accounts with a public profile.' : 'Posts could not be loaded. Reload the page to try again.'
+  const events = eventsSource === 'api' ? 'Events are public Georgia Tech listings; confirm details at the source.' : 'Events could not be loaded. Reload the page to try again.'
+  return `${posts} ${events}`
 }
 
 let started = false
@@ -173,9 +175,9 @@ export function loadCommunity() {
   ]).then(([posts, events]) => {
     // Keep anything written in the composer while the request was in flight.
     const written = state.posts.filter(isSessionPost)
-    // With real events a post links to real records; on fixtures it links to the fixture ones.
-    const links = events.source === 'api' ? [...eventLinks(events.data), ...resourceLinks] : FIXTURE_LINKS
-    set({ posts: [...written, ...posts.data], events: events.data, links, loading: false, note: noteFor(posts.source, events.source), live: posts.source === 'api' })
+    // A post links to real records only. If the events call failed, `events.data` is empty.
+    const links = [...eventLinks(events.data), ...resourceLinks]
+    set({ posts: [...written, ...posts.data], events: events.data, links, loading: false, note: noteFor(posts.source, events.source), live: true })
   })
 }
 
