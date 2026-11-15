@@ -4,6 +4,11 @@ import '../shared/theme.js'
 import { Experience } from '../map/Experience.jsx'
 import { Community } from '../community/Community.jsx'
 import { Reply } from '../people/Reply.jsx'
+import { DATA_SOURCE } from '../shared/data-source.js'
+import { PathsPage } from '../history/PathsPage.jsx'
+import { HistoryPage } from '../history/HistoryPage.jsx'
+import { CoursesPage } from '../history/CoursesPage.jsx'
+import { AsksPage } from '../history/AsksPage.jsx'
 
 export default function App() {
   const [hash, setHash] = useState(location.hash)
@@ -20,6 +25,13 @@ export default function App() {
 
   const reply = hash.match(/^#\/reply\/(\d+)/)
   const community = hash === '#/community'
+  if (DATA_SOURCE === 'api') {
+    if (community) return <Community {...who}/>
+    if (hash === '#/history') return <HistoryPage who={who}/>
+    if (hash === '#/courses') return <CoursesPage who={who}/>
+    if (hash === '#/asks' || reply) return <AsksPage who={who} id={reply?.[1]}/>
+    return <PathsPage who={who}/>
+  }
   return (
     <>
       {/* The path page stays mounted so a traced goal survives a visit to another page. */}

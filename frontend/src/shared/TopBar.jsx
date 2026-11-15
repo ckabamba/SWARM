@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import api from './fake-api.js'
+import { DATA_SOURCE } from './data-source.js'
 import { loadAccount, openAccount, signOut, useAccount } from './account.js'
 import { AccountPanel } from './AccountPanel.jsx'
 import { Avatar, Switch } from './controls.jsx'
@@ -22,7 +23,7 @@ export function TopBar({ active, onHome, students, studentId, onStudent, search 
   const { status, me } = useAccount()
   useEffect(loadAccount, [])
   const real = status === 'in' ? me.profile : null
-  const demo = status === 'demo'
+  const demo = DATA_SOURCE !== 'api'
   const name = real ? real.name : demo ? student.name : null
   const standing = real ? me.email : demo ? `${student.major} · ${api.ordinal(student.school_year)} year` : 'Sign in to post on Social Jackets'
   const showAccount = () => { setOpen(false); openAccount() }
@@ -58,8 +59,13 @@ export function TopBar({ active, onHome, students, studentId, onStudent, search 
       <span className="topbar-space" />
 
       <nav className="topnav cap" aria-label="WarmPath sections">
-        <a href="#" onClick={onHome} aria-current={active === 'path' ? 'page' : undefined}><HexIcon filled={active === 'path'} /><span>Home</span></a>
+        <a href="#" onClick={onHome} aria-current={active === 'path' ? 'page' : undefined}><HexIcon filled={active === 'path'} /><span>Paths</span></a>
         <a href="#/community" aria-current={active === 'community' ? 'page' : undefined}><HiveIcon /><span>Social Jackets</span></a>
+        {DATA_SOURCE === 'api' && <>
+          <a href="#/history" aria-current={active === 'history' ? 'page' : undefined}>My history</a>
+          <a href="#/courses" aria-current={active === 'courses' ? 'page' : undefined}>My Courses</a>
+          <a href="#/asks" aria-current={active === 'asks' ? 'page' : undefined}>Asks</a>
+        </>}
       </nav>
 
       <div className="account" data-open={open} ref={account}>
@@ -82,10 +88,10 @@ export function TopBar({ active, onHome, students, studentId, onStudent, search 
               {real && <button className="arrow-link cap" onClick={() => signOut().catch(() => {})}>Sign out</button>}
             </div>
           )}
-          <div className="menu-row">
+          {demo && <div className="menu-row">
             <span className="cap">{demo ? 'Viewing as' : 'Path map demo student'}</span>
             <Switch label="Demo student" value={studentId} onChange={onStudent} options={students.map((s) => ({ value: s.id, label: s.name }))} />
-          </div>
+          </div>}
           <div className="menu-row">
             <span className="cap">Theme</span>
             <Switch label="Colour theme" value={theme} onChange={setTheme} options={THEMES} />

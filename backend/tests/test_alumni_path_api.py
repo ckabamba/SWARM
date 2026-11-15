@@ -1,135 +1,72 @@
-"""POST /api/alumni-path and GET /api/people against the seeded alumni.
-
-The API runs on its own schema in warmpath_test, so the seeded people never
-mix with other tests' data. Goal text is resolved by word overlap here (no
-model), which keeps the results fixed; test_goal_matching.py covers the model.
-"""
-from uuid import uuid4
-
+"""Authenticated typed-goal resolution using reviewed, shared account histories."""
 from fastapi.testclient import TestClient
 import pytest
-from sqlalchemy import create_engine, text
 
-from backend.api.app import create_app
 from backend.events import embeddings
 from backend.events.embeddings import Unavailable
-from backend.manage import database_url
-from backend.migrate import migrate
-from backend.seed import path_fixtures
+from backend.tests.test_profiles import app, register
+from backend.tests.test_history import save_profile
 
 
 class Broken:
-    def embed(self, documents):
-        raise Unavailable("no model in this test")
-
     def query_embed(self, query):
         raise Unavailable("no model in this test")
 
 
-@pytest.fixture(scope="module")
-def seeded():
-    base = database_url(test=True)
-    admin = create_engine(base)
-    schema = "alumni_path_api_test_" + uuid4().hex
-    with admin.begin() as conn:
-        assert conn.scalar(text("SELECT current_database()")) == "warmpath_test"
-        # Identifier consists only of this constant prefix and a generated hex UUID.
-        conn.execute(text(f"CREATE SCHEMA {schema}"))
-    url = base + ("&" if "?" in base else "?") + f"options=-csearch_path%3D{schema}"
-    try:
-        migrate(url)
-        engine = create_engine(url)
-        with engine.begin() as conn:
-            ids = path_fixtures.load(conn)
-        engine.dispose()
-        yield create_app(url), ids
-    finally:
-        with admin.begin() as conn:
-            conn.execute(text(f"DROP SCHEMA {schema} CASCADE"))
-        admin.dispose()
-
-
 @pytest.fixture
-def client(seeded, monkeypatch):
-    app, ids = seeded
+def clients(app, monkeypatch):
     monkeypatch.setattr(embeddings, "_model", Broken())
-    with TestClient(app) as test_client:
-        yield test_client, ids
+    with TestClient(app) as alum, TestClient(app) as viewer:
+        register(alum)
+        _, account = register(viewer)
+        save_profile(alum, kind='alum', profile_visible=True, experiences=[
+            dict(kind='internship', title='Software internship', organization='NVIDIA',
+                 school_year=3, history_confirmed=True, visible=True),
+            dict(kind='job', title='Software engineer', organization='NVIDIA',
+                 school_year=5, history_confirmed=True, visible=True),
+            dict(kind='internship', title='Secret astrophysics', organization='Private lab',
+                 school_year=2, history_confirmed=True, visible=False),
+        ])
+        yield alum, viewer, account
 
 
-def test_typed_goal_returns_its_path(client):
-    api, ids = client
-    student = ids["students"]["compe"]
-    body = api.post("/api/alumni-path", json={"goal": "an NVIDIA internship", "student_id": student}).json()
-    assert body["match"]["status"] == "matched" and body["match"]["match_basis"] == "keyword"
-    path = body["path"]
-    assert path["goal"]["id"] == ids["activities"]["nvidia_intern"]
-    assert path["student"]["id"] == student
-    assert path["stops"] and path["fixture_evidence"] is True
-    assert sum(stop["next"] for stop in path["stops"]) <= 1
-    for stop in path["stops"]:
-        assert stop["achievers"] <= path["goal"]["achievers"] and stop["lift"] >= 1.5
+def test_typed_goal_and_selected_id_use_authenticated_actor(clients):
+    _, viewer, account = clients
+    response = viewer.post('/api/path', json={'mode':'alumni','goal':'NVIDIA internship'})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body['match']['status'] == 'matched'
+    assert body['match']['match_basis'] == 'keyword'
+    assert body['match']['fallback_reason'] == 'no model in this test'
+    path = body['path']
+    assert path['student']['id'] == account['person_id']
+    assert path['goal']['achievers'] == 1 and path['fixture_evidence'] is False
+    selected = viewer.post('/api/path', json={'mode':'alumni','goal_id':path['goal']['id']})
+    assert selected.json() == path
+    people = viewer.get('/api/people', params={'goal_id':path['goal']['id']}).json()['items']
+    assert len(people) == 1 and people[0]['can_ask'] and people[0]['draft']
 
 
-def test_ambiguous_and_unmatched_goals_draw_nothing(client):
-    api, ids = client
-    student = ids["students"]["compe"]
-    ambiguous = api.post("/api/alumni-path", json={"goal": "nvidia", "student_id": student}).json()
-    assert ambiguous["match"]["status"] == "ambiguous" and ambiguous["path"] is None
-    assert len(ambiguous["match"]["candidates"]) >= 2
-    unmatched = api.post("/api/alumni-path", json={"goal": "become a pastry chef", "student_id": student}).json()
-    assert unmatched["match"]["status"] == "no_match" and unmatched["path"] is None
+def test_ambiguous_no_match_and_privacy_withdrawal(clients):
+    alum, viewer, _ = clients
+    tied = viewer.post('/api/path', json={'mode':'alumni','goal':'NVIDIA'}).json()
+    assert tied['match']['status'] == 'ambiguous' and tied['path'] is None
+    assert len(tied['match']['candidates']) == 2
+    for query in ('pastry chef', 'secret astrophysics'):
+        body = viewer.post('/api/path', json={'mode':'alumni','goal':query}).json()
+        assert body['match']['status'] == 'no_match' and body['path'] is None
+        assert body['match']['candidates'] == []
+    save_profile(alum, profile_visible=False)
+    hidden = viewer.post('/api/path', json={'mode':'alumni','goal':'NVIDIA'}).json()
+    assert hidden['match']['status'] == 'no_match' and hidden['path'] is None
 
 
-def test_picking_a_candidate_by_id(client):
-    api, ids = client
-    goal = ids["activities"]["research_goal"]
-    body = api.post("/api/alumni-path", json={"goal_id": goal, "student_id": ids["students"]["cs"]}).json()
-    assert body["match"]["status"] == "selected" and body["path"]["goal"]["id"] == goal
-
-
-def test_alumni_path_validation(client):
-    api, ids = client
-    student = ids["students"]["compe"]
-    assert api.post("/api/alumni-path", json={"student_id": student}).status_code == 422
-    assert api.post("/api/alumni-path", json={"goal": "  ", "student_id": student}).status_code == 422
-    both = {"goal": "nvidia", "goal_id": ids["activities"]["nvidia_intern"], "student_id": student}
-    assert api.post("/api/alumni-path", json=both).status_code == 422
-    assert api.post("/api/alumni-path", json={"goal": "x" * 301, "student_id": student}).status_code == 422
-    assert api.post("/api/alumni-path", json={"goal_id": 999999, "student_id": student}).status_code == 404
-    assert api.post("/api/alumni-path", json={"goal": "an NVIDIA internship", "student_id": 999999}).status_code == 404
-
-
-def test_people_behind_a_goal_and_a_stop(client):
-    api, ids = client
-    goal, student = ids["activities"]["nvidia_intern"], ids["students"]["compe"]
-    everyone = api.get("/api/people", params={"goal_id": goal, "student_id": student}).json()
-    assert everyone["status"] == "ok" and everyone["items"]
-    person = everyone["items"][0]
-    assert {"id", "name", "major", "grad_year", "shared_tie", "score", "draft"} <= person.keys()
-    assert person["draft"] is None
-    stop = ids["activities"]["embedded_vision"]
-    behind = api.get("/api/people", params={"goal_id": goal, "student_id": student, "activity_id": stop}).json()
-    assert behind["items"] and len(behind["items"]) <= len(everyone["items"])
-    assert api.get("/api/people", params={"goal_id": goal, "student_id": student, "limit": 2}).json()["items"].__len__() <= 2
-
-
-def test_people_without_ids_or_with_unknown_ids(client):
-    api, ids = client
-    assert api.get("/api/people").json()["status"] == "not_available"
-    assert api.get("/api/people", params={"goal_id": 999999, "student_id": ids["students"]["compe"]}).status_code == 404
-
-
-def test_real_model_through_the_api(seeded):
-    pytest.importorskip("fastembed")
-    if not any(embeddings.CACHE.glob("*bge-small-en-v1.5*")):
-        pytest.skip("model not downloaded; run python -m backend.events.embeddings once")
-    app, ids = seeded
-    student = ids["students"]["compe"]
-    with TestClient(app) as api:
-        body = api.post("/api/alumni-path", json={"goal": "I want a software internship at NVIDIA",
-                                                  "student_id": student}).json()
-        assert body["match"]["match_basis"] == "description_similarity"
-        assert body["path"]["goal"]["id"] == ids["activities"]["nvidia_intern"]
-        refused = api.post("/api/alumni-path", json={"goal": "get a job at google", "student_id": student}).json()
-        assert refused["match"]["status"] == "no_match" and refused["path"] is None
+def test_validation_and_login(clients):
+    _, viewer, account = clients
+    for extra in ({}, {'goal':'  '}, {'goal':'x'*301}, {'goal_id':0},
+                  {'goal':'NVIDIA','goal_id':1}, {'goal':'NVIDIA','student_id':account['person_id']}):
+        assert viewer.post('/api/path', json={'mode':'alumni',**extra}).status_code == 422
+    assert viewer.post('/api/path', json={'mode':'alumni','goal_id':2147483647}).status_code == 404
+    viewer.post('/api/auth/logout')
+    assert viewer.post('/api/path', json={'mode':'alumni','goal':'NVIDIA'}).status_code == 401
+    assert viewer.post('/api/path', json={'mode':'alumni','goal_id':1}).status_code == 401

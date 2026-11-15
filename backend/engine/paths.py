@@ -2,9 +2,10 @@
 
 Every count here comes from person_activity rows. Lift measures association,
 not cause: it compares how common an activity is among alumni who reached a
-goal with how common it is among all alumni.
+goal with how common it is among public alumni sharing eligible history.
 
-Only alumni with a visible profile are counted or listed. These rules apply to
+Only alumni with a visible profile and eligible shared history are counted or listed.
+Real queries exclude fixtures; isolated demo callers must opt in explicitly. These rules apply to
 the alumni-path feature only; resource discovery, the feed and the maps do not
 use the lift filter.
 
@@ -47,37 +48,52 @@ def school_year(grad_year, today=None):
     return year if year >= 1 else None
 
 
-_ALUMNI = "SELECT id FROM person WHERE kind = 'alum' AND profile_visible"
+# Real evidence uses only the earliest explicitly shared occurrence, never the
+# private first occurrence used for a member's own personalization. Fixture
+# access is an explicit engine-only opt-in for isolated tests/demos.
+_PUBLIC_HISTORY = """
+    SELECT pa.person_id, pa.activity_id,
+           CASE WHEN :include_fixtures THEN coalesce(pa.public_school_year, pa.school_year)
+                ELSE pa.public_school_year END AS school_year
+    FROM person_activity pa
+    JOIN person p ON p.id = pa.person_id
+    JOIN activity a ON a.id = pa.activity_id
+    WHERE :include_fixtures OR (
+        pa.history_managed AND pa.public_school_year IS NOT NULL
+        AND NOT p.is_fixture AND NOT a.is_fixture
+    )
+"""
 
-# Visible alumni who reached the goal, with the year they reached it.
+_ALUMNI = f"""
+    SELECT p.id FROM person p
+    WHERE p.kind = 'alum' AND p.profile_visible
+      AND (:include_fixtures OR NOT p.is_fixture)
+      AND (:include_fixtures OR EXISTS (SELECT 1 FROM ({_PUBLIC_HISTORY}) h WHERE h.person_id = p.id))
+"""
+
 _ACHIEVER = f"""
     SELECT pa.person_id, pa.school_year AS goal_year
-    FROM person_activity pa
+    FROM ({_PUBLIC_HISTORY}) pa
     JOIN ({_ALUMNI}) alumni ON alumni.id = pa.person_id
     WHERE pa.activity_id = :goal_id
 """
 
-# For each activity an achiever did in an earlier school year than the goal:
-# how many achievers did it, their median year, and how many alumni did it at
-# any time.
 _STOPS = text(f"""
     WITH achiever AS ({_ACHIEVER}),
     prior AS (
         SELECT pa.activity_id, pa.school_year
-        FROM person_activity pa
+        FROM ({_PUBLIC_HISTORY}) pa
         JOIN achiever ON achiever.person_id = pa.person_id
         WHERE pa.school_year < achiever.goal_year
     ),
     prior_count AS (
-        SELECT activity_id,
-               count(*) AS achievers,
+        SELECT activity_id, count(*) AS achievers,
                percentile_disc(0.5) WITHIN GROUP (ORDER BY school_year) AS typical_year
-        FROM prior
-        GROUP BY activity_id
+        FROM prior GROUP BY activity_id
     ),
     base AS (
         SELECT pa.activity_id, count(*) AS alumni
-        FROM person_activity pa
+        FROM ({_PUBLIC_HISTORY}) pa
         JOIN ({_ALUMNI}) alumni ON alumni.id = pa.person_id
         GROUP BY pa.activity_id
     )
@@ -92,58 +108,66 @@ _TOTALS = text(f"""
     SELECT (SELECT count(*) FROM ({_ALUMNI}) alumni) AS alumni,
            (SELECT count(*) FROM ({_ACHIEVER}) achiever) AS achievers,
            EXISTS (
-               SELECT 1 FROM person
-               WHERE kind = 'alum' AND profile_visible AND is_fixture
+               SELECT 1 FROM ({_ALUMNI}) alumni
+               JOIN person p ON p.id = alumni.id WHERE p.is_fixture
            ) AS fixture_evidence
 """)
 
-# Achievers, or only those who did one activity before the goal.
 _CANDIDATES = text(f"""
     WITH achiever AS ({_ACHIEVER})
     SELECT p.id, p.name, p.major, p.grad_year
-    FROM achiever
-    JOIN person p ON p.id = achiever.person_id
-    WHERE CAST(:activity_id AS integer) IS NULL
-       OR EXISTS (
-           SELECT 1 FROM person_activity pa
-           WHERE pa.person_id = achiever.person_id
-             AND pa.activity_id = CAST(:activity_id AS integer)
-             AND pa.school_year < achiever.goal_year
-       )
+    FROM achiever JOIN person p ON p.id = achiever.person_id
+    WHERE p.id <> :student_id AND (
+        CAST(:activity_id AS integer) IS NULL
+        OR EXISTS (
+            SELECT 1 FROM ({_PUBLIC_HISTORY}) pa
+            WHERE pa.person_id = achiever.person_id
+              AND pa.activity_id = CAST(:activity_id AS integer)
+              AND pa.school_year < achiever.goal_year
+        )
+    )
 """)
 
-# Activities the student and an achiever both have, other than the goal.
 _SHARED = text(f"""
     WITH achiever AS ({_ACHIEVER})
     SELECT theirs.person_id, a.id AS activity_id, a.name, a.type,
            theirs.school_year AS their_year, mine.school_year AS my_year
     FROM person_activity mine
-    JOIN person_activity theirs ON theirs.activity_id = mine.activity_id
+    JOIN ({_PUBLIC_HISTORY}) theirs ON theirs.activity_id = mine.activity_id
     JOIN achiever ON achiever.person_id = theirs.person_id
     JOIN activity a ON a.id = mine.activity_id
     WHERE mine.person_id = :student_id AND mine.activity_id <> :goal_id
+      AND (:include_fixtures OR (mine.history_managed AND NOT a.is_fixture))
 """)
 
 
-def _goal(conn, goal_id):
-    row = conn.execute(
-        text("SELECT id, name FROM activity WHERE id = :id"), {"id": goal_id}
-    ).mappings().first()
+def _goal(conn, goal_id, person_id, include_fixtures):
+    row = conn.execute(text(f"""
+        SELECT a.id, a.name FROM activity a WHERE a.id = :id AND (
+            :include_fixtures OR (NOT a.is_fixture AND (
+                a.resource_id IS NOT NULL
+                OR EXISTS (SELECT 1 FROM person_activity own
+                           WHERE own.activity_id = a.id AND own.person_id = :person_id
+                             AND own.history_managed)
+                OR EXISTS (SELECT 1 FROM ({_PUBLIC_HISTORY}) h
+                           JOIN ({_ALUMNI}) p ON p.id = h.person_id WHERE h.activity_id = a.id)
+            ))
+        )
+    """), {'id':goal_id, 'person_id':person_id, 'include_fixtures':include_fixtures}).mappings().first()
     if row is None:
-        raise NotFound(f"No goal activity with id {goal_id}.")
+        raise NotFound('Goal activity is unavailable.')
     return row
 
 
-def _student(conn, student_id):
-    row = conn.execute(
-        text(
-            "SELECT id, name, major, grad_year FROM person "
-            "WHERE id = :id AND kind = 'student'"
-        ),
-        {"id": student_id},
-    ).mappings().first()
+def _student(conn, student_id, include_fixtures):
+    # The field retains its historical response name, but an authenticated alum
+    # can also browse a path using their own history.
+    row = conn.execute(text("""
+        SELECT id, name, major, grad_year FROM person
+        WHERE id = :id AND (:include_fixtures OR NOT is_fixture)
+    """), {'id':student_id, 'include_fixtures':include_fixtures}).mappings().first()
     if row is None:
-        raise NotFound(f"No student with id {student_id}.")
+        raise NotFound('Member is unavailable.')
     return row
 
 
@@ -156,6 +180,7 @@ def path_for_goal(
     min_achievers=MIN_ACHIEVERS,
     max_stops=MAX_STOPS,
     today=None,
+    include_fixtures=False,
 ):
     """Return the POST /path data for one goal and one student.
 
@@ -164,15 +189,15 @@ def path_for_goal(
     lift and cut to max_stops. An empty stops list comes with a reason instead
     of an error. Raises NotFound for an unknown goal or student.
     """
-    goal = _goal(conn, goal_id)
-    student = _student(conn, student_id)
-    totals = conn.execute(_TOTALS, {"goal_id": goal_id}).mappings().one()
+    goal = _goal(conn, goal_id, student_id, include_fixtures)
+    student = _student(conn, student_id, include_fixtures)
+    totals = conn.execute(_TOTALS, {"goal_id": goal_id, "include_fixtures": include_fixtures}).mappings().one()
     total_alumni, total_achievers = totals["alumni"], totals["achievers"]
 
     stops = []
     if total_achievers >= min_achievers:
         rows = conn.execute(
-            _STOPS, {"goal_id": goal_id, "min_achievers": min_achievers}
+            _STOPS, {"goal_id": goal_id, "min_achievers": min_achievers, "include_fixtures": include_fixtures}
         ).mappings()
         for row in rows:
             lift = (row["achievers"] / total_achievers) / (row["alumni"] / total_alumni)
@@ -183,8 +208,9 @@ def path_for_goal(
 
     have = set(
         conn.execute(
-            text("SELECT activity_id FROM person_activity WHERE person_id = :id"),
-            {"id": student_id},
+            text("SELECT pa.activity_id FROM person_activity pa JOIN activity a ON a.id = pa.activity_id "
+                 "WHERE pa.person_id = :id AND (:include_fixtures OR (pa.history_managed AND NOT a.is_fixture))"),
+            {"id": student_id, "include_fixtures": include_fixtures},
         ).scalars()
     )
     next_id = next((row["id"] for _, row in stops if row["id"] not in have), None)
@@ -245,7 +271,7 @@ def _shared_tie(student, alum, strongest):
     return f"You {phrase}"
 
 
-def people_for_goal(conn, goal_id, student_id, activity_id=None, *, limit=10):
+def people_for_goal(conn, goal_id, student_id, activity_id=None, *, limit=10, include_fixtures=False):
     """Return ranked alumni for GET /people.
 
     Without activity_id these are the visible alumni who reached the goal. With
@@ -253,22 +279,23 @@ def people_for_goal(conn, goal_id, student_id, activity_id=None, *, limit=10):
     has id, name, major, grad_year, shared_tie and score. The drafted message
     is added by the API layer, not here. Raises NotFound for unknown ids.
     """
-    _goal(conn, goal_id)
-    student = _student(conn, student_id)
+    _goal(conn, goal_id, student_id, include_fixtures)
+    student = _student(conn, student_id, include_fixtures)
     if activity_id is not None:
         found = conn.execute(
-            text("SELECT 1 FROM activity WHERE id = :id"), {"id": activity_id}
+            text("SELECT 1 FROM activity WHERE id = :id AND (:include_fixtures OR NOT is_fixture)"),
+            {"id": activity_id, "include_fixtures": include_fixtures}
         ).first()
         if found is None:
             raise NotFound(f"No activity with id {activity_id}.")
 
     candidates = conn.execute(
-        _CANDIDATES, {"goal_id": goal_id, "activity_id": activity_id}
+        _CANDIDATES, {"goal_id": goal_id, "activity_id": activity_id, "student_id": student_id, "include_fixtures": include_fixtures}
     ).mappings().all()
 
     shared = {}
     for row in conn.execute(
-        _SHARED, {"goal_id": goal_id, "student_id": student_id}
+        _SHARED, {"goal_id": goal_id, "student_id": student_id, "include_fixtures": include_fixtures}
     ).mappings():
         shared.setdefault(row["person_id"], []).append(row)
 
