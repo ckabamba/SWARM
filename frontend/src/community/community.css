@@ -30,9 +30,6 @@
 /* Sticky offsets are measured from inside the scroller's padding, so 0 holds the columns just under the bar. */
 .me, .rail { position: sticky; top: 0; }
 
-.arrow-link { padding: 6px 0; border: 0; background: none; color: var(--ash); text-align: left; transition: color 160ms ease; }
-.arrow-link::before { content: '->'; margin-right: 10px; color: var(--ember); }
-.pill:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ---------- your profile ---------- */
 .me { overflow: hidden; }
@@ -54,6 +51,8 @@
 .me-path b { font-weight: 600; }
 .me-next { color: var(--glow); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 4px; transition: text-decoration-color 200ms ease; }
 .me .pill { width: 100%; }
+.me-standing + .pill { margin-top: 18px; }
+.composer .form-error { margin-top: 12px; }
 
 /* ---------- stream ---------- */
 .stream { display: grid; gap: 12px; min-width: 0; }
@@ -198,7 +197,6 @@
 .details-note { margin: 22px 0 0; color: var(--ash); font-size: 13px; }
 
 @media (hover: hover) and (pointer: fine) {
-  .arrow-link:hover { color: var(--bone); }
   .me-path:hover .me-next { text-decoration-color: currentColor; }
   .composer-prompt:hover { border-color: var(--focus-line); color: var(--bone); }
   .post-author:hover { text-decoration-color: var(--glow); }

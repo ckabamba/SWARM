@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import api from './fake-api.js'
+import { loadAccount, openAccount, signOut, useAccount } from './account.js'
+import { AccountPanel } from './AccountPanel.jsx'
 import { Avatar, Switch } from './controls.jsx'
 import { CloseIcon, HexIcon, HiveIcon, SearchIcon } from './icons.jsx'
 import { setTheme, useTheme } from './theme.js'
@@ -16,7 +18,14 @@ export function TopBar({ active, onHome, students, studentId, onStudent, search 
   const [open, setOpen] = useState(false)
   const account = useRef(null)
   const student = students.find((s) => s.id === studentId)
-  const standing = `${student.major} · ${api.ordinal(student.school_year)} year`
+  // Who the account button stands for: the signed-in account, nobody, or (on fixtures) the demo student.
+  const { status, me } = useAccount()
+  useEffect(loadAccount, [])
+  const real = status === 'in' ? me.profile : null
+  const demo = status === 'demo'
+  const name = real ? real.name : demo ? student.name : null
+  const standing = real ? me.email : demo ? `${student.major} · ${api.ordinal(student.school_year)} year` : 'Sign in to post on Social Jackets'
+  const showAccount = () => { setOpen(false); openAccount() }
 
   useEffect(() => {
     if (!open) return undefined
@@ -32,6 +41,7 @@ export function TopBar({ active, onHome, students, studentId, onStudent, search 
   }, [open])
 
   return (
+    <>
     <header className="topbar">
       <a className="mark" href="#" onClick={onHome} aria-label="WarmPath home"><i />WarmPath</a>
 
@@ -53,20 +63,27 @@ export function TopBar({ active, onHome, students, studentId, onStudent, search 
       </nav>
 
       <div className="account" data-open={open} ref={account}>
-        <button className="account-button" aria-expanded={open} aria-controls="account-menu" aria-label={`Account: ${student.name}`} onClick={() => setOpen(!open)}>
-          <Avatar name={student.name} ring />
+        <button className="account-button" aria-expanded={open} aria-controls="account-menu" aria-label={`Account: ${name || 'not signed in'}`} onClick={() => setOpen(!open)}>
+          <Avatar name={name} ring />
         </button>
         <div className="account-menu" id="account-menu" inert={!open}>
           <div className="account-id">
-            <Avatar name={student.name} ring />
+            <Avatar name={name} ring />
             <div>
-              <b>{student.name}</b>
+              <b>{name || 'Not signed in'}</b>
               <span>{standing}</span>
             </div>
           </div>
-          <p className="account-note">Demo student. The profiles in WarmPath are invented for now.</p>
+          {demo ? (
+            <p className="account-note">Demo student. The profiles in WarmPath are invented for now.</p>
+          ) : (
+            <div className="account-acts">
+              <button className={real ? 'pill' : 'pill hot'} onClick={showAccount}>{real ? 'Edit profile' : 'Sign in or create an account'}</button>
+              {real && <button className="arrow-link cap" onClick={() => signOut().catch(() => {})}>Sign out</button>}
+            </div>
+          )}
           <div className="menu-row">
-            <span className="cap">Viewing as</span>
+            <span className="cap">{demo ? 'Viewing as' : 'Path map demo student'}</span>
             <Switch label="Demo student" value={studentId} onChange={onStudent} options={students.map((s) => ({ value: s.id, label: s.name }))} />
           </div>
           <div className="menu-row">
@@ -76,5 +93,7 @@ export function TopBar({ active, onHome, students, studentId, onStudent, search 
         </div>
       </div>
     </header>
+    {!demo && <AccountPanel />}
+    </>
   )
 }

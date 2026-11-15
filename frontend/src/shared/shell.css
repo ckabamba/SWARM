@@ -193,6 +193,58 @@
 .menu-row > .cap { color: var(--ash); }
 .account-menu .switch button, .account-menu .switch .on span { padding: 9px 14px; }
 
+.account-acts { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 14px; }
+
+/* ---------- small shared pieces ---------- */
+.arrow-link { padding: 6px 0; border: 0; background: none; color: var(--ash); text-align: left; transition: color 160ms ease; }
+.arrow-link::before { content: '->'; margin-right: 10px; color: var(--ember); }
+@media (hover: hover) and (pointer: fine) { .arrow-link:hover { color: var(--bone); } }
+.pill:disabled { opacity: 0.45; cursor: not-allowed; }
+.avatar svg { width: 46%; height: 46%; }
+
+/* ---------- account drawer: the people panel's drawer, holding forms ---------- */
+.account-panel { z-index: 5; }
+/* The form is taller than the screen. This strip stays at the top so the form scrolls under it, not under the nav. */
+.account-panel::before {
+  content: ''; position: sticky; top: -96px; z-index: 3; display: block;   /* sticky offsets start inside the padding */
+  height: 88px; margin: -96px -34px 8px;
+  background: var(--menu);
+}
+.account-panel .lede { max-width: 38ch; }
+.account-panel > .switch { margin-bottom: 22px; }
+.form { display: grid; gap: 18px; }
+.form label, .form-row { display: grid; gap: 8px; justify-items: start; }
+.form label > .cap, .form-row > .cap, .panel-section h3 { color: var(--ash); font-weight: 500; }
+.input {
+  width: 100%; height: 44px; padding: 0 14px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--tint); font-size: 14.5px; caret-color: var(--ember);
+  transition: border-color 200ms ease;
+}
+textarea.input { height: auto; min-height: 104px; padding: 12px 14px; line-height: 1.55; resize: vertical; }
+.input:focus { outline: 0; border-color: var(--focus-line); }
+.input::placeholder { color: var(--ash); }
+.form-hint { margin: 0; max-width: 40ch; color: var(--ash); font-size: 13px; }
+.form-error { margin: 0; max-width: 40ch; color: var(--ember); font-size: 13.5px; }
+.form > .pill { justify-self: start; }
+.panel-section { display: grid; gap: 12px; justify-items: start; margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--line); }
+.panel-section h3 { margin: 0; }
+.panel-section .acts { display: flex; justify-content: space-between; width: 100%; }
+/* A file input dressed as the ghost pill. The real input stays focusable underneath. */
+.file-pill { position: relative; cursor: pointer; }
+.file-pill[data-busy='true'] { opacity: 0.6; cursor: progress; }
+.file-pill input { position: absolute; inset: 0; opacity: 0; cursor: inherit; }
+.file-pill:focus-within { outline: 1px solid var(--glow); outline-offset: 4px; }
+.suggestions, .entries { width: 100%; margin: 0; padding: 0; list-style: none; }
+.suggestions label { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.suggestions input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--gold); }
+.suggestions label > span { display: grid; gap: 2px; min-width: 0; }
+.suggestions .cap, .evidence { color: var(--ash); }
+.suggestions b, .entries b { font-weight: 500; overflow-wrap: anywhere; }
+.evidence { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 13px; }
+.entries li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.entries span { flex: none; color: var(--ash); font-size: 13px; }
+
 @media (max-width: 760px) {
   .topbar { flex-wrap: wrap; gap: 10px 12px; padding: 14px 16px; }
   .topbar .search { order: 5; flex: 1 0 100%; }
@@ -200,4 +252,8 @@
   /* Icons only on a phone; the names stay available to screen readers. */
   .topnav a span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .account-menu .switch button, .account-menu .switch .on span { padding: 9px 10px; }
+  /* On a phone the bar can be two rows tall, so these drawers cover it instead of sitting under it. */
+  .account-panel, .details { z-index: 7; width: 100%; padding-top: 64px; border-left: 0; }
+  .account-panel .close, .details .close { top: 62px; }
+  .account-panel::before { top: -64px; height: 52px; margin-top: -64px; }
 }
