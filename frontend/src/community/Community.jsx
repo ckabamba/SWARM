@@ -8,7 +8,7 @@ import { Arrow, Avatar, Switch } from '../shared/controls.jsx'
 import { HexIcon, hexPoints } from '../shared/icons.jsx'
 import { useViewport } from '../map/layout.js'
 import { Swarm } from '../map/Swarm.jsx'
-import { CLUBS, EVENTS, PROFILES, RECORDS, formatPostTime, isSessionPost, session } from './data.js'
+import { CLUBS, EVENTS, PROFILES, RECORDS, addSessionPost, formatPostTime, isSessionPost, loadCommunity, useCommunity } from './data.js'
 import { Bee } from './Bee.jsx'
 import { Details } from './Details.jsx'
 import './community.css'
@@ -58,7 +58,9 @@ function Post({ post, index, onProfile, onRecord }) {
 }
 
 export function Community({ students, studentId, onStudent }) {
-  const [posts, setPosts] = useState(session.posts)
+  // Posts and events come from the data layer, which reads fixtures or the backend. See data.js.
+  const { posts, events, loading, note } = useCommunity()
+  useEffect(loadCommunity, [])
   const [query, setQuery] = useState('')
   const [view, setView] = useState('posts')       // where the switch points
   const [shown, setShown] = useState('posts')     // what is on screen; trails `view` while the old list leaves
@@ -128,7 +130,7 @@ export function Community({ students, studentId, onStudent }) {
   const visiblePosts = posts
     .filter((post) => has(PROFILES[post.authorId].name, post.text, post.linkedRecordId && RECORDS.get(post.linkedRecordId).title))
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-  const visibleEvents = EVENTS.filter((event) => has(event.title, event.organizer, event.location))
+  const visibleEvents = events.filter((event) => has(event.title, event.organizer, event.location))
   const visibleClubs = CLUBS.filter((club) => has(club.title))
   const campusCount = visibleEvents.length + visibleClubs.length
   const count = shown === 'posts'
@@ -144,9 +146,7 @@ export function Community({ students, studentId, onStudent }) {
     e.preventDefault()
     const text = draft.trim()
     if (!text) return
-    const all = [{ id: 'post:session:' + Date.now(), authorId: me.id, createdAt: new Date().toISOString(), text, linkedRecordId: linked || null }, ...posts]
-    session.posts = all
-    setPosts(all)
+    addSessionPost({ id: 'post:session:' + Date.now(), authorId: me.id, createdAt: new Date().toISOString(), text, linkedRecordId: linked || null })
     cancelPost()
     setQuery('')
     go('posts')
@@ -154,9 +154,16 @@ export function Community({ students, studentId, onStudent }) {
 
   const empty = (what, otherCount, otherView, otherLabel) => (
     <div className="card empty">
-      <p>No {what} match “{query.trim()}”.</p>
-      {otherCount > 0 && <button className="arrow-link cap" onClick={(e) => go(otherView, e)}>{otherCount} in {otherLabel}</button>}
-      <button className="arrow-link cap" onClick={() => setQuery('')}>Clear search</button>
+      {q ? (
+        <>
+          <p>No {what} match “{query.trim()}”.</p>
+          {otherCount > 0 && <button className="arrow-link cap" onClick={(e) => go(otherView, e)}>{otherCount} in {otherLabel}</button>}
+          <button className="arrow-link cap" onClick={() => setQuery('')}>Clear search</button>
+        </>
+      ) : (
+        // Only reachable with backend data: the fixtures are never empty.
+        <p>{loading ? `Loading ${what}.` : `No ${what} yet.`}</p>
+      )}
     </div>
   )
 
@@ -212,7 +219,7 @@ export function Community({ students, studentId, onStudent }) {
           {!campusCount && empty('events or clubs', visiblePosts.length, 'posts', 'posts')}
         </>
       )}
-      <p className="stream-note" style={{ '--i': 7 }}>Demo data. The profiles, posts and events here are invented, and the events are not real listings.</p>
+      <p className="stream-note" style={{ '--i': 7 }}>{note}</p>
     </>
   )
 
@@ -305,7 +312,7 @@ export function Community({ students, studentId, onStudent }) {
                 <>
                   <h2 className="cap">On campus this week</h2>
                   <ol>
-                    {EVENTS.slice(0, 3).map((event) => {
+                    {events.slice(0, 3).map((event) => {
                       const day = api.eventDay(event.starts_at)
                       return (
                         <li key={event.id}>

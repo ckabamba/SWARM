@@ -22,7 +22,7 @@ export function Details({ detail, onClose, onOpen }) {
   const profile = shown && shown.kind === 'profile' ? PROFILES[shown.id] : null
   const record = shown && shown.kind === 'record' ? RECORDS.get(shown.id) : null
   const club = record && record.type === 'event' && record.clubId ? RECORDS.get(record.clubId) : null
-  const clubEvents = record && record.type === 'club' ? EVENTS.filter((event) => event.clubId === record.id) : []
+  const clubEvents = record && record.type !== 'event' ? EVENTS.filter((event) => event.clubId === record.id) : []
 
   return (
     <aside className="panel details" data-open={Boolean(detail)} aria-hidden={!detail} inert={!detail} aria-label="Details">
@@ -31,7 +31,7 @@ export function Details({ detail, onClose, onOpen }) {
       {profile && (
         <>
           <h2>{profile.name}</h2>
-          <p className="lede">An invented demo profile. It is not a real account.</p>
+          <p className="lede">{profile.note}</p>
           <dl>
             <div><dt className="cap">Major</dt><dd>{profile.majorName}</dd></div>
             <div><dt className="cap">Year</dt><dd className="sentence">{profile.year}</dd></div>
@@ -54,7 +54,8 @@ export function Details({ detail, onClose, onOpen }) {
         </>
       )}
 
-      {record && record.type === 'club' && (
+      {/* Clubs, and campus resources linked from a backend post. */}
+      {record && record.type !== 'event' && (
         <>
           <h2>{record.title}</h2>
           <p className="lede">{record.summary}</p>
