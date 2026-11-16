@@ -1,3 +1,15 @@
+/* The microphone beside the goal field, in the live client and the fixture demo alike. It matches
+   the submit button; while listening it takes the action fill and a slow ring. */
+.mic { flex:none; width:58px; height:58px; margin-bottom:6px; display:grid; place-items:center; border-radius:50%; border:1px solid var(--line); background:none; color:inherit; transition:transform 160ms var(--ease-out), background-color 200ms ease, border-color 200ms ease; }
+.mic:active { transform:scale(0.95); }
+.mic svg { width:22px; height:22px; }
+.mic[aria-pressed='true'] { background:var(--action); border-color:var(--action); color:var(--on-action); animation:mic-listening 1.6s ease-out infinite; }
+@keyframes mic-listening { from { box-shadow:0 0 0 0 var(--focus-line); } to { box-shadow:0 0 0 16px transparent; } }
+@media (hover:hover) and (pointer:fine) { .mic:hover { border-color:var(--focus-line); } }
+@media (prefers-reduced-motion:reduce) { .mic[aria-pressed='true'] { animation:none; box-shadow:0 0 0 4px var(--focus-line); } }
+.goal form .voice-note { margin:20px 0 0; color:var(--ash); font-size:15px; }
+@media(max-width:700px) { .mic { width:46px; height:46px; } .mic svg { width:19px; height:19px; } }
+
 .live-experience .strip { max-width:520px; }
 .live-experience .strip p { font-size:13px; }
 .live-experience .goal form [role=group] { margin-top:20px; }

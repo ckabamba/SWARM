@@ -44,6 +44,7 @@ How it fits together:
 - The composer posts through `POST /api/posts` once you are signed in and your profile is public. A post can link to a listed event or a campus resource.
 - Still on fixtures in every mode: the path map, the people panel, asks and the reply page, plus Social Jackets clubs. The backend's `POST /api/path` returns resources, not alumni stops, and `/api/people` and asks are not available yet. The account menu keeps a "Path map demo student" switch for that reason.
 - Not built yet: editing or deleting a post, editing contacts and experiences by hand (a resume import can add them), courses and transcripts, deleting an account, and posting an event (the backend has no endpoint for it).
+- The goal field on the path landing has a microphone in both modes when the browser supports speech recognition ([src/shared/voice.js](src/shared/voice.js)). Speaking fills the field with editable text and submits nothing; the browser does the transcription and the app receives only text. It needs HTTPS or `localhost`, and a browser such as Chrome, Edge or Safari. With no support the microphone is not rendered; with a blocked microphone or no speech heard, a message appears and typing still works.
 - `npm run build` output has no proxy. Serving it needs the API on the same origin.
 
 ## The fixtures

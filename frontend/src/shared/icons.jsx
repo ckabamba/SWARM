@@ -40,6 +40,11 @@ export function SearchIcon() {
   return <Icon><circle cx="9" cy="9" r="5.5" /><path d="M13.2 13.2 17 17" /></Icon>
 }
 
+/* A microphone: speak instead of typing. */
+export function MicIcon() {
+  return <Icon><rect x="7.5" y="2.5" width="5" height="9" rx="2.5" /><path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v2.5M7.2 17.5h5.6" /></Icon>
+}
+
 export function CloseIcon() {
   return <Icon><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" /></Icon>
 }
